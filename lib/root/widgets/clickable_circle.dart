@@ -7,16 +7,18 @@ class ClickableCircle extends StatefulWidget {
   final VoidCallback? onLongPress; // Nullable callback for long press
   final Color splashColor;  // Color for splash effect
   final Color highlightColor;  // Color for highlight effect
+  final EdgeInsets? padding;
 
   const ClickableCircle({
-    Key? key,
+    super.key,
     required this.child,
     this.size = 50.0,  // Default size is 50
     required this.onTap,
     this.onLongPress,  // Nullable long press callback
     this.splashColor = Colors.grey,  // Default splash color
     this.highlightColor = Colors.transparent,  // Default highlight color
-  }) : super(key: key);
+    this.padding,
+  });
 
   @override
   _ClickableCircleState createState() => _ClickableCircleState();
@@ -93,6 +95,7 @@ class _ClickableCircleState extends State<ClickableCircle> with SingleTickerProv
           return Container(
             width: widget.size,
             height: widget.size,
+            padding: widget.padding,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: widget.highlightColor,

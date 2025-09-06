@@ -25,9 +25,7 @@ class ChatTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
-          leading:
-              chatIcon ??
-              DocumentIcon(), // Custom DocumentIcon widget as leading
+          leading: chatIcon ??  DocumentIcon(), // Custom DocumentIcon widget as leading
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

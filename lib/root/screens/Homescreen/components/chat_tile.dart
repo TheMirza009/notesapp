@@ -31,7 +31,7 @@ class ChatTile extends StatelessWidget {
           onTap: onTap, // Executes onTap if provided
           child: Container(
             width: ThemeConstants.screenWidth,
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             child: Row(
               children: [
                 // Leading Icon
@@ -54,8 +54,8 @@ class ChatTile extends StatelessWidget {
                               child: Text(
                                 title,
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w500,
                                   color: ThemeConstants.textLight,
                                   overflow: TextOverflow.ellipsis, // Truncate if necessary
                                 ),
@@ -81,7 +81,7 @@ class ChatTile extends StatelessWidget {
                             softWrap: false, // Prevent wrapping
                             overflow: TextOverflow.ellipsis, // Truncate if necessary
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: ThemeConstants.subtitleLight,
                             ),
                           ),
@@ -94,14 +94,6 @@ class ChatTile extends StatelessWidget {
             ),
           ),
         ),
-        
-        // Divider (conditionally shown based on showDivider)
-        if (showDivider)
-          Divider(
-            color: ThemeConstants.homeDividerLight.withAlpha(255), // Divider color
-            thickness: 1, // Divider thickness
-            indent: ThemeConstants.screenWidth * (1 - 0.9), // Divider aligned to right
-          ),
       ],
     );
   }

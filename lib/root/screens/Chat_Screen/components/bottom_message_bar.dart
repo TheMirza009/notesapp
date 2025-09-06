@@ -5,9 +5,10 @@ class BottomMessageBar extends StatelessWidget {
   final VoidCallback onEmojiTap;
   final VoidCallback onAttachmentTap;
   final VoidCallback onMicTap;
-  final VoidCallback onSend;
+  final Function(String) onSend;
 
   const BottomMessageBar({
+    super.key, 
     required this.screenWidth,
     required this.onEmojiTap,
     required this.onAttachmentTap,
@@ -57,7 +58,7 @@ class BottomMessageBar extends StatelessWidget {
                     icon: Icon(Icons.mic, color: IconLight),
                   )
                   : IconButton(
-                    onPressed: onSend, // Send the text message
+                    onPressed: () => onSend(messageController.text), // Send the text message
                     icon: Icon(Icons.send, color: IconLight),
                   );
             },
