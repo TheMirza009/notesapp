@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 const List<PopupMenuItem<String>> dummyOptions = [
-  PopupMenuItem<String>(value: 'Option 1', child: Text('Option 1')),
-  PopupMenuItem<String>(value: 'Option 2', child: Text('Option 2')),
-  PopupMenuItem<String>(value: 'Option 3', child: Text('Option 3')),
+  PopupMenuItem<String>(value: 'profile', child: Text('Profile')),
+  PopupMenuItem<String>(value: 'settings', child: Text('Settings')),
+  PopupMenuItem<String>(value: 'deleteAll', child: Text('Delete All Chats')),
 ];
 
 class CustomContextMenu extends StatelessWidget {

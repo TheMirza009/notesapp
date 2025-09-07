@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
@@ -12,7 +13,11 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  runApp(const MyApp());
+  
+  runApp(ProviderScope(
+    child: const MyApp(),
+      ),
+    );
 }
 
 class MyApp extends StatefulWidget {

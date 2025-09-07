@@ -6,13 +6,17 @@ class CustomIconButton extends StatelessWidget {
   final Widget icon;
   final double size;
   final Color backgroundColor;
+  final Color? splashColor;
+  final EdgeInsets? padding;
 
   const CustomIconButton({
     super.key,
     required this.onPressed,
     required this.icon,
-    this.size = 55,
-    this.backgroundColor = Colors.transparent,
+    this.size = 40,
+    this.backgroundColor = Colors.transparent, 
+    this.splashColor, 
+    this.padding,
   });
 
   @override
@@ -22,13 +26,16 @@ class CustomIconButton extends StatelessWidget {
       color: backgroundColor, // background circle color
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        splashColor: ThemeConstants.circleIconBorderLight,
+        splashColor: splashColor ?? ThemeConstants.circleIconBorderLight,
         customBorder: const CircleBorder(),
         onTap: onPressed,
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Center(child: icon),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(0),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Center(child: icon),
+          ),
         ),
       ),
     );
