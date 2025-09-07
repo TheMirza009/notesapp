@@ -8,13 +8,14 @@ class ThemeConstants {
   /// Homescreen Colors
   static const hometoolbarLight = Color.fromARGB(255, 210, 217, 222);
   static const hometoolbarLight2 =  Color.fromARGB(255, 190, 207, 208);
+  static const hometoolbarLight3 = Color(0xFFd2d9de);
   static const circleIconBorderLight = Color.fromARGB(255, 135, 150, 160);
   static const circleIconBackgroundLight = Color.fromARGB(255, 164, 182, 191);
   static const circleIconLight = Color.fromARGB(255, 232, 247, 248);
   static const homeSubtitleLight = Color.fromARGB(255, 133, 148, 158);
   static const homeSearchbarLight = Color.fromARGB(255, 206, 218, 219);
   static const homeDividerLight = Color.fromARGB(255, 164, 182, 191);
-
+  static const lightseedColor =  Color.fromARGB(255, 170, 203, 222);
 
 
   /// Chat screen colors
@@ -27,4 +28,15 @@ class ThemeConstants {
   /// Chat Bubble padding
   static const bubblePaddingHorizontal = 16.0; // Define horizontal padding
   static const bubblePaddingVertical = bubblePaddingHorizontal / 2; // Vertical padding is half
+
+
+  // ============ DARK COLORS ================//
+
+  static const Color darkAppbar = Color(0xFF1d2b36);
+  static const Color sinisterSeed = Color(0xFF0c96a4);
+  static const Color textDark = Color(0xFFc4cacd);
+  static const Color textDark2 = Color.fromARGB(255, 234, 248, 255);
+  static const Color darkIconBorder = Color(0xFF293942);
+  static const Color darkIconbackground = Color(0xFF4f616d);
+  static const Color darkIconforeground = Color(0xFF778492);
 }

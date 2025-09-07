@@ -1,19 +1,21 @@
-class TimeFormat {
+import 'package:intl/intl.dart';
 
-  /// Show proper date/time
+class TimeFormat {
+  /// Show proper date/time for chat
   static String formatChatTime(DateTime time) {
-    final DateTime currentTime = DateTime.now();
-    final bool isSameDay = time.day == currentTime.day;
-    final bool isSameYear = time.year == currentTime.year;
-    final lastMessageTime = "${time.hour}:${time.minute}";
-    final lastMessageDate = "${time.day} ${time.month}";
-    final lastMessageDateWithYear = "${time.month} ${time.year}";
+    final DateTime now = DateTime.now();
+    final bool isSameDay = time.year == now.year &&  time.month == now.month &&  time.day == now.day;
+    final bool isSameYear = time.year == now.year;
+    final String timeAMPM = DateFormat.jm().format(time);
+    final String date = DateFormat('d MMM').format(time);
+    final String dateWithYear = DateFormat('MMM yyyy').format(time);
+
     if (isSameDay) {
-      return lastMessageTime;
+      return timeAMPM; // show time with AM/PM e.g., 3:45 PM
     } else if (isSameYear) {
-      return lastMessageDate;
+      return date; // Show day + month name, e.g., "12 Sep"
     } else {
-      return lastMessageDateWithYear;
+      return dateWithYear; // Show month name + year, e.g., "Sep 2024"
     }
   }
 }

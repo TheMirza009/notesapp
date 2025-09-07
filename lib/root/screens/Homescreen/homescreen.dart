@@ -7,6 +7,7 @@ import 'package:iconify_flutter/icons/carbon.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/dummy_data/dummy_chats.dart';
@@ -16,6 +17,7 @@ import 'package:notesapp/root/widgets/clickable_circle.dart';
 import 'package:notesapp/root/widgets/custom_context_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
+import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:svg_flutter/svg.dart';
 
 class Homescreen extends ConsumerWidget {
@@ -28,6 +30,52 @@ class Homescreen extends ConsumerWidget {
     Size screensize = MediaQuery.sizeOf(context);
     final List<Chat> chatlist = ref.watch(chatListProvider);
     final chatNotifier = ref.read(chatListProvider.notifier);
+    bool isLight = Theme.brightnessOf(context) == Brightness.light;
+
+    Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+
+    void handleContextMenuAction(value) {
+      switch (value) {
+        case "profile": print("Profile");
+        case "settings": print("Settings");
+        case "deleteAll":
+          showCupertinoDialog(
+            context: context,
+            builder:
+                (_) => CustomAlertDialog(
+                  title: "Delete all notes",
+                  content: "Are you sure you want to delete all notes?",
+                  iconColor: Colors.redAccent,
+                  option: TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      chatNotifier.clearChats();
+                    },
+                    child: Text(
+                      "Delete",
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                ),
+          );
+      }
+    }
+
+    Widget circularAvatar() => CustomIconButton(
+      size: 40,
+      backgroundColor: Colors.transparent,
+      splashColor: const Color.fromARGB(144, 164, 182, 191),
+      icon: ClipRRect(
+        borderRadius: BorderRadiusGeometry.circular(100),
+        child: Transform.scale(
+          scale: 0.94,
+          child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
+        ),
+      ),
+      onPressed: () {
+        ref.read(themeNotifierProvider.notifier).toggleTheme();
+      },
+    );
 
     return Scaffold(
       floatingActionButton: CustomIconButton(
@@ -46,7 +94,7 @@ class Homescreen extends ConsumerWidget {
       appBar: AppBar(
         // backgroundColor: ThemeConstants.hometoolbarLight,
         elevation: 0,
-        backgroundColor: ThemeConstants.hometoolbarLight2,
+        backgroundColor: headerColor,
         shadowColor: Colors.transparent,
         toolbarHeight: 65,
         title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
@@ -58,13 +106,7 @@ class Homescreen extends ConsumerWidget {
           CustomContextMenu(
             icon: const Icon(Icons.more_vert),
             menuItems: dummyOptions,
-            onSelected: (value) {
-              switch(value) {
-                case "profile" : print("Profile");
-                case "settings" : print("Settings");
-                case "deleteAll" : chatNotifier.clearChats();
-              }
-            },
+            onSelected: (value) => handleContextMenuAction(value)
           ),
         ],
       ),
@@ -72,7 +114,7 @@ class Homescreen extends ConsumerWidget {
         height: screensize.height,
         width: screensize.width,
         padding: EdgeInsets.only(top: 12),
-        decoration: BoxDecoration(gradient: Gradients.lightBackground),
+        decoration: BoxDecoration(gradient: isLight ? Gradients.lightBackground : Gradients.darkBackground),
         child: 
         Column(
           children: [
@@ -80,17 +122,17 @@ class Homescreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 12.0, bottom: 8),
+                  padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 3),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       maxHeight: 40,
                       maxWidth: screensize.width - 60,
                     ),
                     child: SearchBar(
-                      shadowColor: WidgetStatePropertyAll(Colors.transparent),
                       shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
                       padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                      backgroundColor: WidgetStatePropertyAll(ThemeConstants.hometoolbarLight2),
+                      shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                      backgroundColor: WidgetStatePropertyAll(headerColor),
                       leading: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Icon(Icons.search, color: ThemeConstants.iconLight,),
@@ -107,7 +149,7 @@ class Homescreen extends ConsumerWidget {
               child: chatlist.isEmpty
               ? TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 500),
                     builder: (context, value, child) {
                       return Opacity(opacity: value, child: child);
                     },
@@ -144,7 +186,6 @@ class Homescreen extends ConsumerWidget {
                   );
                 },
                 separatorBuilder: (context, index) => Divider(
-                  color: ThemeConstants.homeDividerLight,
                   thickness: 1,
                   indent: ThemeConstants.screenWidth * (1 - 0.93),
                 ),
@@ -166,23 +207,3 @@ Widget buildContextMenuArea({
     builder: (context) => menuItems,
   );
 }
-
-Widget circularAvatar() => CustomIconButton(
-  size: 40,
-  backgroundColor: Colors.transparent,
-  splashColor: const Color.fromARGB(144, 164, 182, 191),
-  icon: ClipRRect(
-    borderRadius: BorderRadiusGeometry.circular(100),
-    child: Transform.scale(
-      scale: 1.2,
-      child: Iconify(
-        Carbon.user_avatar_filled_alt,
-        color: ThemeConstants.iconLight,
-        size: 40,
-      ),
-    ),
-  ),
-  onPressed: () {
-    // Handle tap
-  },
-);

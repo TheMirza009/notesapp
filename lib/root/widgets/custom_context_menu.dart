@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 
 const List<PopupMenuItem<String>> dummyOptions = [
   PopupMenuItem<String>(value: 'profile', child: Text('Profile')),
@@ -13,18 +16,25 @@ class CustomContextMenu extends StatelessWidget {
   final void Function(String)? onSelected;
 
   const CustomContextMenu({
-    Key? key,
+    super.key,
     required this.icon,
     this.menuItems = dummyOptions,
     this.onSelected, /// Does not work without menuItems
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: icon,
-      onSelected: onSelected,
-      itemBuilder: (BuildContext context) => menuItems,
+    const lightBG = Color.fromARGB(255, 228, 239, 240);
+    const darkBG = Color.fromARGB( 255, 34, 52, 65, );
+    return Material(
+      color: Colors.transparent,
+      child: PopupMenuButton<String>(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        color: context.isLight ? lightBG : darkBG, // ThemeConstants.homeSearchbarLight
+        icon: icon,
+        onSelected: onSelected,
+        itemBuilder: (BuildContext context) => menuItems,
+      ),
     );
   }
 }

@@ -5,9 +5,18 @@ class Gradients {
   static const silverSunlight = Color(0xFFEBE7E0);
   static const silverSunlight2 = Color.fromARGB(255, 238, 231, 217);
 
+  static const shadowBlue = Color(0xFF11161a);
+  static const marianaBlue = Color(0xFF2b3c4c);
+
   static const lightBackground = LinearGradient(
     colors: [silverSunlight2, silverGrey],
     begin: Alignment(-2.0, -2.5),
     end: Alignment(1.0, 0.5),
+  );
+
+  static const darkBackground = LinearGradient(
+    colors: [shadowBlue, marianaBlue],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
 }

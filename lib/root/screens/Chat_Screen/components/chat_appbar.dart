@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 
 class ChatAppBar extends StatelessWidget {
   final String title;
@@ -27,16 +28,17 @@ class ChatAppBar extends StatelessWidget {
       title: InkWell(
         onTap: onTitleTap,
         child: Transform.translate(
-          offset: Offset(-15, 0),
+          offset: Offset(-10, 0),
           child: SizedBox(
             width: double.maxFinite,
             child: Row(
               children: [
-                Icon(
-                  Icons.account_circle,
-                  size: 50.0, // Icon size inside the circle
-                ),
-                SizedBox(width: ThemeConstants.screenWidth * 0.015,),
+                DocumentIcon(size: 40),
+                // Icon(
+                //   Icons.account_circle,
+                //   size: 50.0, // Icon size inside the circle
+                // ),
+                SizedBox(width: ThemeConstants.screenWidth * 0.02,),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

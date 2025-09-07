@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
-import 'package:notesapp/root/data/chat_list_provider/chat_list_extension.dart';
+import 'package:notesapp/core/extensions/chat_list_extension.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
 
 void main() async {
@@ -20,14 +20,14 @@ void main() async {
     );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
@@ -44,15 +44,12 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final themeProvider = ref.watch(themeNotifierProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'NotesApp',
-      theme: ThemeData(
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Color.fromARGB(255, 170, 203, 222),
-        ),
-      ),
+      theme: themeProvider,
       home: const Homescreen(),
     );
   }
