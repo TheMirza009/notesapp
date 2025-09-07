@@ -17,6 +17,10 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
   void clearChats() {
     state = [];
   }
+
+  void updateChat(Chat updatedChat) {
+    state = state.map((chat) => chat.id == updatedChat.id ? updatedChat : chat).toList();
+  }
 }
 
 // The provider

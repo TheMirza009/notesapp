@@ -4,6 +4,7 @@ import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 class Chat {
+  final String id;
   final String? title;
   final String preview;
   final DateTime date;
@@ -11,32 +12,36 @@ class Chat {
   final List<Message> messages;
   final List<Media> media;
 
-  const Chat({
+ Chat({
+    String? id,
     this.title = "New Note",
     required this.preview,
     required this.date,
     this.photo,
     this.messages = const [],
     this.media = const [],
-  });
+  }) : id = id ?? DateTime.now().microsecondsSinceEpoch.toString();
 
   Chat copyWith({
-    String? title,
-    String? preview,
-    DateTime? date,
-    dynamic photo,
-    List<Message>? messages,
-    List<Media>? media,
-  }) {
-    return Chat(
-      title: title ?? this.title,
-      preview: preview ?? this.preview,
-      date: date ?? this.date,
-      photo: photo ?? this.photo,
-      messages: messages ?? List.from(this.messages),
-      media: media ?? List.from(this.media),
-    );
-  }
+  String? id,
+  String? title,
+  String? preview,
+  DateTime? date,
+  dynamic photo,
+  List<Message>? messages,
+  List<Media>? media,
+}) {
+  return Chat(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    preview: preview ?? this.preview,
+    date: date ?? this.date,
+    photo: photo ?? this.photo,
+    messages: messages ?? List.from(this.messages),
+    media: media ?? List.from(this.media),
+  );
+}
+
 
   factory Chat.emptyChat() {
     return Chat(

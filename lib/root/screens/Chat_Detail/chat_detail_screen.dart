@@ -15,81 +15,95 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
+  late ChatDetailNotifier notifier;
   late TextEditingController titleController;
   bool isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    titleController = TextEditingController(text: widget.chat.title ?? "New Chat");
+    notifier = ChatDetailNotifier(widget.chat);
+    titleController =
+        TextEditingController(text: widget.chat.title ?? "New Chat");
   }
 
   @override
   void dispose() {
     titleController.dispose();
+    notifier.dispose(); // ✅ clean up
     super.dispose();
   }
 
   void _startEditing() {
     setState(() => isEditing = true);
-    // Open keyboard
-    Future.delayed(Duration.zero, () => titleController.selection = TextSelection.fromPosition(
-        TextPosition(offset: titleController.text.length)
-    ));
+    Future.delayed(Duration.zero, () {
+      titleController.selection = TextSelection.fromPosition(
+        TextPosition(offset: titleController.text.length),
+      );
+    });
   }
 
   void _finishEditing() {
     final newText = titleController.text.trim();
-    ref.read(chatDetailProvider(widget.chat).notifier).updateTitle(newText);
+    notifier.updateTitle(newText, ref);
     setState(() => isEditing = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final chat = ref.watch(chatDetailProvider(widget.chat));
+    final chat = notifier.state;
 
     Size screenSize = MediaQuery.sizeOf(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: isEditing
-            ? TextField(
-                controller: titleController,
-                autofocus: true,
-                decoration: const InputDecoration(border: InputBorder.none),
-                style: const TextStyle(fontSize: 21.5, fontWeight: FontWeight.w300),
-              )
-            : Text(chat.title!),
-        actions: [
-          IconButton(
-            icon: Icon(isEditing ? Icons.check : Icons.edit),
-            onPressed: isEditing ? _finishEditing : _startEditing,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(
-            height: screenSize.height / 3,
-            margin: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Color.fromARGB(67, 164, 182, 191),
-              shape: BoxShape.circle,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: isEditing
+              ? TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  decoration: const InputDecoration(border: InputBorder.none),
+                  style: const TextStyle(fontSize: 21.5, fontWeight: FontWeight.w300),
+                )
+              : Text(chat.title ?? "New Chat"), // ✅ no crash risk
+          actions: [
+            IconButton(
+              icon: Icon(isEditing ? Icons.check : Icons.edit),
+              onPressed: isEditing ? _finishEditing : _startEditing,
             ),
-            child: Center(child: DocumentIcon(size: screenSize.height / 3)),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                height: screenSize.height / 3,
+                margin: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(67, 164, 182, 191),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(child: DocumentIcon(size: screenSize.height / 3)),
+              ),
+              Column(
+                children: [
+                  TabBar(
+                    indicatorSize: TabBarIndicatorSize.label,
+                    tabs: [
+                      Tab(text: "Photos"),
+                      Tab(text: "Documents"),
+                    ],
+                  ),
+                  // TabBarView(children: [
+                  //   Text("No Photos in chat yet"),
+                  //   Text("No Documents in chat yet"),
+                  // ])
+                ],
+              ),
+            ],
           ),
-          const DefaultTabController(
-            length: 2,
-            child: TabBar(
-              indicatorSize: TabBarIndicatorSize.label,
-              tabs: [
-                Tab(text: "Photos"),
-                Tab(text: "Documents"),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
-

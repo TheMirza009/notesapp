@@ -13,7 +13,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   runApp(ProviderScope(
     child: const MyApp(),
       ),
@@ -45,6 +45,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'NotesApp',
       theme: ThemeData(
         textTheme: GoogleFonts.poppinsTextTheme(),

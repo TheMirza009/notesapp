@@ -94,8 +94,8 @@ class ChatTile extends StatelessWidget {
                                 Text(
                                   time,
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                     color: ThemeConstants.subtitleLight,
                                   ),
                                 ),

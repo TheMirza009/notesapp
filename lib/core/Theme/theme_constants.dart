@@ -7,6 +7,7 @@ class ThemeConstants {
 
   /// Homescreen Colors
   static const hometoolbarLight = Color.fromARGB(255, 210, 217, 222);
+  static const hometoolbarLight2 =  Color.fromARGB(255, 190, 207, 208);
   static const circleIconBorderLight = Color.fromARGB(255, 135, 150, 160);
   static const circleIconBackgroundLight = Color.fromARGB(255, 164, 182, 191);
   static const circleIconLight = Color.fromARGB(255, 232, 247, 248);

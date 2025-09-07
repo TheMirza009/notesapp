@@ -4,6 +4,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 
 final List<Chat> dummyChats = [
   Chat(
+    id: "0",
     title: "Work Project",
     preview: "Don't forget the deadline tomorrow!",
     date: DateTime(2025, 4, 9, 14, 30),
@@ -24,9 +25,10 @@ final List<Chat> dummyChats = [
     ],
   ),
   Chat(
+    id: "1",
     title: "Family Group",
     preview: "Dinner at 8 PM tonight?",
-    date: DateTime(2025, 4, 8, 18, 0),
+    date: DateTime(2024, 4, 8, 18, 0),
     photo: null,
     messages: [
       Message(
@@ -44,6 +46,7 @@ final List<Chat> dummyChats = [
     ],
   ),
   Chat(
+    id: "2",
     title: "Travel Plans",
     preview: "We need to finalize the itinerary.",
     date: DateTime(2025, 4, 7, 10, 45),

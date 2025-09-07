@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_extension.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -15,50 +16,36 @@ import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
 
-class ChatScreen extends ConsumerStatefulWidget {
-  final Chat? chat;
-  const ChatScreen({super.key, this.chat});
+class ChatScreen extends ConsumerWidget {
+  final String chatId; // only keep ID, not Chat
+  const ChatScreen({super.key, required this.chatId});
 
   @override
-  ConsumerState<ChatScreen> createState() => _ChatScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+    // Declarations 
+    final List<Chat> chatList = ref.watch(chatListProvider);
+    final Chat currentChat = chatList.getChatByID(chatId);
+    final bool isChatEmpty = currentChat.messages.length == 1;
+    final ChatListNotifier chatNotifier = ref.read(chatListProvider.notifier);
 
-  List<Message> dummyMessages = [
-    Message(
-      text: "How does Grid Computing work? Explain its Working with an appropriate Diagram.",
-      time: DateTime.now(),
-      isSender: false,
-      type: Mediatype.text,
-    ),
-    Message(
-      text: "See this diagram.",
-      time: DateTime.now(),
-      isSender: true,
-      type: Mediatype.text,
-    ),
-  ];
+    // Functions
+    void sendMessage(String text) {
+      final Message newMessage = Message(text: text, time: DateTime.now());
+      final updatedChat = currentChat.copyWith(
+        messages: [...currentChat.messages, newMessage],
+        preview: newMessage.text,
+        date: newMessage.time,
+      );
+      chatNotifier.updateChat(updatedChat); // update globally ✅
+    }
 
-  void _sendMessage(String text) {
-    setState(() {
-      // dummyMessages.add(Message(text: text, time: DateTime.now()));
-      widget.chat!.messages.add(Message(text: text, time: DateTime.now()));
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final Chat currentChat = widget.chat ?? Chat.emptyChat();
-    bool isChatEmpty = currentChat.messages.length == 1;
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
-        final chatNotifier = ref.read(chatListProvider.notifier);
         if (isChatEmpty) {
           chatNotifier.removeChat(currentChat);
         }
       },
-
       child: Scaffold(
         body: Container(
           height: ThemeConstants.screenHeight,
@@ -110,7 +97,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 onMicTap: () {
                   print("Microphone tapped"); // Placeholder
                 },
-                onSend: (text) => _sendMessage(text),
+                onSend: (text) => sendMessage(text),
               ),
             ],
           ),
