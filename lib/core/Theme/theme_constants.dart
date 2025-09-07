@@ -39,4 +39,6 @@ class ThemeConstants {
   static const Color darkIconBorder = Color(0xFF293942);
   static const Color darkIconbackground = Color(0xFF4f616d);
   static const Color darkIconforeground = Color(0xFF778492);
+  static const Color messageBarDark = Color(0xFF1d2b36);
+  static const Color senderBlueDark = Color(0xFF003755);
 }

@@ -18,7 +18,7 @@ class CustomAlertDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var seedColor = (context.isLight ? const Color.fromARGB(255, 48, 160, 205) : ThemeConstants.sinisterSeed);
-    var backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    var backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkAlertBackground;
     return Dialog(
       child: Container(
         width: MediaQuery.of(context).size.width >= 600 ? 300 : null,

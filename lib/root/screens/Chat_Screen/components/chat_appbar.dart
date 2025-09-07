@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 
 class ChatAppBar extends StatelessWidget {
@@ -16,9 +17,10 @@ class ChatAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: ThemeConstants.toolbarLight,
+      backgroundColor: context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.darkAppbar,
       elevation: 1.0,
       titleSpacing: 0,
+      toolbarHeight: 65,
       leading: IconButton(
         onPressed: () {
           Navigator.pop(context); // Placeholder
@@ -47,7 +49,7 @@ class ChatAppBar extends StatelessWidget {
                       style: TextStyle(
                         fontSize: ThemeConstants.screenWidth * 0.045,
                         fontWeight: FontWeight.w600,
-                        color: ThemeConstants.textLight,
+                        color: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2,
                       ),
                     ),
                     Text(

@@ -19,4 +19,10 @@ class Gradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  static const darkAlertBackground = LinearGradient(
+    colors: [Color.fromARGB(255, 28, 39, 50), Color.fromARGB(255, 22, 33, 41), Color.fromARGB(255, 30, 46, 61)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomRight,
+  );
 }

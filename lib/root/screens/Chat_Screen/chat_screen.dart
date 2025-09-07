@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/chat_list_extension.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -28,6 +29,7 @@ class ChatScreen extends ConsumerWidget {
     final Chat currentChat = chatList.getChatByID(chatId);
     final bool isChatEmpty = currentChat.messages.length == 1;
     final ChatListNotifier chatNotifier = ref.read(chatListProvider.notifier);
+    LinearGradient backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkBackground;
 
     // Functions
     void sendMessage(String text) {
@@ -50,7 +52,7 @@ class ChatScreen extends ConsumerWidget {
         body: Container(
           height: ThemeConstants.screenHeight,
           width: ThemeConstants.screenWidth,
-          decoration: BoxDecoration(gradient: Gradients.lightBackground),
+          decoration: BoxDecoration(gradient: backgroundGradient),
           child: Column(
             children: [
               ChatAppBar(

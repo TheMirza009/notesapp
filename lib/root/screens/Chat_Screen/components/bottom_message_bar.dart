@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 
 class BottomMessageBar extends StatelessWidget {
   final double screenWidth;
@@ -27,8 +29,8 @@ class BottomMessageBar extends StatelessWidget {
         horizontal: screenWidth * 0.04,
       ),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+        color: context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.messageBarDark,  // Colors.grey[100],
+        border: Border(top: BorderSide(color: context.isLight ? Colors.grey[300]! : ThemeConstants.darkAppbar) ),
       ),
       child: Row(
         children: [

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
@@ -25,7 +26,7 @@ class MessageBubble extends StatelessWidget {
           vertical: screenWidth * 0.02,
         ),
         decoration: BoxDecoration(
-          color: isSender ? ThemeConstants.senderBlue : Colors.white, // Color
+          color: isSender ? ( context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark) : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder), // Color
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(

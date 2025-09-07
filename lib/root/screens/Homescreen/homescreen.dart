@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:contextmenu/contextmenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +33,7 @@ class Homescreen extends ConsumerWidget {
     final List<Chat> chatlist = ref.watch(chatListProvider);
     final chatNotifier = ref.read(chatListProvider.notifier);
     bool isLight = Theme.brightnessOf(context) == Brightness.light;
-
+    LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
     Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
 
     void handleContextMenuAction(value) {
@@ -114,36 +116,41 @@ class Homescreen extends ConsumerWidget {
         height: screensize.height,
         width: screensize.width,
         padding: EdgeInsets.only(top: 12),
-        decoration: BoxDecoration(gradient: isLight ? Gradients.lightBackground : Gradients.darkBackground),
+        decoration: BoxDecoration(gradient: backgroundGradient),
         child: 
         Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 3),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: 40,
-                      maxWidth: screensize.width - 60,
-                    ),
-                    child: SearchBar(
-                      shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
-                      padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                      shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                      backgroundColor: WidgetStatePropertyAll(headerColor),
-                      leading: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+            Padding(
+              padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
+              child: Row(
+                spacing: Platform.isWindows ? 5 : 0,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: 40,
                       ),
-                      hintText: "Search in notes...",
-                      hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                      child: SearchBar(
+                        autoFocus: false,
+                        shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+                        padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                        shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                        backgroundColor: WidgetStatePropertyAll(headerColor),
+                        leading: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                        ),
+                        hintText: "Search in notes...",
+                        hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                      ),
                     ),
                   ),
-                ),
-                IconButton(onPressed: () {}, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,))
-              ],
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: IconButton(onPressed: () {}, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
+                ],
+              ),
             ),
             Expanded(
               child: chatlist.isEmpty
