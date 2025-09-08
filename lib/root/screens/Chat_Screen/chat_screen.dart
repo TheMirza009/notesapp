@@ -42,6 +42,20 @@ class ChatScreen extends ConsumerWidget {
       chatNotifier.updateChat(updatedChat); // update globally ✅
     }
 
+    void toggleSender(Message message) {
+  final Message? msgToUpdate = currentChat.messages.getMessageByTime(message.time);
+  if (msgToUpdate != null) {
+    final updatedMessages = currentChat.messages.map((message) {
+      if (message.time == msgToUpdate.time) {
+        return message.copyWith(isSender: !message.isSender);
+      }
+      return message;
+    }).toList();
+    final updatedChat = currentChat.copyWith(messages: updatedMessages);
+    chatNotifier.updateChat(updatedChat);
+  }
+}
+
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
         if (isChatEmpty) {
@@ -74,7 +88,7 @@ class ChatScreen extends ConsumerWidget {
                           ? currentChat.messages.map((message) {
                             return MessageBubble(
                               message: message,
-                              onTap: () => print("OK"),
+                              onTap: () => toggleSender(message),
                               );
                           }).toList()
                           : 

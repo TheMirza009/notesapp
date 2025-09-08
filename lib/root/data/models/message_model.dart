@@ -25,4 +25,20 @@ class Message {
     }
     return _content; // Return the content for non-text messages
   }
+
+  Message copyWith({
+    String? text,
+    DateTime? time,
+    Mediatype? type,
+    bool? isSender,
+    Media? content,
+  }) {
+    return Message(
+      text: text ?? this.text,
+      time: time ?? this.time,
+      type: type ?? this.type,
+      isSender: isSender ?? this.isSender,
+      content: content ?? (type == Mediatype.text ? null : _content),
+    );
+  }
 }

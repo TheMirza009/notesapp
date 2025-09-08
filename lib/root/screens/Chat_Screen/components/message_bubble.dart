@@ -22,56 +22,61 @@ class MessageBubble extends StatelessWidget {
     // Determine whether the message is a sender
     bool isSender = message.isSender;
     final double screenWidth = MediaQuery.sizeOf(context).width;
+    Color messgaeBubbleColor = isSender
+          ? (context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark)
+          : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder);
 
     return Align(
       alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: screenWidth * 0.015),
+        child: Material(
+          color: Colors.transparent,
+          elevation: 0,
           child: Container(
-            constraints: BoxConstraints(maxWidth: screenWidth * 0.90),
-            margin: EdgeInsets.symmetric(vertical: screenWidth * 0.015),
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.03,
-              vertical: screenWidth * 0.02,
-            ),
             decoration: BoxDecoration(
-              color: isSender ? ( context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark) : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder), // Color
-              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25), // Shadow color
-                  spreadRadius: 0, // No spread
-                  blurRadius: 1.5, // Minimal blur
-                  offset: Offset(0, 2.5), // Slight offset for the shadow
+                  color: Colors.black.withOpacity(0.25),
+                  spreadRadius: 0,
+                  blurRadius: 1.5,
+                  offset: Offset(0, 2.5),
                 ),
               ],
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: IntrinsicWidth(
-              // This makes the container width flexible
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Text wrapped in a Row with Flexible
-                  // Render only if the message type is text
-                  buildMediaContent(),
-          
-                  SizedBox(
-                    height: screenWidth * 0.01,
-                  ), // Space between text and time
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Text(
-                      "${message.time.hour.toString()}:${message.time.minute.toString()}", // Get time from message
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: ThemeConstants.subtitleLight,
-                      ),
+            child: Material(
+              color: messgaeBubbleColor,
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                onTap: onTap,
+                onLongPress: onLongPress,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.03,
+                    vertical: screenWidth * 0.02,
+                  ),
+                  child: IntrinsicWidth(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        buildMediaContent(),
+                        SizedBox(height: screenWidth * 0.01),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            "${message.time.hour}:${message.time.minute.toString().padLeft(2, '0')}",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: ThemeConstants.subtitleLight,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
