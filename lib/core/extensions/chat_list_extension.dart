@@ -10,4 +10,8 @@ extension MessageListX on List<Message> {
   Message? getMessageByTime(DateTime time) {
     return firstWhere((message) => message.time == time);
   }
+
+  Message? getMessageByText(String text) {
+    return firstWhere((message) => message.text == text);
+  }
 }

@@ -27,15 +27,19 @@ class ChatScreen extends ConsumerWidget {
     // Declarations 
     final List<Chat> chatList = ref.watch(chatListProvider);
     final Chat currentChat = chatList.getChatByID(chatId);
-    final bool isChatEmpty = currentChat.messages.length == 1;
+    final bool isChatEmpty = currentChat.messages.isEmpty;
     final ChatListNotifier chatNotifier = ref.read(chatListProvider.notifier);
     LinearGradient backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
     // Functions
     void sendMessage(String text) {
       final Message newMessage = Message(text: text, time: DateTime.now());
+      final initMessage = currentChat.messages.getMessageByText(
+        "This is a new chat. Start typing to create your first note.",
+      );
+      final updatedMessages = currentChat.messages.where((message) => message != initMessage) .toList();
       final updatedChat = currentChat.copyWith(
-        messages: [...currentChat.messages, newMessage],
+        messages: [...updatedMessages, newMessage],
         preview: newMessage.text,
         date: newMessage.time,
       );
@@ -43,18 +47,20 @@ class ChatScreen extends ConsumerWidget {
     }
 
     void toggleSender(Message message) {
-  final Message? msgToUpdate = currentChat.messages.getMessageByTime(message.time);
-  if (msgToUpdate != null) {
-    final updatedMessages = currentChat.messages.map((message) {
-      if (message.time == msgToUpdate.time) {
-        return message.copyWith(isSender: !message.isSender);
+      final Message? msgToUpdate = currentChat.messages.getMessageByTime(
+        message.time,
+      );
+      if (msgToUpdate != null) {
+        final updatedMessages = currentChat.messages.map((message) {
+              if (message.time == msgToUpdate.time) {
+                return message.copyWith(isSender: !message.isSender);
+              }
+              return message;
+            }).toList();
+        final updatedChat = currentChat.copyWith(messages: updatedMessages);
+        chatNotifier.updateChat(updatedChat);
       }
-      return message;
-    }).toList();
-    final updatedChat = currentChat.copyWith(messages: updatedMessages);
-    chatNotifier.updateChat(updatedChat);
-  }
-}
+    }
 
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
