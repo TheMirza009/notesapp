@@ -29,7 +29,7 @@ class ChatScreen extends ConsumerWidget {
     final Chat currentChat = chatList.getChatByID(chatId);
     final bool isChatEmpty = currentChat.messages.length == 1;
     final ChatListNotifier chatNotifier = ref.read(chatListProvider.notifier);
-    LinearGradient backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    LinearGradient backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
     // Functions
     void sendMessage(String text) {
@@ -71,9 +71,12 @@ class ChatScreen extends ConsumerWidget {
                   ),
                   children:
                       currentChat.messages.isNotEmpty
-                          ? currentChat.messages
-                              .map((message) => MessageBubble(message: message))
-                              .toList()
+                          ? currentChat.messages.map((message) {
+                            return MessageBubble(
+                              message: message,
+                              onTap: () => print("OK"),
+                              );
+                          }).toList()
                           : 
                           [
                             Center(

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/theme_provider.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
@@ -53,6 +55,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isLight = context.isLight;
     final chat = notifier.state;
 
     Size screenSize = MediaQuery.sizeOf(context);
@@ -60,6 +63,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   length: 2,
   child: Scaffold(
     appBar: AppBar(
+      elevation: 0,
+      forceMaterialTransparency: true,
       title: isEditing
           ? TextField(
               controller: titleController,
@@ -69,6 +74,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             )
           : Text(chat.title ?? "New Chat"),
       actions: [
+        IconButton(
+          icon: Icon(isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
+          onPressed: () => ref.read(themeNotifierProvider.notifier).toggleTheme(),
+        ),
         IconButton(
           icon: Icon(isEditing ? Icons.check : Icons.edit),
           onPressed: isEditing ? _finishEditing : _startEditing,
@@ -97,9 +106,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         SliverPersistentHeader(
           pinned: true,
           delegate: _TabBarDelegate(
-            const TabBar(
+             TabBar(
               indicatorSize: TabBarIndicatorSize.label,
-              dividerColor: ThemeConstants.homeSearchbarLight,
+              dividerColor: context.isLight ? ThemeConstants.homeSearchbarLight : ThemeConstants.darkAppbar,
               dividerHeight: 1,
               tabs: [
                 Tab(text: "Photos"),
@@ -115,9 +124,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               Row(
-                spacing: 5,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 10,
                 children: [
-                  SvgPicture.string(IconPaths.catSitting),
+                  SvgPicture.string(IconPaths.catSitting, color: ThemeConstants.iconLight, height: 20,),
                   Text("No Photos in chat yet"),
                 ],
               ),
@@ -128,9 +139,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               Row(
-                spacing: 5,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 10,
                 children: [
-                  SvgPicture.string(IconPaths.catSitting),
+                  SvgPicture.string(IconPaths.catSitting, color: ThemeConstants.iconLight, height: 20,),
                   Text("No Documents in chat yet"),
                 ],
               ),

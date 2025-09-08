@@ -7,8 +7,15 @@ import 'package:notesapp/root/data/models/message_model.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message; // Accepting Message object
+  final void Function()? onTap;
+  final void Function()? onLongPress;
 
-  const MessageBubble({required this.message});
+  const MessageBubble({
+    super.key,
+    required this.message,
+    this.onTap,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,48 +25,55 @@ class MessageBubble extends StatelessWidget {
 
     return Align(
       alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: screenWidth * 0.90),
-        margin: EdgeInsets.symmetric(vertical: screenWidth * 0.015),
-        padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.03,
-          vertical: screenWidth * 0.02,
-        ),
-        decoration: BoxDecoration(
-          color: isSender ? ( context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark) : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder), // Color
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25), // Shadow color
-              spreadRadius: 0, // No spread
-              blurRadius: 1.5, // Minimal blur
-              offset: Offset(0, 2.5), // Slight offset for the shadow
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Container(
+            constraints: BoxConstraints(maxWidth: screenWidth * 0.90),
+            margin: EdgeInsets.symmetric(vertical: screenWidth * 0.015),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.03,
+              vertical: screenWidth * 0.02,
             ),
-          ],
-        ),
-        child: IntrinsicWidth(
-          // This makes the container width flexible
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Text wrapped in a Row with Flexible
-              // Render only if the message type is text
-              buildMediaContent(),
-
-              SizedBox(
-                height: screenWidth * 0.01,
-              ), // Space between text and time
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Text(
-                  "${message.time.hour.toString()}:${message.time.minute.toString()}", // Get time from message
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: ThemeConstants.subtitleLight,
-                  ),
+            decoration: BoxDecoration(
+              color: isSender ? ( context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark) : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder), // Color
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25), // Shadow color
+                  spreadRadius: 0, // No spread
+                  blurRadius: 1.5, // Minimal blur
+                  offset: Offset(0, 2.5), // Slight offset for the shadow
                 ),
+              ],
+            ),
+            child: IntrinsicWidth(
+              // This makes the container width flexible
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Text wrapped in a Row with Flexible
+                  // Render only if the message type is text
+                  buildMediaContent(),
+          
+                  SizedBox(
+                    height: screenWidth * 0.01,
+                  ), // Space between text and time
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                      "${message.time.hour.toString()}:${message.time.minute.toString()}", // Get time from message
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: ThemeConstants.subtitleLight,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -143,4 +157,56 @@ class MessageBubble extends StatelessWidget {
       ],
     );
   }
+}
+
+class ChatBubbleClipper extends CustomClipper<Path> {
+  final bool isSender;
+  ChatBubbleClipper({required this.isSender});
+
+  @override
+  Path getClip(Size size) {
+    const radius = 12.0;
+    final path = Path();
+
+    if (isSender) {
+      // bubble with tail on right
+      path.moveTo(0, radius);
+      path.quadraticBezierTo(0, 0, radius, 0);
+      path.lineTo(size.width - radius, 0);
+      path.quadraticBezierTo(size.width, 0, size.width, radius);
+      path.lineTo(size.width, size.height - radius);
+      path.quadraticBezierTo(size.width, size.height, size.width - radius, size.height);
+      path.lineTo(radius + 10, size.height);
+      path.quadraticBezierTo(radius, size.height, radius, size.height - 10);
+      path.lineTo(radius, radius);
+      path.close();
+
+      // Tail
+      path.moveTo(size.width - 10, size.height - 20);
+      path.lineTo(size.width, size.height - 10);
+      path.lineTo(size.width - 10, size.height - 5);
+      path.close();
+    } else {
+      // bubble with tail on left
+      path.moveTo(10, size.height - 20);
+      path.lineTo(0, size.height - 10);
+      path.lineTo(10, size.height - 5);
+      path.close();
+
+      path.moveTo(0, radius);
+      path.quadraticBezierTo(0, 0, radius, 0);
+      path.lineTo(size.width - radius, 0);
+      path.quadraticBezierTo(size.width, 0, size.width, radius);
+      path.lineTo(size.width, size.height - radius);
+      path.quadraticBezierTo(size.width, size.height, size.width - radius, size.height);
+      path.lineTo(radius, size.height);
+      path.quadraticBezierTo(0, size.height, 0, size.height - radius);
+      path.close();
+    }
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

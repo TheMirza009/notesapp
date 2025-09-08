@@ -17,7 +17,7 @@ class ChatAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.darkAppbar,
+      backgroundColor: context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark,
       elevation: 1.0,
       titleSpacing: 0,
       toolbarHeight: 65,
@@ -48,7 +48,7 @@ class ChatAppBar extends StatelessWidget {
                       title,
                       style: TextStyle(
                         fontSize: ThemeConstants.screenWidth * 0.045,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2,
                       ),
                     ),

@@ -5,7 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/arcticons.dart';
 import 'package:iconify_flutter/icons/carbon.dart';
+import 'package:iconify_flutter/icons/fa.dart';
+import 'package:iconify_flutter/icons/icon_park_twotone.dart';
+import 'package:iconify_flutter/icons/ion.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:iconify_flutter/icons/ph.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -22,6 +28,7 @@ import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:svg_flutter/svg.dart';
 
+
 class Homescreen extends ConsumerWidget {
   const Homescreen({super.key});
 
@@ -35,6 +42,7 @@ class Homescreen extends ConsumerWidget {
     bool isLight = Theme.brightnessOf(context) == Brightness.light;
     LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
     Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    String addNotePath = isLight ? IconPaths.addNoteLight : IconPaths.addNoteDark;
 
     void handleContextMenuAction(value) {
       switch (value) {
@@ -48,6 +56,8 @@ class Homescreen extends ConsumerWidget {
                   title: "Delete all notes",
                   content: "Are you sure you want to delete all notes?",
                   iconColor: Colors.redAccent,
+                  iconData: (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
+                  iconSize: 25,
                   option: TextButton(
                     onPressed: () {
                       Navigator.pop(context);
@@ -91,7 +101,7 @@ class Homescreen extends ConsumerWidget {
             CupertinoPageRoute(builder: (_) => ChatScreen(chatId: newChat.id)),
           );
         },
-        icon:  Image.asset(IconPaths.addNoteLight, scale: 10,),
+        icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
       ),
       appBar: AppBar(
         // backgroundColor: ThemeConstants.hometoolbarLight,
@@ -195,6 +205,7 @@ class Homescreen extends ConsumerWidget {
                 separatorBuilder: (context, index) => Divider(
                   thickness: 1,
                   indent: ThemeConstants.screenWidth * (1 - 0.93),
+                  color: isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder,
                 ),
               ),
             ),
@@ -211,6 +222,8 @@ Widget buildContextMenuArea({
 }) {
   return ContextMenuArea(
     child: Padding(padding: const EdgeInsets.all(8.0), child: child),
-    builder: (context) => menuItems,
+    builder: (context) {
+      return menuItems;
+      },
   );
 }

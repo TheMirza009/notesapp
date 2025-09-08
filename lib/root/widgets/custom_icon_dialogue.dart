@@ -11,9 +11,20 @@ class CustomAlertDialog extends StatelessWidget {
   final String? content;
   final String? iconData;
   final Color? iconColor;
+  final double? iconSize;
   final Widget? option;
   final void Function()? onOkPressed;
-  const CustomAlertDialog({super.key, this.title, this.content, this.iconData, this.iconColor, this.onOkPressed, this.option});
+
+  const CustomAlertDialog({
+    super.key,
+    this.title,
+    this.content,
+    this.iconData,
+    this.iconColor,
+    this.iconSize,
+    this.onOkPressed,
+    this.option,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +50,7 @@ class CustomAlertDialog extends StatelessWidget {
               ),
               child: Iconify(
                 iconData ?? (EmojioneMonotone.exclamation_mark),
-                size: 15,
+                size: iconSize,
                 color: iconColor ?? seedColor,
               ),
             ),

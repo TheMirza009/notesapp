@@ -15,6 +15,7 @@ class IconPaths {
 
   // PNGs
   static const String addNoteLight = "$iconRoot/add_note_light.png";
+  static const String addNoteDark = "$iconRoot/add_note_dark.png";
   static const String avatarLight = "$iconRoot/avatar_light.png";
   static const String avatarDark = "$iconRoot/avatar_dark.png";
 
