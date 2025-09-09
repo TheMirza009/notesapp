@@ -4,17 +4,20 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/widgets/custom_context_menu_2.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message; // Accepting Message object
   final void Function()? onTap;
   final void Function()? onLongPress;
+  final void Function()? onDeleteMessage;
 
   const MessageBubble({
     super.key,
     required this.message,
     this.onTap,
     this.onLongPress,
+    this.onDeleteMessage,
   });
 
   @override
@@ -26,10 +29,11 @@ class MessageBubble extends StatelessWidget {
           ? (context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark)
           : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder);
 
+    var verticalPadding = screenWidth * 0.015;
     return Align(
       alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: screenWidth * 0.015),
+        padding: EdgeInsets.only(top: verticalPadding, bottom: verticalPadding, left: isSender ? 40 : 0, right: !isSender ? 40 : 0 ),
         child: Material(
           color: Colors.transparent,
           elevation: 0,
@@ -48,32 +52,42 @@ class MessageBubble extends StatelessWidget {
             child: Material(
               color: messgaeBubbleColor,
               borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                onTap: onTap,
-                onLongPress: onLongPress,
-                borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.03,
-                    vertical: screenWidth * 0.02,
-                  ),
-                  child: IntrinsicWidth(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        buildMediaContent(),
-                        SizedBox(height: screenWidth * 0.01),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Text(
-                            "${message.time.hour}:${message.time.minute.toString().padLeft(2, '0')}",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: ThemeConstants.subtitleLight,
+              child: GestureDetector(
+                onLongPressStart: (details) {
+                  CustomContextMenu2(
+                    position: details.globalPosition,
+                    items: [
+                      MenuItem.text("Delete", onDeleteMessage!),
+                    ],
+                  ).show(context);
+                },
+                child: InkWell(
+                  onTap: onTap,
+                  onLongPress: onLongPress,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.03,
+                      vertical: screenWidth * 0.02,
+                    ),
+                    child: IntrinsicWidth(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          buildMediaContent(),
+                          SizedBox(height: screenWidth * 0.01),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Text(
+                              "${message.time.hour}:${message.time.minute.toString().padLeft(2, '0')}",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: ThemeConstants.subtitleLight,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -164,54 +178,121 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-class ChatBubbleClipper extends CustomClipper<Path> {
-  final bool isSender;
-  ChatBubbleClipper({required this.isSender});
+class _SpecialChatBubbleOne extends CustomPainter {
+  final Color color;
+  final Alignment alignment;
+  final bool tail;
+
+  _SpecialChatBubbleOne({
+    required this.color,
+    required this.alignment,
+    required this.tail,
+  });
+
+  double _radius = 10.0;
+  double _x = 10.0;
 
   @override
-  Path getClip(Size size) {
-    const radius = 12.0;
-    final path = Path();
-
-    if (isSender) {
-      // bubble with tail on right
-      path.moveTo(0, radius);
-      path.quadraticBezierTo(0, 0, radius, 0);
-      path.lineTo(size.width - radius, 0);
-      path.quadraticBezierTo(size.width, 0, size.width, radius);
-      path.lineTo(size.width, size.height - radius);
-      path.quadraticBezierTo(size.width, size.height, size.width - radius, size.height);
-      path.lineTo(radius + 10, size.height);
-      path.quadraticBezierTo(radius, size.height, radius, size.height - 10);
-      path.lineTo(radius, radius);
-      path.close();
-
-      // Tail
-      path.moveTo(size.width - 10, size.height - 20);
-      path.lineTo(size.width, size.height - 10);
-      path.lineTo(size.width - 10, size.height - 5);
-      path.close();
+  void paint(Canvas canvas, Size size) {
+    if (alignment == Alignment.topRight) {
+      if (tail) {
+        canvas.drawRRect(
+            RRect.fromLTRBAndCorners(
+              0,
+              0,
+              size.width - _x,
+              size.height,
+              bottomLeft: Radius.circular(_radius),
+              bottomRight: Radius.circular(_radius),
+              topLeft: Radius.circular(_radius),
+            ),
+            Paint()
+              ..color = this.color
+              ..style = PaintingStyle.fill);
+        var path = new Path();
+        path.moveTo(size.width - _x, 0);
+        path.lineTo(size.width - _x, 10);
+        path.lineTo(size.width, 0);
+        canvas.clipPath(path);
+        canvas.drawRRect(
+            RRect.fromLTRBAndCorners(
+              size.width - _x,
+              0.0,
+              size.width,
+              size.height,
+              topRight: Radius.circular(3),
+            ),
+            Paint()
+              ..color = this.color
+              ..style = PaintingStyle.fill);
+      } else {
+        canvas.drawRRect(
+            RRect.fromLTRBAndCorners(
+              0,
+              0,
+              size.width - _x,
+              size.height,
+              bottomLeft: Radius.circular(_radius),
+              bottomRight: Radius.circular(_radius),
+              topLeft: Radius.circular(_radius),
+              topRight: Radius.circular(_radius),
+            ),
+            Paint()
+              ..color = this.color
+              ..style = PaintingStyle.fill);
+      }
     } else {
-      // bubble with tail on left
-      path.moveTo(10, size.height - 20);
-      path.lineTo(0, size.height - 10);
-      path.lineTo(10, size.height - 5);
-      path.close();
-
-      path.moveTo(0, radius);
-      path.quadraticBezierTo(0, 0, radius, 0);
-      path.lineTo(size.width - radius, 0);
-      path.quadraticBezierTo(size.width, 0, size.width, radius);
-      path.lineTo(size.width, size.height - radius);
-      path.quadraticBezierTo(size.width, size.height, size.width - radius, size.height);
-      path.lineTo(radius, size.height);
-      path.quadraticBezierTo(0, size.height, 0, size.height - radius);
-      path.close();
+      if (tail) {
+        canvas.drawRRect(
+            RRect.fromLTRBAndCorners(
+              _x,
+              0,
+              size.width,
+              size.height,
+              bottomRight: Radius.circular(_radius),
+              topRight: Radius.circular(_radius),
+              bottomLeft: Radius.circular(_radius),
+            ),
+            Paint()
+              ..color = this.color
+              ..style = PaintingStyle.fill);
+        var path = new Path();
+        path.moveTo(_x, 0);
+        path.lineTo(_x, 10);
+        path.lineTo(0, 0);
+        canvas.clipPath(path);
+        canvas.drawRRect(
+            RRect.fromLTRBAndCorners(
+              0,
+              0.0,
+              _x,
+              size.height,
+              topLeft: Radius.circular(3),
+            ),
+            Paint()
+              ..color = this.color
+              ..style = PaintingStyle.fill);
+      } else {
+        canvas.drawRRect(
+            RRect.fromLTRBAndCorners(
+              _x,
+              0,
+              size.width,
+              size.height,
+              bottomRight: Radius.circular(_radius),
+              topRight: Radius.circular(_radius),
+              bottomLeft: Radius.circular(_radius),
+              topLeft: Radius.circular(_radius),
+            ),
+            Paint()
+              ..color = this.color
+              ..style = PaintingStyle.fill);
+      }
     }
-
-    return path;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
 }

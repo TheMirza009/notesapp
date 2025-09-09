@@ -105,7 +105,8 @@ class ChatTile extends StatelessWidget {
                             SizedBox(
                               width: ThemeConstants.screenWidth * 0.6, // Adjust width for subtitle
                               child: Text(
-                                subtitle,
+                                subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
+                                maxLines: 1,
                                 softWrap: false, // Prevent wrapping
                                 overflow: TextOverflow.ellipsis, // Truncate if necessary
                                 style: TextStyle(

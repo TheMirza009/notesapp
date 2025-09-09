@@ -4,24 +4,15 @@ import 'package:contextmenu/contextmenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/arcticons.dart';
-import 'package:iconify_flutter/icons/carbon.dart';
-import 'package:iconify_flutter/icons/fa.dart';
-import 'package:iconify_flutter/icons/icon_park_twotone.dart';
-import 'package:iconify_flutter/icons/ion.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
-import 'package:iconify_flutter/icons/ph.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
-import 'package:notesapp/root/data/dummy_data/dummy_chats.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
-import 'package:notesapp/root/widgets/clickable_circle.dart';
 import 'package:notesapp/root/widgets/custom_context_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
@@ -165,19 +156,25 @@ class Homescreen extends ConsumerWidget {
             Expanded(
               child: chatlist.isEmpty
               ? TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 500),
-                    builder: (context, value, child) {
-                      return Opacity(opacity: value, child: child);
-                    },
-                    child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: SvgPicture.asset(IconPaths.nothing, color: Colors.blueGrey,),
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 500),
+                  builder: (context, value, child) {
+                    return Opacity(opacity: value, child: child);
+                  },
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.all(30.0),
+                      child: SvgPicture.asset(
+                        IconPaths.nothing,
+                        colorFilter: ColorFilter.mode(
+                          Colors.blueGrey,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              )
+                )
               : ListView.separated(
                 itemCount: chatlist.length,
                 itemBuilder: (context, index) {
@@ -216,14 +213,14 @@ class Homescreen extends ConsumerWidget {
   }
 }
 
-Widget buildContextMenuArea({
-  required Widget child,
-  required List<Widget> menuItems,
-}) {
-  return ContextMenuArea(
-    child: Padding(padding: const EdgeInsets.all(8.0), child: child),
-    builder: (context) {
-      return menuItems;
-      },
-  );
-}
+// Widget buildContextMenuArea({
+//   required Widget child,
+//   required List<Widget> menuItems,
+// }) {
+//   return ContextMenuArea(
+//     child: Padding(padding: const EdgeInsets.all(8.0), child: child),
+//     builder: (context) {
+//       return menuItems;
+//       },
+//   );
+// }

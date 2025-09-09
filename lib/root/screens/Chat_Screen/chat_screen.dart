@@ -1,12 +1,16 @@
 import 'dart:io';
 
+import 'package:chat_bubbles/chat_bubbles.dart';
+import 'package:contextmenu/contextmenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
+import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/chat_list_extension.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -16,6 +20,8 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
+import 'package:notesapp/root/widgets/custom_context_menu.dart';
+import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
   final String chatId; // only keep ID, not Chat
@@ -27,63 +33,46 @@ class ChatScreen extends ConsumerWidget {
     // Declarations 
     final List<Chat> chatList = ref.watch(chatListProvider);
     final Chat currentChat = chatList.getChatByID(chatId);
-    final bool isChatEmpty = currentChat.messages.length == 0;
-    final ChatListNotifier chatNotifier = ref.read(chatListProvider.notifier);
+    final bool isChatEmpty = currentChat.messages.isEmpty;
+    final ChatListNotifier chatListNotifier = ref.read(chatListProvider.notifier);
     LinearGradient backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
     // Functions
     void sendMessage(String text) {
-      final Message newMessage = Message(text: text, time: DateTime.now());
-      final updatedChat = currentChat.copyWith(
-        messages: [...currentChat.messages, newMessage],
-        preview: newMessage.text,
-        date: newMessage.time,
-      );
-      chatNotifier.updateChat(updatedChat); // update globally ✅
-    }
+      const initText = "This is a new chat. Start typing to create your first note.";
+      final newMessage = Message(text: text, time: DateTime.now()); // Create new message
+      final updatedMessages = currentChat.messages.removeMessageWithText(initText); // Remove init message if it exists
 
-    void sendMessageAndRemoveMessage(String text) {
-      final Message newMessage = Message(text: text, time: DateTime.now());
-      final initMessage = currentChat.messages.getMessageByText(
-        "This is a new chat. Start typing to create your first note.",
-      );
-      final updatedMessages = currentChat.messages.where((message) => message != initMessage) .toList();
+      // Add new message
       final updatedChat = currentChat.copyWith(
         messages: [...updatedMessages, newMessage],
         preview: newMessage.text,
         date: newMessage.time,
       );
-      chatNotifier.updateChat(updatedChat); // update globally ✅
+      
+      // update globally ✅
+      chatListNotifier.updateChat(updatedChat); 
     }
 
-    void handleSendMessage(String message) {
-    if (currentChat.messages.first.text == "This is a new chat. Start typing to create your first note.") {
-      sendMessageAndRemoveMessage(message);
-    } else {
-      sendMessage(message);
-    }
-  }
 
     void toggleSender(Message message) {
-      final Message? msgToUpdate = currentChat.messages.getMessageByTime(
-        message.time,
-      );
-      if (msgToUpdate != null) {
-        final updatedMessages = currentChat.messages.map((message) {
-              if (message.time == msgToUpdate.time) {
-                return message.copyWith(isSender: !message.isSender);
-              }
-              return message;
-            }).toList();
-        final updatedChat = currentChat.copyWith(messages: updatedMessages);
-        chatNotifier.updateChat(updatedChat);
-      }
+      if (message.id == null) return; // Early return on null
+      final updatedMessages = currentChat.messages.toggleSenderById( message.id! ); // Call extension method
+      final updatedChat = currentChat.copyWith(messages: updatedMessages); // Create updated list
+      chatListNotifier.updateChat(updatedChat); // ✅ update globally
+    }
+
+    void deleteMessage(Message message) {
+      if (message.id == null) return;
+      final updatedMessages = currentChat.messages.removeMessageById(message.id!);
+      final updatedChat = currentChat.copyWith(messages: updatedMessages);
+      chatListNotifier.updateChat(updatedChat);
     }
 
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
         if (isChatEmpty) {
-          chatNotifier.removeChat(currentChat);
+          chatListNotifier.removeChat(currentChat);
         }
       },
       child: Scaffold(
@@ -95,12 +84,38 @@ class ChatScreen extends ConsumerWidget {
             children: [
               ChatAppBar(
                 title: currentChat.title!,
-                lastEdited: currentChat.messages.isNotEmpty
-                        ? currentChat.messages.last.time
-                        : DateTime.now(),
+                lastEdited: currentChat.messages.isNotEmpty ? currentChat.messages.last.time : DateTime.now(),
                 onTitleTap: () {
                   Navigator.push(context, CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: currentChat)));
                 },
+                onOptionsPressed: () {
+                  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+                  showMenu<String>(
+                    context: context,
+                    position: RelativeRect.fromLTRB(
+                      10,
+                      200, // left & top
+                      overlay.size.width - 10, // right
+                      overlay.size.height - 200, // bottom
+                    ),
+                    items: [
+                      const PopupMenuItem<String>(
+                        value: "data",
+                        child: Text("Data"),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: "settings",
+                        child: Text("Settings"),
+                      ),
+                    ],
+                  ).then((value) {
+                    if (value != null) {
+                      print("Selected: $value");
+                    }
+                  });
+                }
+
               ),
               Expanded(
                 child: ListView(
@@ -110,19 +125,33 @@ class ChatScreen extends ConsumerWidget {
                   children:
                       currentChat.messages.isNotEmpty
                           ? currentChat.messages.map((message) {
+                            // return DateChip(date: message.time, ); 
+                            BubbleSpecialOne(text: message.text, isSender: message.isSender, color: ThemeConstants.senderBlue, );
                             return MessageBubble(
                               message: message,
                               onTap: () => toggleSender(message),
+                              onDeleteMessage: () => deleteMessage(message),
                               );
                           }).toList()
                           : 
                           [
-                            Center(
-                              child: Text(
-                                "No messages yet.",
-                                style: TextStyle(
-                                  color: ThemeConstants.homeSubtitleLight,
-                                  fontSize: 16,
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: 1),
+                              duration: const Duration(milliseconds: 500),
+                              builder: (context, value, child) {
+                                return Opacity(opacity: value, child: child);
+                              },
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(30.0),
+                                  child: SvgPicture.asset(
+                                    IconPaths.nothing,
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.blueGrey,
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -130,7 +159,6 @@ class ChatScreen extends ConsumerWidget {
                 ),
               ),
               BottomMessageBar(
-                screenWidth: ThemeConstants.screenWidth,
                 onEmojiTap: () {
                   print("Emoji tapped"); // Placeholder
                 },
@@ -140,7 +168,7 @@ class ChatScreen extends ConsumerWidget {
                 onMicTap: () {
                   print("Microphone tapped"); // Placeholder
                 },
-                onSend: (text) => handleSendMessage(text),
+                onSend: (text) => sendMessage(text),
               ),
             ],
           ),
