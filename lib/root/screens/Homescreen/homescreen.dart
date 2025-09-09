@@ -36,6 +36,7 @@ class Homescreen extends ConsumerWidget {
     LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
     Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     String addNotePath = isLight ? IconPaths.addNoteLight : IconPaths.addNoteDark;
+    final FocusNode _searchFocusNode = FocusNode();
 
     void handleContextMenuAction(value) {
       switch (value) {
@@ -115,83 +116,88 @@ class Homescreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Container(
-        height: screensize.height,
-        width: screensize.width,
-        padding: EdgeInsets.only(top: 12),
-        decoration: BoxDecoration(gradient: backgroundGradient),
-        child: 
-        Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
-              child: Row(
-                spacing: Platform.isWindows ? 5 : 0,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: 40,
-                      ),
-                      child: SearchBar(
-                        autoFocus: false,
-                        shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
-                        padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                        shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                        backgroundColor: WidgetStatePropertyAll(headerColor),
-                        leading: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                          child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Container(
+          height: screensize.height,
+          width: screensize.width,
+          padding: EdgeInsets.only(top: 12),
+          decoration: BoxDecoration(gradient: backgroundGradient),
+          child: 
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
+                child: Row(
+                  spacing: Platform.isWindows ? 5 : 0,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: 40,
                         ),
-                        hintText: "Search in notes...",
-                        hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                        child: SearchBar(
+                          focusNode: _searchFocusNode,
+                          autoFocus: false,
+                          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                          shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                          backgroundColor: WidgetStatePropertyAll(headerColor),
+                          leading: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                            child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                          ),
+                          hintText: "Search in notes...",
+                          hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                        ),
                       ),
                     ),
-                  ),
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: IconButton(onPressed: () {
-                      Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadTestScreen()));
-                    }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
-                ],
-              ),
-            ),
-            Expanded(
-              child: chatlist.isEmpty
-              ? NothingToSee()
-              : ListView.separated(
-                itemCount: chatlist.length,
-                itemBuilder: (context, index) {
-                  final chat = chatlist[index];
-                   return TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 300),
-                    builder: (context, value, child) {
-                      return Opacity(opacity: value, child: child);
-                    },
-                    child: ChatTile(
-                      title: chat.title!,
-                      subtitle: chat.preview,
-                      time: TimeFormat.formatChatTime(chat.date),
-                      onDismissed: (_) => chatNotifier.removeChat(chat),
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.id)),
-                          );
-                      },
-                    ),
-                  );
-                },
-                separatorBuilder: (context, index) => Divider(
-                  thickness: 1,
-                  indent: ThemeConstants.screenWidth * (1 - 0.93),
-                  color: isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder,
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: IconButton(onPressed: () {
+                        Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadTestScreen()));
+                      }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
+                  ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: chatlist.isEmpty
+                ? NothingToSee()
+                : ListView.separated(
+                  itemCount: chatlist.length,
+                  itemBuilder: (context, index) {
+                    final chat = chatlist[index];
+                     return TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 300),
+                      builder: (context, value, child) {
+                        return Opacity(opacity: value, child: child);
+                      },
+                      child: ChatTile(
+                        title: chat.title!,
+                        subtitle: chat.preview,
+                        time: TimeFormat.formatChatTime(chat.date),
+                        onDismissed: (_) => chatNotifier.removeChat(chat),
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.id)),
+                            );
+                        },
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) => Divider(
+                    thickness: 1,
+                    indent: ThemeConstants.screenWidth * (1 - 0.93),
+                    color: isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

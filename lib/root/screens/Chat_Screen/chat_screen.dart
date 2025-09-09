@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
@@ -72,21 +74,40 @@ class ChatScreen extends ConsumerWidget {
                 },
               ),
               Expanded(
-                child: ListView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ThemeConstants.screenWidth * 0.03,
-                  ),
-                  children: currentChat.messages.isNotEmpty
-                      ? currentChat.messages.map((message) {
-                          return MessageBubble(
-                            message: message,
-                            onTap: () => notifier.toggleSender(message),
-                            onDeleteMessage: () => notifier.deleteMessage(message),
-                          );
-                        }).toList()
-                      : [const NothingToSee()],
+                child: currentChat.messages.isEmpty 
+                ? NothingToSee() 
+                : ListView.builder(
+                  padding: EdgeInsets.symmetric( horizontal: ThemeConstants.screenWidth * 0.03, ),
+                  itemCount: currentChat.messages.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == currentChat.messages.length) {
+                      return Container(height: 150, color: Colors.transparent);
+                    }
+
+                    final message = currentChat.messages[index];
+                    final prevMessage = index > 0 ? currentChat.messages[index - 1] : null;
+
+                    // Check if a new date chip should be shown
+                    final showDateChip =
+                        prevMessage == null ||
+                        message.time.day != prevMessage.time.day ||
+                        message.time.month != prevMessage.time.month ||
+                        message.time.year != prevMessage.time.year;
+
+                    return Column(
+                      children: [
+                        if (showDateChip) DateChip(message.time),
+                        MessageBubble(
+                          message: message,
+                          onTap: () => notifier.toggleSender(message),
+                          onDeleteMessage: () => notifier.deleteMessage(message),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
+
               BottomMessageBar(
                 onEmojiTap: () => debugPrint("Emoji tapped"),
                 onAttachmentTap: () => debugPrint("Attachment tapped"),

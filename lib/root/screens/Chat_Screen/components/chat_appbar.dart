@@ -63,7 +63,7 @@ class ChatAppBar extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "Last seen today at ${lastEdited.hour}:${lastEdited.minute}",
+                      "Last edited today at ${lastEdited.hour}:${lastEdited.minute}",
                       style: TextStyle(
                         fontSize: ThemeConstants.screenWidth * 0.03,
                         color: ThemeConstants.subtitleLight,

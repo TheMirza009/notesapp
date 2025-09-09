@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
@@ -79,7 +80,7 @@ class MessageBubble extends StatelessWidget {
                           Align(
                             alignment: Alignment.bottomRight,
                             child: Text(
-                              "${message.time.hour}:${message.time.minute.toString().padLeft(2, '0')}",
+                              DateFormat.jm().format(message.time),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: ThemeConstants.subtitleLight,
