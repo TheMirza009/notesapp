@@ -18,6 +18,7 @@ class IconPaths {
   static const String addNoteDark = "$iconRoot/add_note_dark.png";
   static const String avatarLight = "$iconRoot/avatar_light.png";
   static const String avatarDark = "$iconRoot/avatar_dark.png";
+  static const String coin = "$iconRoot/coin.png";
 
   // Cat Icons | Iconify
   static const catFull = Iconify(Bxs.cat);

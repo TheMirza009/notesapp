@@ -45,6 +45,7 @@ dependencies:
   chat_bubbles: ^1.7.0
   intl: ^0.20.2
   uuid: ^4.5.1
+  pull_to_refresh_flutter3: ^2.0.2
 
 dev_dependencies:
   flutter_test:
