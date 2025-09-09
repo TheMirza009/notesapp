@@ -21,6 +21,7 @@ import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
 import 'package:notesapp/root/widgets/custom_context_menu.dart';
+import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
@@ -126,7 +127,7 @@ class ChatScreen extends ConsumerWidget {
                       currentChat.messages.isNotEmpty
                           ? currentChat.messages.map((message) {
                             // return DateChip(date: message.time, ); 
-                            BubbleSpecialOne(text: message.text, isSender: message.isSender, color: ThemeConstants.senderBlue, );
+                            // BubbleSpecialOne(text: message.text, isSender: message.isSender, color: ThemeConstants.senderBlue, );
                             return MessageBubble(
                               message: message,
                               onTap: () => toggleSender(message),
@@ -135,26 +136,7 @@ class ChatScreen extends ConsumerWidget {
                           }).toList()
                           : 
                           [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0, end: 1),
-                              duration: const Duration(milliseconds: 500),
-                              builder: (context, value, child) {
-                                return Opacity(opacity: value, child: child);
-                              },
-                              child: Align(
-                                alignment: Alignment.topCenter,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(30.0),
-                                  child: SvgPicture.asset(
-                                    IconPaths.nothing,
-                                    colorFilter: ColorFilter.mode(
-                                      Colors.blueGrey,
-                                      BlendMode.srcIn,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            NothingToSee()
                           ],
                 ),
               ),

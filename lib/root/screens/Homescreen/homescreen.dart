@@ -17,6 +17,7 @@ import 'package:notesapp/root/widgets/custom_context_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 
@@ -155,26 +156,7 @@ class Homescreen extends ConsumerWidget {
             ),
             Expanded(
               child: chatlist.isEmpty
-              ? TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: const Duration(milliseconds: 500),
-                  builder: (context, value, child) {
-                    return Opacity(opacity: value, child: child);
-                  },
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.all(30.0),
-                      child: SvgPicture.asset(
-                        IconPaths.nothing,
-                        colorFilter: ColorFilter.mode(
-                          Colors.blueGrey,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
+              ? NothingToSee()
               : ListView.separated(
                 itemCount: chatlist.length,
                 itemBuilder: (context, index) {
