@@ -7,6 +7,7 @@ class Message {
   final String text;      // Text message (empty if media-only)
   final DateTime time;    // Timestamp
   final bool isSender;    // Whether current user sent it
+  final bool isSelected;
   final Media? media;     // Media attached (null for text-only)
 
   static final Uuid _uuid = Uuid();
@@ -16,6 +17,7 @@ class Message {
     required this.text,
     required this.time,
     this.isSender = true,
+    this.isSelected = false,
     this.media,
   }) : id = id ?? _uuid.v7();
 
@@ -25,6 +27,7 @@ class Message {
     String? text,
     DateTime? time,
     bool? isSender,
+    bool? isSelected,
     Media? media,
   }) {
     return Message(
@@ -32,6 +35,7 @@ class Message {
       text: text ?? this.text,
       time: time ?? this.time,
       isSender: isSender ?? this.isSender,
+      isSelected: isSelected ?? this.isSelected,
       media: media ?? this.media,
     );
   }

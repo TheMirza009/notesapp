@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/chat_list_extension.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 class ChatScreenNotifier extends Notifier<Chat> {
   final String initText = "This is a new chat. Start typing to create your first note.";
+  bool isSelecting = false;
   late String chatId;
 
   @override
@@ -22,6 +24,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
   void init(String id) {
     chatId = id;
     state = ref.read(chatListProvider).getChatByID(id);
+    ref.invalidateSelf();
   }
 
   void sendMessage(String text) {
@@ -54,8 +57,43 @@ class ChatScreenNotifier extends Notifier<Chat> {
     updateChat(updatedChat);
   }
 
-  void deleteMessage(Message message) {
+  int selectCount() {
+    return state.messages.selectedCount;
+  }
+
+  void selectMessage(Message message) {
     if (message.id == null) return;
+    isSelecting = true;
+    final updatedMessages = state.messages.selectMessageByID(message.id!);
+    final updatedChat = state.copyWith(messages: updatedMessages);
+    updateChat(updatedChat);
+  }
+
+  void unselectMessage(Message message) {
+    if (message.id == null) return;
+    isSelecting = true;
+    final updatedMessages = state.messages.unselectMessageByID(message.id!);
+    final updatedChat = state.copyWith(messages: updatedMessages);
+    updateChat(updatedChat);
+
+    if (state.messages.allUnselected) {
+      isSelecting = false;
+    }
+  }
+
+  void unSelectAllMessages() {
+    isSelecting = false;
+    final updatedMessages = state.messages.unselectAll();
+    final updatedChat = state.copyWith(messages: updatedMessages);
+    updateChat(updatedChat);
+  }
+
+  void deleteMessage(Message message) async {
+    if (message.id == null) return;
+    // If it's not a text message, delete the file from storage
+    if (message.media != null && message.media!.type != Mediatype.text) {
+      await MediaHandler.deleteMedia(message.media!);
+    }
     final updatedMessages = state.messages.removeMessageById(message.id!);
     final updatedChat = state.copyWith(messages: updatedMessages);
     updateChat(updatedChat);

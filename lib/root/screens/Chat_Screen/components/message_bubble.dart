@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -53,42 +54,32 @@ class MessageBubble extends StatelessWidget {
             child: Material(
               color: messgaeBubbleColor,
               borderRadius: BorderRadius.circular(10),
-              child: GestureDetector(
-                onLongPressStart: (details) {
-                  CustomContextMenu2(
-                    position: details.globalPosition,
-                    items: [
-                      MenuItem.text("Delete", onDeleteMessage!),
-                    ],
-                  ).show(context);
-                },
-                child: InkWell(
-                  onTap: onTap,
-                  onLongPress: onLongPress,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.03,
-                      vertical: screenWidth * 0.02,
-                    ),
-                    child: IntrinsicWidth(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          buildMediaContent(),
-                          SizedBox(height: screenWidth * 0.01),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Text(
-                              DateFormat.jm().format(message.time),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: ThemeConstants.subtitleLight,
-                              ),
+              child: InkWell(
+                onTap: onTap,
+                onLongPress: onLongPress,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.03,
+                    vertical: screenWidth * 0.02,
+                  ),
+                  child: IntrinsicWidth(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        buildMediaContent(),
+                        SizedBox(height: screenWidth * 0.01),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            DateFormat.jm().format(message.time),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: ThemeConstants.subtitleLight,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -102,6 +93,10 @@ class MessageBubble extends StatelessWidget {
 
   // Helper function to render the correct content based on message type
   Widget buildMediaContent() {
+    if (message.media == null || message.media!.type == Mediatype.text) {
+      return _buildTextMessage();
+    }
+
     switch (message.media!.type) {
       case Mediatype.text:
         return _buildTextMessage();
@@ -134,17 +129,37 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
+  Future<double> _getImageAspectRatio(File file) async {
+    final image = await decodeImageFromList(file.readAsBytesSync());
+    return image.width / image.height;
+  }
+
   // Render image message (example)
   Widget _buildImageMessage() {
-    return Row(
-      children: [
-        // Add your image rendering logic here
-        Image.file(
-          message.media!.content!, // Assuming content has a URL for images
-          width: 100, // Example size
-          height: 100, // Example size
-        ),
-      ],
+    final file = message.media!.content!;
+    final maxHeight = ThemeConstants.screenHeight * 0.5;
+    return FutureBuilder<double>(
+      future: _getImageAspectRatio(file),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox(
+            width: 100,
+            height: 100,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: AspectRatio(
+              aspectRatio: snapshot.data!,
+              child: Image.file(file, fit: BoxFit.contain),
+            ),
+          ),
+        );
+      },
     );
   }
 

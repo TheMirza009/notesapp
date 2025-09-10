@@ -16,6 +16,10 @@ class Media {
     required this.type,
   });
 
+  factory Media.text() {
+    return const Media._(name: "", extension: "txt", type: Mediatype.text);
+  }
+
   /// Factory: create Media from a file on disk
   factory Media.fromFile(File file) {
     final name = file.uri.pathSegments.last;

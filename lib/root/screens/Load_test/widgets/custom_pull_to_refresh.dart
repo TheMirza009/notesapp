@@ -135,6 +135,7 @@ class _CoinStackPullDownState extends State<CoinStackPullDown>
                         SizedBox(
                           height: widget.coinSize * 3,
                           child: CoinAnimation(
+                            allowSpin: true,
                             coinSize: widget.coinSize,
                             coinCount: widget.coinCount,
                           ),

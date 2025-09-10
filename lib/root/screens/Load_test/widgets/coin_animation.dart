@@ -43,7 +43,7 @@ class CoinAnimation extends StatelessWidget {
                 return Transform.translate(
                   offset: Offset(0, value),
                   child: Transform.rotate(
-                    angle: allowSpin! ? 0 : rotation,
+                    angle: allowSpin ? rotation : 0,
                     child: child,
                   ),
                 );

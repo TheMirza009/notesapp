@@ -43,11 +43,11 @@ class _SlideScreenTestState extends State<SlideScreenTest> {
     const double avatarSize = 40.0;
     const double shownScale = 5.0;
     const double hiddenScale = 1.0;
-    const double profileTop = avatarSize * shownScale - 20;
+    const double profileTop = avatarSize * shownScale + 10;
 
     final double topWhenHidden = statusBarHeight + (kToolbarHeight - avatarSize + 10) / 2;
     final double leftWhenHidden = 16.0;
-    final double leftWhenShown = (screenWidth / 2) - avatarSize;
+    final double leftWhenShown = (screenWidth / 2) - avatarSize + 20;
 
     return Scaffold(
       

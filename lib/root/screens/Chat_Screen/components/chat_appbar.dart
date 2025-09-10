@@ -14,6 +14,7 @@ class ChatAppBar extends StatelessWidget {
   final String title;
   final DateTime lastEdited;
   final VoidCallback onTitleTap;
+  final Widget? leading;
   final void Function()? onOptionsPressed;
 
   const ChatAppBar({
@@ -21,7 +22,8 @@ class ChatAppBar extends StatelessWidget {
     required this.title,
     required this.lastEdited,
     required this.onTitleTap,
-    this.onOptionsPressed,
+    this.leading,
+    this.onOptionsPressed, 
   });
 
   @override
@@ -34,7 +36,7 @@ class ChatAppBar extends StatelessWidget {
       elevation: 1.0,
       titleSpacing: 0,
       toolbarHeight: 65,
-      leading: IconButton(
+      leading: leading ?? IconButton(
         onPressed: () {
           Navigator.pop(context); // Placeholder
         },

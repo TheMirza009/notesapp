@@ -61,6 +61,17 @@ class MediaHandler {
     return Media.fromFile(savedFile);
   }
 
+  /// Find and Delete given file based on its storage path
+  static Future<void> deleteMedia(Media media) async {
+    if (media.content != null && await media.content!.exists()) {
+      try {
+        await media.content!.delete();
+      } catch (e) {
+        debugPrint("Failed to delete media file: $e");
+      }
+    }
+  }
+
   /// ===== Helpers =====
 
   /// Cropping logic
