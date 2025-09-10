@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:notesapp/root/screens/Load_test/coin_animation.dart';
+import 'package:notesapp/root/screens/Load_test/widgets/coin_animation.dart';
 
 /// A wrapper that repeats the [CoinAnimation] infinitely while refreshing.
 /// - Plays one stack fully.

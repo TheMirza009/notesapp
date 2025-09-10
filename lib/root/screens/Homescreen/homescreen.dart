@@ -14,10 +14,12 @@ import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
 import 'package:notesapp/root/screens/Load_test/load_test_screen.dart';
+import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
 import 'package:notesapp/root/widgets/custom_context_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
@@ -40,7 +42,7 @@ class Homescreen extends ConsumerWidget {
 
     void handleContextMenuAction(value) {
       switch (value) {
-        case "profile": print("Profile");
+        case "profile": Navigator.push(context, CupertinoPageRoute(builder: (_) => SlideScreenTest()));
         case "settings": print("Settings");
         case "deleteAll":
           showCupertinoDialog(

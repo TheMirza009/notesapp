@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/root/screens/Load_test/custom_pull_to_refresh.dart';
+import 'package:notesapp/root/screens/Load_test/widgets/custom_pull_to_refresh.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 
 class LoadTestScreen extends ConsumerStatefulWidget {

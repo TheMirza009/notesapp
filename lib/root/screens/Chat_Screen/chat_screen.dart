@@ -11,6 +11,7 @@ import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
+import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
 class ChatScreen extends ConsumerWidget {
@@ -97,11 +98,22 @@ class ChatScreen extends ConsumerWidget {
                     return Column(
                       children: [
                         if (showDateChip) DateChip(message.time),
-                        MessageBubble(
-                          message: message,
-                          onTap: () => notifier.toggleSender(message),
-                          onDeleteMessage: () => notifier.deleteMessage(message),
-                        ),
+                        Align(
+                          alignment: message.isSender ? Alignment.centerLeft : Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GlassContainer(
+                              backgroundColor: Colors.blue.withValues(alpha: 0.2),
+                              borderRadius: 20,
+                              child: Text(message.text),
+                              ),
+                          ),
+                        )
+                        // MessageBubble(
+                        //   message: message,
+                        //   onTap: () => notifier.toggleSender(message),
+                        //   onDeleteMessage: () => notifier.deleteMessage(message),
+                        // ),
                       ],
                     );
                   },
