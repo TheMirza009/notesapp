@@ -102,7 +102,7 @@ class MessageBubble extends StatelessWidget {
 
   // Helper function to render the correct content based on message type
   Widget buildMediaContent() {
-    switch (message.type) {
+    switch (message.media!.type) {
       case Mediatype.text:
         return _buildTextMessage();
       case Mediatype.image:
@@ -139,11 +139,11 @@ class MessageBubble extends StatelessWidget {
     return Row(
       children: [
         // Add your image rendering logic here
-        // Image.network(
-        //   message.content?.url ?? '', // Assuming content has a URL for images
-        //   width: 100, // Example size
-        //   height: 100, // Example size
-        // ),
+        Image.file(
+          message.media!.content!, // Assuming content has a URL for images
+          width: 100, // Example size
+          height: 100, // Example size
+        ),
       ],
     );
   }

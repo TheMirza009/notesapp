@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 import 'package:svg_flutter/svg.dart';
@@ -87,18 +89,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     body: NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         SliverToBoxAdapter(
-          child: Container(
-            height: screenSize.height / 3,
-            margin: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Color.fromARGB(67, 164, 182, 191),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: DocumentIcon(
-                size: screenSize.height / 3,
-                borderWidth: 12,
-                iconPadding: EdgeInsets.all(26),
+          child: Material(
+            color: Colors.transparent,
+            shape: CircleBorder(),
+            clipBehavior:
+                Clip.antiAlias, // ensures splash respects circle
+            child: InkWell(
+              splashColor: const Color.fromARGB(87, 220, 247, 255),
+              onTap: () async {
+                final Media? file = await MediaHandler.pickImage();
+                if (file != null) {
+                  print(file.name);
+                }
+              },
+              customBorder:
+                  CircleBorder(), // ensures splash is circular
+              child: Center(
+                child: DocumentIcon(
+                  size: screenSize.height / 3,
+                  borderWidth: 12,
+                  iconPadding: EdgeInsets.all(26),
+                ),
               ),
             ),
           ),

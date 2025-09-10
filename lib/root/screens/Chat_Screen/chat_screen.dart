@@ -98,22 +98,22 @@ class ChatScreen extends ConsumerWidget {
                     return Column(
                       children: [
                         if (showDateChip) DateChip(message.time),
-                        Align(
-                          alignment: message.isSender ? Alignment.centerLeft : Alignment.centerRight,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: GlassContainer(
-                              backgroundColor: Colors.blue.withValues(alpha: 0.2),
-                              borderRadius: 20,
-                              child: Text(message.text),
-                              ),
-                          ),
-                        )
-                        // MessageBubble(
-                        //   message: message,
-                        //   onTap: () => notifier.toggleSender(message),
-                        //   onDeleteMessage: () => notifier.deleteMessage(message),
-                        // ),
+                        // Align(
+                        //   alignment: message.isSender ? Alignment.centerLeft : Alignment.centerRight,
+                        //   child: Padding(
+                        //     padding: const EdgeInsets.all(8.0),
+                        //     child: GlassContainer(
+                        //       backgroundColor: Colors.blue.withValues(alpha: 0.2),
+                        //       borderRadius: 20,
+                        //       child: Text(message.text),
+                        //       ),
+                        //   ),
+                        // )
+                        MessageBubble(
+                          message: message,
+                          onTap: () => notifier.toggleSender(message),
+                          onDeleteMessage: () => notifier.deleteMessage(message),
+                        ),
                       ],
                     );
                   },

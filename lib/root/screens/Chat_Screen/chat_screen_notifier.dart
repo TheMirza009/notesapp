@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/chat_list_extension.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 class ChatScreenNotifier extends Notifier<Chat> {
@@ -29,6 +31,18 @@ class ChatScreenNotifier extends Notifier<Chat> {
       messages: [...updatedMessages, newMessage],
       preview: newMessage.text,
       date: newMessage.time,
+    );
+    updateChat(updatedChat);
+  }
+
+  Future<void> pickImage() async {
+    final image = await MediaHandler.pickImage();
+    if (image == null) return;
+    final newImageMessage = Message(text: "", time: DateTime.now(), media: image);
+    final updatedChat = state.copyWith(
+      messages: [...state.messages, newImageMessage],
+      preview: "📷 Photo",
+      date: newImageMessage.time,
     );
     updateChat(updatedChat);
   }

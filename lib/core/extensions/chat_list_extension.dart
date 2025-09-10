@@ -68,7 +68,7 @@ extension MessageListX on List<Message> {
   }
 
   /// Update message content
-  List<Message> updateContentById(String id, Media? newContent) {
-    return updateMessageById(id, (m) => m.copyWith(content: newContent));
+  List<Message> updateMediaById(String id, Media? newMediaContent) {
+    return updateMessageById(id, (message) => message.copyWith(media: newMediaContent));
   }
 }

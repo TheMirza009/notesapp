@@ -24,7 +24,7 @@ class DocumentIcon extends StatelessWidget {
     Color borderColor = isLight ? ThemeConstants.circleIconBorderLight : ThemeConstants.darkIconBorder;
     Color bgColor = isLight ? ThemeConstants.circleIconBackgroundLight : ThemeConstants.darkIconbackground;
     Color iconColor = isLight ? ThemeConstants.circleIconLight : ThemeConstants.darkIconforeground;
-    return Container(
+    return Ink(
       width: size,
       height: size,
       decoration: BoxDecoration(

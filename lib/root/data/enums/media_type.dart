@@ -4,9 +4,11 @@ enum Mediatype {
   video,
   audio,
   document,
+  link,
   contact,
   location,
   chart,
   thread,
   scan,
+  unknown,
 }

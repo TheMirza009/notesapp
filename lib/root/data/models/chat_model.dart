@@ -55,7 +55,6 @@ class Chat {
           text: "This is a new chat. Start typing to create your first note.",
           time: DateTime.now(),
           isSender: false,
-          type: Mediatype.text,
         ),
       ],
     );
