@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:contextmenu/contextmenu.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
 import 'package:notesapp/root/widgets/custom_context_menu.dart';
@@ -26,6 +28,7 @@ class ChatAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     var backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
     var textcolor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2;
+    var timeString = "Last edited ${TimeFormat.formatChatSubtitle(lastEdited)}";
     return AppBar(
       backgroundColor: backgroundColor,
       elevation: 1.0,
@@ -63,7 +66,7 @@ class ChatAppBar extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "Last edited today at ${lastEdited.hour}:${lastEdited.minute}",
+                      timeString,
                       style: TextStyle(
                         fontSize: ThemeConstants.screenWidth * 0.03,
                         color: ThemeConstants.subtitleLight,

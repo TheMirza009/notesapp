@@ -33,7 +33,7 @@ final List<Chat> dummyChats = [
     messages: [
       Message(
         text: "Dinner at 8 PM tonight?",
-        time: DateTime(2025, 4, 8, 18, 0),
+        time: DateTime(2024, 4, 8, 18, 0),
         isSender: false,
         type: Mediatype.text,
       ),

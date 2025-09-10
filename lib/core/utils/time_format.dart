@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 
 class TimeFormat {
-  
+
   /// Show proper date/time for chat
   static String formatChatTime(DateTime time) {
     final DateTime now = DateTime.now();
@@ -30,12 +30,28 @@ class TimeFormat {
       return "Today";
     } else if (msgDate == yesterday) {
       return "Yesterday";
-    } else if (now.difference(msgDate).inDays < 7) {
-      // Show weekday name
+    } else if (now.difference(msgDate).inDays < 7) {  // Show weekday name
       return DateFormat.EEEE().format(date); // e.g. "Sunday"
-    } else {
-      // Show full date
+    } else {  // Show full date
       return DateFormat('d MMM yyyy').format(date); // e.g. "14 Jun 2024"
+    }
+  }
+
+  static String formatChatSubtitle(DateTime lastEdited) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final lastEditedDate = DateTime(lastEdited.year, lastEdited.month, lastEdited.day);
+    final String formattedTime = DateFormat.jm().format(lastEdited);
+
+    if (lastEditedDate == today) {
+      return "today at $formattedTime";
+    } else if (lastEditedDate == yesterday) {
+      return "yesterday at $formattedTime";
+    } else if (now.difference(lastEditedDate).inDays < 7) {
+      return DateFormat.EEEE().format(lastEdited);
+    } else {
+      return DateFormat('d MMM yyyy').format(lastEdited);
     }
   }
 }

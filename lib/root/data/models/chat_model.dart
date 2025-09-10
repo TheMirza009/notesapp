@@ -51,6 +51,7 @@ class Chat {
       photo: null,
       messages: [
         Message(
+          id: "0000",
           text: "This is a new chat. Start typing to create your first note.",
           time: DateTime.now(),
           isSender: false,
