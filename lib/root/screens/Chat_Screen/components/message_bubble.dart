@@ -7,7 +7,6 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
-import 'package:notesapp/root/widgets/custom_context_menu_2.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message; // Accepting Message object

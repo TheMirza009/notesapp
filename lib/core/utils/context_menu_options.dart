@@ -5,6 +5,12 @@ import 'package:iconify_flutter/icons/ph.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:svg_flutter/svg.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/heroicons_outline.dart';
+ // widget
+
+ // widget
 
 Widget buildOptionTile({required Widget icon, required String text}) { // Iconify(Ph.user_bold, color: ThemeConstants.iconColorNeutral)
   return Row(
@@ -52,6 +58,7 @@ List<PopupMenuItem<String>> chatScreenOptions = [
 
 /// Message Hold Options
  List<PopupMenuItem<String>> messageHoldOptions = [
+  PopupMenuItem<String>(value: 'reply', child: buildOptionTile(icon: SvgPicture.string(IconPaths.messageReply, color: ThemeConstants.iconColorNeutral,),  text: "Reply")),
   PopupMenuItem<String>(value: 'deleteMessage', child: buildOptionTile(icon: SvgPicture.string(IconPaths.trash1, color: ThemeConstants.iconColorNeutral,),  text: "Delete")),
 ];
 

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/icons/ic.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
+import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
@@ -14,9 +16,11 @@ import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
-import 'package:notesapp/root/widgets/custom_context_menu_2.dart';
+import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
+import 'package:notesapp/root/widgets/context_menus/custom_context_menu_2.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
+import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
   final String chatId;
@@ -139,28 +143,58 @@ class ChatScreen extends ConsumerWidget {
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 10,
                                   ),
-                                  child: MessageBubble(
-                                    message: message,
-                                    onTap: notifier.isSelecting
-                                      ? () {
-                                        message.isSelected
-                                        ? notifier .unselectMessage( message, )
-                                        : notifier .selectMessage( message, );
-                                      }
-                                      : () {
-                                        notifier.toggleSender(
-                                          message,
+                                  child: Dismissible(
+  key: ValueKey(message.id),
+  direction: message.isSender
+              ? DismissDirection.endToStart
+              : DismissDirection.startToEnd,
+          dismissThresholds: const {
+            DismissDirection.startToEnd: 1.0, // 100% (prevents auto-dismiss)
+            DismissDirection.endToStart: 1.0,
+          },
+          confirmDismiss: (direction) async => false, // never dismiss
+          movementDuration: Duration.zero, // 🔹 disables swipe-off animation
+          resizeDuration: null, // 🔹 prevents shrink animation
+  
+  onUpdate: (details) {
+    // Listen to drag updates (for showing background effect)
+  },
+  background: dismissBackground(context, alignLeft: !message.isSender),
+                                    child: MessageBubble(
+                                      message: message,
+                                      onTap: notifier.isSelecting
+                                        ? () {
+                                          message.isSelected
+                                          ? notifier .unselectMessage( message, )
+                                          : notifier .selectMessage( message, );
+                                        }
+                                        : () {
+                                          notifier.toggleSender(
+                                            message,
+                                          );
+                                        },
+                                        onLongPress: (position) {
+                                        notifier.selectMessage(message);
+                                        CustomContextMenu.showMenuAt(
+                                          context,
+                                          position: position,
+                                          menuItems: messageHoldOptions,
+                                          // [
+                                          //   const PopupMenuItem(value: 'reply', child: Text('Reply')),
+                                          //   const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                          // ],
+                                          onSelected: (val) {
+                                            if (val == 'deleteMessage') notifier.deleteMessage(message);
+                                          },
                                         );
+                                        // _showMessageContextMenu(
+                                        //   context,
+                                        //   details,
+                                        //   message,
+                                        //   () => notifier.deleteMessage( message, ),
+                                        // );
                                       },
-                                      onLongPress: (details) {
-                                      notifier.selectMessage(message);
-                                      _showMessageContextMenu(
-                                        context,
-                                        details,
-                                        message,
-                                        () => notifier.deleteMessage( message, ),
-                                      );
-                                    },
+                                    ),
                                   ),
                                 ),
                                 if (notifier.isSelecting)
@@ -212,3 +246,29 @@ class ChatScreen extends ConsumerWidget {
     ).show(context);
   }
 }
+
+Widget dismissBackground(BuildContext context, {required bool alignLeft}) {
+    return Container(
+      alignment: alignLeft ? Alignment.centerLeft : Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: SvgPicture.string(
+            IconPaths.messageReply,
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(
+              context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
