@@ -97,6 +97,15 @@ class ChatScreenNotifier extends Notifier<Chat> {
     final updatedMessages = state.messages.removeMessageById(message.id!);
     final updatedChat = state.copyWith(messages: updatedMessages);
     updateChat(updatedChat);
+    unSelectAllMessages();
+  }
+
+  void deleteSelected() {
+    if (state.messages.allUnselected) return;
+    final updatedMessages = state.messages.deleteSelectedMessages();
+    final updatedChat = state.copyWith(messages: updatedMessages);
+    updateChat(updatedChat);
+    isSelecting = false;
   }
   
   void updateChat(Chat updatedChat) {

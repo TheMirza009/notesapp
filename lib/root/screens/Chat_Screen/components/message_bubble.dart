@@ -6,12 +6,13 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/widgets/custom_context_menu_2.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message; // Accepting Message object
   final void Function()? onTap;
-  final void Function()? onLongPress;
+  final Function(Offset)? onLongPress;
   final void Function()? onDeleteMessage;
 
   const MessageBubble({
@@ -26,12 +27,13 @@ class MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     // Determine whether the message is a sender
     bool isSender = message.isSender;
-    final double screenWidth = MediaQuery.sizeOf(context).width;
-    Color messgaeBubbleColor = isSender
+    final double screenWidth = context.screenWidth;
+    Color messageBubbleColor = isSender
           ? (context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark)
           : (context.isLight ? ThemeConstants.hometoolbarLight3 : ThemeConstants.darkIconBorder);
 
     var verticalPadding = screenWidth * 0.015;
+    var messageborderRadius = BorderRadius.circular(10);
     return Align(
       alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
@@ -49,38 +51,35 @@ class MessageBubble extends StatelessWidget {
                   offset: Offset(0, 2.5),
                 ),
               ],
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: messageborderRadius,
             ),
-            child: Material(
-              color: messgaeBubbleColor,
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                onTap: onTap,
-                onLongPress: onLongPress,
-                borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.03,
-                    vertical: screenWidth * 0.02,
-                  ),
-                  child: IntrinsicWidth(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        buildMediaContent(),
-                        SizedBox(height: screenWidth * 0.01),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Text(
-                            DateFormat.jm().format(message.time),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: ThemeConstants.subtitleLight,
-                            ),
+            child: RippleMenu(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              borderRadius: messageborderRadius,
+              materialColor: messageBubbleColor,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.03,
+                  vertical: screenWidth * 0.02,
+                ),
+                child: IntrinsicWidth(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildMediaContent(),
+                      SizedBox(height: screenWidth * 0.01),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: Text(
+                          DateFormat.jm().format(message.time),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: ThemeConstants.subtitleLight,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

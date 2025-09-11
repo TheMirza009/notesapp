@@ -9,6 +9,7 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
@@ -58,6 +59,7 @@ class ChatScreen extends ConsumerWidget {
                     ),
                   title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : currentChat.title!,
                   lastEdited: currentChat.messages.isNotEmpty ? currentChat.messages.last.time : DateTime.now(),
+                  isSelecting: notifier.isSelecting,
                   onTitleTap: () {
                     Navigator.push(
                       context,
@@ -88,6 +90,9 @@ class ChatScreen extends ConsumerWidget {
                       ],
                     );
                   },
+                  actions: notifier.isSelecting
+                    ? [ IconButton(onPressed: () => notifier.deleteSelected(), icon: Icon(Icons.delete_outline_rounded))]
+                    : null,
                 ),
                 Expanded(
                   child: currentChat.messages.isEmpty 
@@ -136,12 +141,6 @@ class ChatScreen extends ConsumerWidget {
                                   ),
                                   child: MessageBubble(
                                     message: message,
-                                    onTap: () {},
-                                  ),
-                                ),
-                                Positioned.fill(
-                                  child: GestureDetector(
-                                    behavior: HitTestBehavior.translucent,
                                     onTap: notifier.isSelecting
                                       ? () {
                                         message.isSelected
@@ -152,17 +151,25 @@ class ChatScreen extends ConsumerWidget {
                                         notifier.toggleSender(
                                           message,
                                         );
-                                      }, // no tap handler in normal mode → lets MessageBubble.onTap fire
-                                    onLongPressStart: (details) {
+                                      },
+                                      onLongPress: (details) {
                                       notifier.selectMessage(message);
                                       _showMessageContextMenu(
                                         context,
                                         details,
                                         message,
-                                        () => notifier.deleteMessage(
-                                          message,
-                                        ),
+                                        () => notifier.deleteMessage( message, ),
                                       );
+                                    },
+                                  ),
+                                ),
+                                if (notifier.isSelecting)
+                                Positioned.fill(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      message.isSelected
+                                          ? notifier .unselectMessage( message, )
+                                          : notifier .selectMessage( message, );
                                     },
                                     child: Container(
                                       color: message.isSelected
@@ -195,12 +202,12 @@ class ChatScreen extends ConsumerWidget {
 
   void _showMessageContextMenu(
     BuildContext context,
-    LongPressStartDetails details,
+    Offset details,
     Message message,
     VoidCallback onDeleteMessage,
   ) {
     CustomContextMenu2(
-      position: details.globalPosition,
+      position: details,
       items: [MenuItem.text("Delete", onDeleteMessage)],
     ).show(context);
   }

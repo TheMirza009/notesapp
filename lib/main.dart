@@ -17,9 +17,9 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(ProviderScope(
-    child: const MyApp(),
-      ),
+  runApp(
+    ProviderScope(
+    child: const MyApp()),
     );
 }
 

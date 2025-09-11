@@ -9,6 +9,7 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
+import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -37,6 +38,7 @@ class Homescreen extends ConsumerWidget {
     bool isLight = Theme.brightnessOf(context) == Brightness.light;
     LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
     Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    Color dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
     String addNotePath = isLight ? IconPaths.addNoteLight : IconPaths.addNoteDark;
     final FocusNode _searchFocusNode = FocusNode();
 
@@ -47,24 +49,23 @@ class Homescreen extends ConsumerWidget {
         case "deleteAll":
           showCupertinoDialog(
             context: context,
-            builder:
-                (_) => CustomAlertDialog(
-                  title: "Delete all notes",
-                  content: "Are you sure you want to delete all notes?",
-                  iconColor: Colors.redAccent,
-                  iconData: (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
-                  iconSize: 25,
-                  option: TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      chatNotifier.clearChats();
-                    },
-                    child: Text(
-                      "Delete",
-                      style: TextStyle(color: Colors.redAccent),
-                    ),
-                  ),
+            builder: (_) => CustomAlertDialog(
+              title: "Delete all notes",
+              content: "Are you sure you want to delete all notes?",
+              iconColor: Colors.redAccent,
+              iconData: (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
+              iconSize: 25,
+              option: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  chatNotifier.clearChats();
+                },
+                child: Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.redAccent),
                 ),
+              ),
+            ),
           );
       }
     }
@@ -113,7 +114,7 @@ class Homescreen extends ConsumerWidget {
         actions: [
           CustomContextMenu(
             icon: const Icon(Icons.more_vert),
-            menuItems: dummyOptions,
+            menuItems: homeScreenOptions,
             onSelected: (value) => handleContextMenuAction(value)
           ),
         ],
@@ -135,6 +136,9 @@ class Homescreen extends ConsumerWidget {
                   spacing: Platform.isWindows ? 5 : 0,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+
+                    // SvgPicture.string(IconPaths.catTipping, color: Colors.white,),
+
                     Expanded(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
@@ -191,11 +195,13 @@ class Homescreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  separatorBuilder: (context, index) => Divider(
+                  separatorBuilder: (context, index) {
+                    return Divider(
                     thickness: 1,
                     indent: ThemeConstants.screenWidth * (1 - 0.93),
-                    color: isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder,
-                  ),
+                    color: dividerColor,
+                  );
+                  },
                 ),
               ),
             ],

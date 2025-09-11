@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
@@ -15,7 +16,9 @@ class ChatAppBar extends StatelessWidget {
   final DateTime lastEdited;
   final VoidCallback onTitleTap;
   final Widget? leading;
+  final bool? isSelecting;
   final void Function()? onOptionsPressed;
+  final List<Widget>? actions;
 
   const ChatAppBar({
     super.key, 
@@ -24,6 +27,8 @@ class ChatAppBar extends StatelessWidget {
     required this.onTitleTap,
     this.leading,
     this.onOptionsPressed, 
+    this.isSelecting = false,
+    this.actions,
   });
 
   @override
@@ -31,6 +36,7 @@ class ChatAppBar extends StatelessWidget {
     var backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
     var textcolor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2;
     var timeString = "Last edited ${TimeFormat.formatChatSubtitle(lastEdited)}";
+    
     return AppBar(
       backgroundColor: backgroundColor,
       elevation: 1.0,
@@ -48,47 +54,53 @@ class ChatAppBar extends StatelessWidget {
           offset: Offset(-10, 0),
           child: SizedBox(
             width: double.maxFinite,
-            child: Row(
-              children: [
-                DocumentIcon(size: 40),
-                // Icon(
-                //   Icons.account_circle,
-                //   size: 50.0, // Icon size inside the circle
-                // ),
-                SizedBox(width: ThemeConstants.screenWidth * 0.02,),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: ThemeConstants.screenWidth * 0.045,
-                        fontWeight: FontWeight.w500,
-                        color: textcolor,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: Row(
+                key: ValueKey(isSelecting),
+                children: [
+                  DocumentIcon(size: 40),
+                  // Icon(
+                  //   Icons.account_circle,
+                  //   size: 50.0, // Icon size inside the circle
+                  // ),
+                  SizedBox(width: ThemeConstants.screenWidth * 0.02,),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: ThemeConstants.screenWidth * (isSelecting! ? 0.05 : 0.045),
+                          fontWeight: FontWeight.w500,
+                          color: textcolor,
+                        ),
                       ),
-                    ),
-                    Text(
-                      timeString,
-                      style: TextStyle(
-                        fontSize: ThemeConstants.screenWidth * 0.03,
-                        color: ThemeConstants.subtitleLight,
+                      if (!isSelecting!) Text(
+                        timeString,
+                        style: TextStyle(
+                          fontSize: ThemeConstants.screenWidth * 0.03,
+                          color: ThemeConstants.subtitleLight,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-      actions: [
+      actions: actions ?? [
         IconButton(
           onPressed: () {
             print("Search tapped"); // Placeholder
           },
           icon: Icon(Icons.search), // color: ThemeConstants.iconLight),
         ),
-        CustomContextMenu(icon: Icon(Icons.more_vert))
+        CustomContextMenu(icon: Icon(Icons.more_vert), menuItems: chatScreenOptions, )
       ],
     );
   }

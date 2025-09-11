@@ -64,6 +64,11 @@ extension MessageListX on List<Message> {
     return updateMessageById(id, (message) => message.copyWith(isSelected: false));
   }
 
+  List<Message> updateSelectedMessages(Message Function(Message) update) {
+    return map(
+      (message) => message.isSelected ? update(message) : message).toList();
+  }
+
    /// Returns true if every message is selected (and list is not empty).
   bool get allSelected => isNotEmpty && every((m) => m.isSelected);
 
@@ -79,6 +84,15 @@ extension MessageListX on List<Message> {
   // List<Message> unselectMessageByID(String id) {
   //   return updateMessageById(id, (message) => message.copyWith(isSelected: !message.isSelected));
   // }
+
+  /// Delete all *Selected* messages
+  List<Message> deleteSelectedMessages() {
+    return where((message) => message.isSelected == false).toList();
+  }
+
+  List<Message> selectAllMessages() {
+    return map((message) => message.copyWith(isSelected: true)).toList();
+  }
 
   List<Message> unselectAll() {
     return map((message) => message.copyWith(isSelected: false)).toList();
