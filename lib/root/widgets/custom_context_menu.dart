@@ -10,6 +10,7 @@ class CustomContextMenu extends StatelessWidget {
   final List<PopupMenuEntry<String>> menuItems;
   final void Function(String)? onSelected;
   final Color? backgroundColor;
+  final Offset? offset;
 
   const CustomContextMenu({
     super.key,
@@ -17,6 +18,7 @@ class CustomContextMenu extends StatelessWidget {
     required this.menuItems,
     this.onSelected, /// Does not work without menuItems
     this.backgroundColor,
+    this.offset,
   });
 
   @override
@@ -33,8 +35,10 @@ class CustomContextMenu extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: PopupMenuButton<String>(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: dividerColor(), width: 1.5)),
+        popUpAnimationStyle: AnimationStyle(curve: Curves.ease, duration: Duration(milliseconds: 300)),
         color: backgroundColor ?? (context.isLight ? lightBG : darkBG), // ThemeConstants.homeSearchbarLight
+        offset: offset ?? Offset.zero,
         icon: icon,
         onSelected: onSelected,
         itemBuilder: (BuildContext context) {
@@ -45,7 +49,7 @@ class CustomContextMenu extends StatelessWidget {
             final item = entry.value;
 
             if (index < menuItems.length - 1) {
-              return [item, PopupMenuDivider(height: 1, thickness: 1.5, color: dividerColor(),)]; // Return the item followed by a divider
+              return [item, PopupMenuDivider(height: 1, thickness: 1.5, color: dividerColor(), indent: 15, endIndent: 15,)]; // Return the item followed by a divider
             } else {
               return [item]; // Last item, no divider
             }

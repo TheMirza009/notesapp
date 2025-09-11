@@ -16,6 +16,25 @@ Widget buildOptionTile({required Widget icon, required String text}) { // Iconif
     );
 }
 
+Widget clearIcon() {
+  return Transform.scale(
+    scale: 1.245,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        SvgPicture.string(IconPaths.stopRounded, color: ThemeConstants.iconColorNeutral),
+        Icon(Icons.clear_rounded, size: 12, color: ThemeConstants.iconColorNeutral,),
+      ],
+    ),
+  );
+}
+
+Transform scaledVector() {
+  return Transform.scale(
+  scale: 0.9,
+  child: SvgPicture.string(IconPaths.clearChatString, color: ThemeConstants.iconColorNeutral,));
+}
+
 /// HomeScreenOptions
  List<PopupMenuItem<String>> homeScreenOptions = [
   PopupMenuItem<String>(value: 'profile', child: buildOptionTile(icon: SvgPicture.string(IconPaths.userHUGE, color: ThemeConstants.iconColorNeutral,),  text: "Profile")),
@@ -27,6 +46,12 @@ Widget buildOptionTile({required Widget icon, required String text}) { // Iconif
 List<PopupMenuItem<String>> chatScreenOptions = [
   PopupMenuItem<String>(value: 'chatInfo', child: buildOptionTile(icon: SvgPicture.string(IconPaths.infoSquare, color: ThemeConstants.iconColorNeutral,), text: "Chat info")),
   PopupMenuItem<String>(value: 'chatMedia', child: buildOptionTile(icon: SvgPicture.string(IconPaths.mediaGallery, color: ThemeConstants.iconColorNeutral,), text: "Chat info")),
-  PopupMenuItem<String>(value: 'search', child: buildOptionTile(icon: Icon(Icons.info_outline_rounded), text: "Search")),
-  PopupMenuItem<String>(value: 'clearChat', child: buildOptionTile(icon: Icon(Icons.info_outline_rounded), text: "Clear Chat")),
+  PopupMenuItem<String>(value: 'search', child: buildOptionTile(icon: SvgPicture.string(IconPaths.messageSearch, color: ThemeConstants.iconColorNeutral,), text: "Search")),
+  PopupMenuItem<String>(value: 'clearChat', child: buildOptionTile(icon: clearIcon(), text: "Clear Chat")),
 ];
+
+/// Message Hold Options
+ List<PopupMenuItem<String>> messageHoldOptions = [
+  PopupMenuItem<String>(value: 'deleteMessage', child: buildOptionTile(icon: SvgPicture.string(IconPaths.trash1, color: ThemeConstants.iconColorNeutral,),  text: "Delete")),
+];
+

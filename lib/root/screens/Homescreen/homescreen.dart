@@ -137,8 +137,6 @@ class Homescreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
 
-                    // SvgPicture.string(IconPaths.catTipping, color: Colors.white,),
-
                     Expanded(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
