@@ -100,7 +100,9 @@ class ChatAppBar extends StatelessWidget {
           },
           icon: Icon(Icons.search), // color: ThemeConstants.iconLight),
         ),
-        CustomContextMenu(icon: Icon(Icons.more_vert), menuItems: chatScreenOptions, )
+        CustomContextMenu(
+          icon: Icon(Icons.more_vert), 
+          menuItems: chatScreenOptions, )
       ],
     );
   }

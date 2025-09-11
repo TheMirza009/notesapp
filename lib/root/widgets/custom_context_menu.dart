@@ -8,14 +8,13 @@ import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 class CustomContextMenu extends StatelessWidget {
   final Icon icon;
   final List<PopupMenuEntry<String>> menuItems;
-  /// Does not work without menuItems
   final void Function(String)? onSelected;
   final Color? backgroundColor;
 
   const CustomContextMenu({
     super.key,
     required this.icon,
-    this.menuItems = homeScreenOptions,
+    required this.menuItems,
     this.onSelected, /// Does not work without menuItems
     this.backgroundColor,
   });
