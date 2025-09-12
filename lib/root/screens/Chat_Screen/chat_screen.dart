@@ -137,7 +137,7 @@ class ChatScreen extends ConsumerWidget {
                                         ? notifier.unselectMessage(message)
                                         : notifier.selectMessage(message);
                                   },
-                                  dismissBackground: dismissBackground(context, alignLeft: !message.isSender),
+                                  // dismissBackground: dismissBackground(context, alignLeft: !message.isSender),
                                   onTap: () => notifier.toggleSender(message),
                                   onLongPress: (pos) {
                                     notifier.selectMessage(message);

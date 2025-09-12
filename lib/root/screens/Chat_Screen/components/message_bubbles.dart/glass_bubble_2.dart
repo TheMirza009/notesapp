@@ -4,7 +4,7 @@ import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:svg_flutter/svg.dart';
@@ -82,22 +82,6 @@ class GlassBubble2 extends StatelessWidget {
       child: Stack(
         children: [
       
-          // Full-width selection overlay
-          if (isSelecting)
-            Positioned(
-              left: 0,
-              top: 0,
-              width: screenWidth,
-              height: double.maxFinite,
-              child: GestureDetector(
-                onTap: onTapWhileSelecting,
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 5),
-                  color: message.isSelected ? Colors.blue.withValues(alpha: 0.2) : Colors.transparent,
-                ),
-              ),
-            ),
-      
           // The bubble itself, aligned left or right
           Align(
             alignment: message.isSender ? Alignment.centerRight : Alignment.centerLeft,
@@ -152,6 +136,22 @@ class GlassBubble2 extends StatelessWidget {
               ),
             ),
           ),
+
+          // Full-width selection overlay
+          if (isSelecting)
+            Positioned.fill(
+              // left: 0,
+              // top: 0,
+              // width: screenWidth,
+              // height: double.maxFinite,
+              child: GestureDetector(
+                onTap: onTapWhileSelecting,
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 5),
+                  color: message.isSelected ? Colors.blue.withValues(alpha: 0.2) : Colors.transparent,
+                ),
+              ),
+            ),
         ],
       ),
     );
