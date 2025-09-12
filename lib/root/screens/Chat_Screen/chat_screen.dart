@@ -1,21 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconify_flutter/icons/ic.dart';
+import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/glass_bubble.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
-import 'package:notesapp/root/screens/chat_screen/components/message_bubble.dart' show MessageBubble;
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu_2.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
@@ -38,6 +39,9 @@ class ChatScreen extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
+    String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
+
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
         notifier.removeChatIfEmpty();
@@ -48,7 +52,10 @@ class ChatScreen extends ConsumerWidget {
           body: Container(
             height: ThemeConstants.screenHeight,
             width: ThemeConstants.screenWidth,
-            decoration: BoxDecoration(gradient: backgroundGradient),
+            decoration: BoxDecoration(gradient: backgroundGradient, image: DecorationImage(
+              image: NetworkImage(imageURL2),
+              fit: BoxFit.fitHeight,
+              )),
             child: Column(
               children: [
                 ChatAppBar(
@@ -120,100 +127,95 @@ class ChatScreen extends ConsumerWidget {
                         final showDateChip =
                             prevMessage == null ||
                             message.time.day != prevMessage.time.day ||
-                            message.time.month !=
-                                prevMessage.time.month ||
-                            message.time.year != prevMessage.time.year;
+                            message.time.month != prevMessage.time.month || message.time.year != prevMessage.time.year;
                         return Column(
                           children: [
-                            if (showDateChip) DateChip(message.time),
-                            // Align(
-                            //   alignment: message.isSender ? Alignment.centerLeft : Alignment.centerRight,
-                            //   child: Padding(
-                            //     padding: const EdgeInsets.all(8.0),
-                            //     child: GlassContainer(
-                            //       backgroundColor: Colors.blue.withValues(alpha: 0.2),
-                            //       borderRadius: 20,
-                            //       child: Text(message.text),
-                            //       ),
-                            //   ),
-                            // )
-                            Stack(
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                  child: Dismissible(
-  key: ValueKey(message.id),
-  direction: message.isSender
-              ? DismissDirection.endToStart
-              : DismissDirection.startToEnd,
-          dismissThresholds: const {
-            DismissDirection.startToEnd: 1.0, // 100% (prevents auto-dismiss)
-            DismissDirection.endToStart: 1.0,
-          },
-          confirmDismiss: (direction) async => false, // never dismiss
-          movementDuration: Duration.zero, // 🔹 disables swipe-off animation
-          resizeDuration: null, // 🔹 prevents shrink animation
-  
-  onUpdate: (details) {
-    // Listen to drag updates (for showing background effect)
-  },
-  background: dismissBackground(context, alignLeft: !message.isSender),
-                                    child: MessageBubble(
-                                      message: message,
-                                      onTap: notifier.isSelecting
-                                        ? () {
-                                          message.isSelected
-                                          ? notifier .unselectMessage( message, )
-                                          : notifier .selectMessage( message, );
+                              if (showDateChip) DateChip(message.time),
+                                GlassBubble(
+                                  text: message.text,
+                                  time: message.time,
+                                  isSender: message.isSender,
+                                  backgroundColor: message.isSender ? Colors.blue.withValues(alpha: 0.15) : Colors.white.withValues( alpha: 0.15),
+                                  onTap: () => notifier.toggleSender(message),
+                                  onLongPress: (pos) {
+                                    CustomContextMenu.showMenuAt(
+                                    context,
+                                    position: pos,
+                                    menuItems: messageHoldOptions,
+                                    triangleHorizontalOffset: message.isSender ? 120 : 40,  
+                                    onSelected: (val) {
+                                        if (val == 'deleteMessage') {
+                                          notifier.deleteMessage(message);
+                                        } else if (val == "reply") {
+                                          print(val);
+                                        } else if (val == "copy") {
+                                          Utils.copyToClipboard(message.text);
                                         }
-                                        : () {
-                                          notifier.toggleSender(
-                                            message,
-                                          );
-                                        },
-                                        onLongPress: (position) {
-                                        notifier.selectMessage(message);
-                                        CustomContextMenu.showMenuAt(
-                                          context,
-                                          position: position,
-                                          menuItems: messageHoldOptions,
-                                          // [
-                                          //   const PopupMenuItem(value: 'reply', child: Text('Reply')),
-                                          //   const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                                          // ],
-                                          onSelected: (val) {
-                                            if (val == 'deleteMessage') notifier.deleteMessage(message);
-                                          },
-                                        );
-                                        // _showMessageContextMenu(
-                                        //   context,
-                                        //   details,
-                                        //   message,
-                                        //   () => notifier.deleteMessage( message, ),
-                                        // );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                if (notifier.isSelecting)
-                                Positioned.fill(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      message.isSelected
-                                          ? notifier .unselectMessage( message, )
-                                          : notifier .selectMessage( message, );
-                                    },
-                                    child: Container(
-                                      color: message.isSelected
-                                      ? ThemeConstants .sinisterSeed .withValues(alpha: 0.2)
-                                      : Colors.transparent,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                                      } 
+                                    );
+                                  },
+                              ),
+                            // Stack(
+                            //   children: [
+                            //     Padding(
+                            //       padding: EdgeInsets.symmetric(
+                            //         horizontal: 10,
+                            //       ),
+                            //       child: Dismissible(
+                            //         key: ValueKey(message.id),
+                            //         direction: message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
+                            //         dismissThresholds: const {
+                            //           DismissDirection.startToEnd: 1.0, // 100% (prevents auto-dismiss)
+                            //           DismissDirection.endToStart: 1.0,
+                            //         },
+                            //         confirmDismiss: (direction) async => false, // never dismiss
+                            //         movementDuration: Duration.zero, // 🔹 disables swipe-off animation
+                            //         resizeDuration: null, // 🔹 prevents shrink animation
+                            //         onUpdate: (details) {},
+                            //         background: dismissBackground(context, alignLeft: !message.isSender),
+                            //         child: MessageBubble(
+                            //           message: message,
+                            //           onTap: notifier.isSelecting
+                            //             ? () {
+                            //               message.isSelected
+                            //               ? notifier .unselectMessage( message, )
+                            //               : notifier .selectMessage( message, );
+                            //             }
+                            //             : () {
+                            //               notifier.toggleSender(
+                            //                 message,
+                            //               );
+                            //             },
+                            //             onLongPress: (position) {
+                            //             notifier.selectMessage(message);
+                            //             CustomContextMenu.showMenuAt(
+                            //               context,
+                            //               position: position,
+                            //               menuItems: messageHoldOptions,
+                            //               triangleHorizontalOffset: message.isSender ? 120 : 40,  
+                            //               onSelected: (val) {
+                            //                 if (val == 'deleteMessage') notifier.deleteMessage(message);
+                            //               },
+                            //             );
+                            //           },
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     if (notifier.isSelecting)
+                            //     Positioned.fill(
+                            //       child: GestureDetector(
+                            //         onTap: () {
+                            //           message.isSelected ? notifier .unselectMessage( message, ) : notifier .selectMessage( message, );
+                            //         },
+                            //         child: Container(
+                            //           color: message.isSelected
+                            //           ? ThemeConstants .sinisterSeed .withValues(alpha: 0.2)
+                            //           : Colors.transparent,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ],
                         );
                       },

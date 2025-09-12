@@ -52,12 +52,12 @@ class CustomContextMenu extends StatelessWidget {
         icon: (iconBuilder == null)
             ? (icon ?? const Icon(Icons.more_vert))
             : null,
-        child: iconBuilder?.call(context),
 
         onSelected: onSelected,
         itemBuilder: (BuildContext context) {
           return _buildMenuItems(menuItems, dividerColor());
         },
+        child: iconBuilder?.call(context),
       ),
     );
   }
@@ -69,6 +69,7 @@ class CustomContextMenu extends StatelessWidget {
     required List<PopupMenuEntry<String>> menuItems,
     void Function(String)? onSelected,
     Color? backgroundColor,
+    double? triangleHorizontalOffset,
   }) async {
     const lightBG = Color.fromARGB(255, 228, 239, 240);
     const darkBG = Color.fromARGB(255, 34, 52, 65);
@@ -90,12 +91,12 @@ class CustomContextMenu extends StatelessWidget {
         position.dy,
       ),
       color: backgroundColor ?? (context.isLight ? lightBG : darkBG),
-      shape: TriangleBorder(
+      shape: TailedRRectBorder(
         borderRadius: BorderRadius.circular(15),
         side: BorderSide(color: dividerColor(), width: 1.5),
         triangleHeight: 8,
         triangleWidth: 14,
-        triangleOffset: 40, // adjust horizontal position
+        triangleHorizontalOffset: triangleHorizontalOffset ?? 40, // adjust horizontal position
       ),
       items: _buildMenuItems(menuItems, dividerColor()),
     );

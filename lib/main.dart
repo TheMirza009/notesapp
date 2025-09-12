@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
 
 bool kisWindows = Platform.isWindows;
@@ -53,6 +54,8 @@ class _MyAppState extends ConsumerState<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'NotesApp',
       theme: themeProvider,
+      scaffoldMessengerKey: scaffoldMessengerkey,
+      navigatorKey: navigatorKey,
       home: const Homescreen(),
     );
   }

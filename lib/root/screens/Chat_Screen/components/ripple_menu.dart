@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class RippleMenu extends StatefulWidget {
+class RippleWell extends StatefulWidget {
   final Widget child;
   final Color? materialColor;
   final void Function()? onTap;
   final void Function(Offset position)? onLongPress;
   final BorderRadius? borderRadius;
 
-  const RippleMenu({
+  const RippleWell({
     super.key,
     required this.child,
     this.materialColor,
@@ -17,10 +17,10 @@ class RippleMenu extends StatefulWidget {
   });
 
   @override
-  _RippleMenuState createState() => _RippleMenuState();
+  _RippleWellState createState() => _RippleWellState();
 }
 
-class _RippleMenuState extends State<RippleMenu> {
+class _RippleWellState extends State<RippleWell> {
   Offset? _tapPosition;
 
   @override

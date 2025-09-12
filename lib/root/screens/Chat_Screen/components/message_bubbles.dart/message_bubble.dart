@@ -52,7 +52,7 @@ class MessageBubble extends StatelessWidget {
               ],
               borderRadius: messageborderRadius,
             ),
-            child: RippleMenu(
+            child: RippleWell(
               onTap: onTap,
               onLongPress: onLongPress,
               borderRadius: messageborderRadius,

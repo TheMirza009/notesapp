@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-/// A rounded rectangle with a small triangle on top
-class TriangleBorder extends RoundedRectangleBorder {
+/// A rounded rectangle with a small trianglular tail on top
+class TailedRRectBorder extends RoundedRectangleBorder {
   final double triangleHeight;
   final double triangleWidth;
-  final double triangleOffset;
+  final double triangleHorizontalOffset;
 
-  const TriangleBorder({
+  const TailedRRectBorder({
     super.borderRadius,
     super.side,
     this.triangleHeight = 10.0,
     this.triangleWidth = 16.0,
-    this.triangleOffset = 20.0,
+    this.triangleHorizontalOffset = 20.0,
   });
 
   @override
@@ -29,32 +29,25 @@ class TriangleBorder extends RoundedRectangleBorder {
     path.moveTo(left + radius.topLeft.x, top);
 
     // Line to before triangle
-    path.lineTo(left + triangleOffset, top);
+    path.lineTo(left + triangleHorizontalOffset, top);
 
     // Triangle
-    path.lineTo(left + triangleOffset + triangleWidth / 2, top - triangleHeight);
-    path.lineTo(left + triangleOffset + triangleWidth, top);
-
-    // Continue along top edge
-    path.lineTo(right - radius.topRight.x, top);
-
-    // Top-right corner
-    path.quadraticBezierTo(right, top, right, top + radius.topRight.y);
+    path.lineTo(left + triangleHorizontalOffset + triangleWidth / 2, top - triangleHeight);
+    path.lineTo(left + triangleHorizontalOffset + triangleWidth, top);
+    path.lineTo(right - radius.topRight.x, top);  // Continue along top edge
+    path.quadraticBezierTo(right, top, right, top + radius.topRight.y); // Top-right corner
 
     // Right edge
     path.lineTo(right, bottom - radius.bottomRight.y);
-    path.quadraticBezierTo(
-        right, bottom, right - radius.bottomRight.x, bottom);
+    path.quadraticBezierTo(right, bottom, right - radius.bottomRight.x, bottom);
 
     // Bottom edge
     path.lineTo(left + radius.bottomLeft.x, bottom);
-    path.quadraticBezierTo(
-        left, bottom, left, bottom - radius.bottomLeft.y);
+    path.quadraticBezierTo(left, bottom, left, bottom - radius.bottomLeft.y);
 
     // Left edge
     path.lineTo(left, top + radius.topLeft.y);
     path.quadraticBezierTo(left, top, left + radius.topLeft.x, top);
-
     path.close();
     return path;
   }
