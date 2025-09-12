@@ -6,6 +6,7 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/message_list_layout.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -14,6 +15,7 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/glass_bubble.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/glass_bubble_2.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
@@ -118,43 +120,37 @@ class ChatScreen extends ConsumerWidget {
                             color: Colors.transparent,
                           );
                         }
+                        
                         final message = currentChat.messages[index];
-                        final prevMessage =
-                            index > 0
-                                ? currentChat.messages[index - 1]
-                                : null;
-                        // Check if a new date chip should be shown
-                        final showDateChip =
-                            prevMessage == null ||
-                            message.time.day != prevMessage.time.day ||
-                            message.time.month != prevMessage.time.month || message.time.year != prevMessage.time.year;
+                        final info = currentChat.messages.layoutInfo(index);
+                    
                         return Column(
                           children: [
-                              if (showDateChip) DateChip(message.time),
-                                GlassBubble(
-                                  text: message.text,
-                                  time: message.time,
-                                  isSender: message.isSender,
-                                  backgroundColor: message.isSender ? Colors.blue.withValues(alpha: 0.15) : Colors.white.withValues( alpha: 0.15),
+                              if (info.showDateChip) DateChip(message.time),
+                                GlassBubble2(
+                                  message: message,
+                                  isSelecting: notifier.isSelecting,
+                                  topPadding: info.topPadding,
+                                  bottomPadding: info.bottomPadding,
+                                  onTapWhileSelecting: () {
+                                    message.isSelected
+                                        ? notifier.unselectMessage(message)
+                                        : notifier.selectMessage(message);
+                                  },
+                                  dismissBackground: dismissBackground(context, alignLeft: !message.isSender),
                                   onTap: () => notifier.toggleSender(message),
                                   onLongPress: (pos) {
+                                    notifier.selectMessage(message);
                                     CustomContextMenu.showMenuAt(
-                                    context,
-                                    position: pos,
-                                    menuItems: messageHoldOptions,
-                                    triangleHorizontalOffset: message.isSender ? 120 : 40,  
-                                    onSelected: (val) {
-                                        if (val == 'deleteMessage') {
-                                          notifier.deleteMessage(message);
-                                        } else if (val == "reply") {
-                                          print(val);
-                                        } else if (val == "copy") {
-                                          Utils.copyToClipboard(message.text);
-                                        }
-                                      } 
+                                      context,
+                                      position: pos,
+                                      menuItems: messageHoldOptions,
+                                      triangleHorizontalOffset: message.isSender ? 120 : 40,
+                                      onSelected: (val) => notifier.handleMessageMenuAction(val, message),
                                     );
                                   },
-                              ),
+                                )
+
                             // Stack(
                             //   children: [
                             //     Padding(

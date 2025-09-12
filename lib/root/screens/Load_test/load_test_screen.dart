@@ -4,6 +4,7 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/custom_pull_to_refresh.dart';
+import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 
 class LoadTestScreen extends ConsumerStatefulWidget {
@@ -45,16 +46,19 @@ class _LoadTestScreenState extends ConsumerState<LoadTestScreen> {
           ),
         ],
       ),
-      body: CoinStackPullDown(
-        triggerDistance: 100,
-        onRefresh: () async {
-          await Future.delayed(const Duration(seconds: 2));
-        },
-        coinSize: 15,
-        coinCount: 15,
-        backgroundColor: context.isLight ? Colors.white : Colors.deepOrange,
-        // child: Center(child: CoinAnimation(coinSize: 50,))
-        child: ListView.builder(
+      body: PullDownWrapper(
+        maxRevealHeight: 200,
+      // CoinStackPullDown(
+      //   triggerDistance: 100,
+      //   onRefresh: () async {
+      //     await Future.delayed(const Duration(seconds: 2));
+      //   },
+      //   coinSize: 15,
+      //   coinCount: 15,
+      //   backgroundColor: context.isLight ? Colors.white : Colors.deepOrange,
+      //   // child: Center(child: CoinAnimation(coinSize: 50,))
+        child: 
+        ListView.builder(
           physics: NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
           itemCount: 10,

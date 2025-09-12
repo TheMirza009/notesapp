@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/chat_list_extension.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -111,6 +112,17 @@ class ChatScreenNotifier extends Notifier<Chat> {
   void updateChat(Chat updatedChat) {
     ref.read(chatListProvider.notifier).updateChat(updatedChat);
     state = updatedChat; // keep local state synced
+  }
+
+  /// Message options callbacks
+  void handleMessageMenuAction(String action, Message message) {
+    if (action == 'deleteMessage') {
+      deleteMessage(message);
+    } else if (action == 'reply') {
+      print("Reply to `${message.text}`");
+    } else if (action == 'copy') {
+      Utils.copyToClipboard(message.text);
+    }
   }
 
   void removeChatIfEmpty() {
