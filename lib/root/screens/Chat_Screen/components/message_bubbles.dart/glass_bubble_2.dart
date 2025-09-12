@@ -3,8 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:svg_flutter/svg.dart';
@@ -33,7 +34,7 @@ class GlassBubble2 extends StatelessWidget {
   final double borderWidth;
   final Color borderColor;
   final Color? backgroundColor;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final double? width;
   final double? height;
   final double? topPadding;
@@ -56,7 +57,7 @@ class GlassBubble2 extends StatelessWidget {
     this.borderWidth = 1.0,
     this.borderColor = const Color.fromARGB(100, 255, 255, 255),
     this.backgroundColor,
-    this.padding = const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+    this.padding,
     this.width,
     this.height,
     this.topPadding = 5,
@@ -66,7 +67,9 @@ class GlassBubble2 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = context.screenWidth;
-
+    EdgeInsets getDefaultPadding() => message.media?.type == Mediatype.image ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10) : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
+    bool isImage = message.media?.type == Mediatype.image;
+    
     return Dismissible(
       key: ValueKey(message.id),
       direction: message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
@@ -108,30 +111,10 @@ class GlassBubble2 extends StatelessWidget {
                       (message.isSender
                           ? Colors.blue.withValues(alpha: 0.15)
                           : Colors.white.withValues(alpha: 0.15)),
-                  padding: padding,
+                  padding: padding ?? getDefaultPadding(),
                   width: width,
                   height: height,
-                  child: IntrinsicWidth(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          message.text,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Text(
-                            DateFormat.jm().format(message.time),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white30,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: MessageContentBuilder(message: message),
                 ),
               ),
             ),

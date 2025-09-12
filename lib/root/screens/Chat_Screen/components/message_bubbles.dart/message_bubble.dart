@@ -6,6 +6,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -66,7 +67,7 @@ class MessageBubble extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      buildMediaContent(),
+                      MessageContentBuilder(message: message),
                       SizedBox(height: screenWidth * 0.01),
                       Align(
                         alignment: Alignment.bottomRight,
@@ -86,108 +87,6 @@ class MessageBubble extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  // Helper function to render the correct content based on message type
-  Widget buildMediaContent() {
-    if (message.media == null || message.media!.type == Mediatype.text) {
-      return _buildTextMessage();
-    }
-
-    switch (message.media!.type) {
-      case Mediatype.text:
-        return _buildTextMessage();
-      case Mediatype.image:
-        return _buildImageMessage();
-      case Mediatype.video:
-        return _buildVideoMessage();
-      case Mediatype.audio:
-        return _buildAudioMessage();
-      case Mediatype.document:
-        return _buildDocumentMessage();
-      default:
-        return SizedBox.shrink(); // In case of unsupported type
-    }
-  }
-
-  // Render text message
-  Widget _buildTextMessage() {
-    return Row(
-      mainAxisSize:  MainAxisSize.min, // Ensures the row sizes itself to fit the text
-      children: [
-        Flexible(
-          child: Text(
-            message.text, // Get text from message
-            style: TextStyle(fontSize: ThemeConstants.screenWidth * 0.04),
-            softWrap: true, // Ensures text wraps to the next line if too long
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<double> _getImageAspectRatio(File file) async {
-    final image = await decodeImageFromList(file.readAsBytesSync());
-    return image.width / image.height;
-  }
-
-  // Render image message (example)
-  Widget _buildImageMessage() {
-    final file = message.media!.content!;
-    final maxHeight = ThemeConstants.screenHeight * 0.5;
-    return FutureBuilder<double>(
-      future: _getImageAspectRatio(file),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const SizedBox(
-            width: 100,
-            height: 100,
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: AspectRatio(
-              aspectRatio: snapshot.data!,
-              child: Image.file(file, fit: BoxFit.contain),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // Render video message (example)
-  Widget _buildVideoMessage() {
-    return Row(
-      children: [
-        // Add your video rendering logic here
-        Icon(Icons.video_call), // Placeholder for video
-      ],
-    );
-  }
-
-  // Render audio message (example)
-  Widget _buildAudioMessage() {
-    return Row(
-      children: [
-        // Add your audio rendering logic here
-        Icon(Icons.music_note), // Placeholder for audio
-      ],
-    );
-  }
-
-  // Render document message (example)
-  Widget _buildDocumentMessage() {
-    return Row(
-      children: [
-        // Add your document rendering logic here
-        Icon(Icons.insert_drive_file), // Placeholder for document
-      ],
     );
   }
 }
