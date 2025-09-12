@@ -56,7 +56,7 @@ class MessageContentBuilder extends StatelessWidget {
               DateFormat.jm().format(message.time),
               style: const TextStyle(
                 fontSize: 12,
-                color: Colors.white30,
+                color: ThemeConstants.subtitleLight,
               ),
             ),
           ),
@@ -109,7 +109,7 @@ class MessageContentBuilder extends StatelessWidget {
                       DateFormat.jm().format(message.time),
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.white30,
+                        color: ThemeConstants.subtitleLight,
                       ),
                     ),
                   ),

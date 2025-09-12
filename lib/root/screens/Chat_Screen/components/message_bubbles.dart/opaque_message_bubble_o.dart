@@ -9,13 +9,13 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 
-class MessageBubble extends StatelessWidget {
+class OpaqueMessageBubble extends StatelessWidget {
   final Message message; // Accepting Message object
   final void Function()? onTap;
   final Function(Offset)? onLongPress;
   final void Function()? onDeleteMessage;
 
-  const MessageBubble({
+  const OpaqueMessageBubble({
     super.key,
     required this.message,
     this.onTap,

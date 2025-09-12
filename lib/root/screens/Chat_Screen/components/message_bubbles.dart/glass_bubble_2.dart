@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
-import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
+import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:svg_flutter/svg.dart';
 
-class GlassBubble2 extends StatelessWidget {
+class MessageBubble extends StatelessWidget {
   final Message message;
 
   /// Selection state
@@ -40,9 +40,13 @@ class GlassBubble2 extends StatelessWidget {
   final double? topPadding;
   final double? bottomPadding;
 
-  const GlassBubble2({
+  /// Style
+  final BubbleStyle style;
+
+  const MessageBubble({
     super.key,
     required this.message,
+    this.style = BubbleStyle.opaque,
     this.isSelecting = false,
     this.onTapWhileSelecting,
     this.dismissBackground,
@@ -66,13 +70,27 @@ class GlassBubble2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = context.screenWidth;
-    EdgeInsets getDefaultPadding() => message.media?.type == Mediatype.image ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10) : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
-    bool isImage = message.media?.type == Mediatype.image;
-    
+    final bubblePadding = _getDefaultPadding();
+    final bubbleColor = _getBubbleColor(context);
+    final glassColor = _getGlassColor();
+
+    Widget styleBuilder(BubbleStyle style) {
+      return switch (style) {
+        BubbleStyle.glass => glassBubble(
+          glassColor: glassColor,
+          glassPadding: bubblePadding,
+        ),
+        BubbleStyle.opaque => opaqueBubble(
+          messageBubbleColor: bubbleColor,
+          bubblePadding: bubblePadding,
+        ),
+      };
+    }
+
     return Dismissible(
       key: ValueKey(message.id),
-      direction: message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
+      direction:
+          message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
       dismissThresholds: const {
         DismissDirection.startToEnd: 1.0,
         DismissDirection.endToStart: 1.0,
@@ -84,10 +102,9 @@ class GlassBubble2 extends StatelessWidget {
       onDismissed: onDismissed,
       child: Stack(
         children: [
-      
-          // The bubble itself, aligned left or right
           Align(
-            alignment: message.isSender ? Alignment.centerRight : Alignment.centerLeft,
+            alignment:
+                message.isSender ? Alignment.centerRight : Alignment.centerLeft,
             child: Padding(
               padding: EdgeInsets.only(
                 left: message.isSender ? 45.0 : 8,
@@ -95,43 +112,20 @@ class GlassBubble2 extends StatelessWidget {
                 top: topPadding ?? 5,
                 bottom: bottomPadding ?? 5,
               ),
-              child: RippleWell(
-                borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
-                materialColor: rippleColor,
-                onTap: isSelecting ? onTapWhileSelecting : onTap,
-                onLongPress: onLongPress,
-                child: GlassContainer(
-                  blurX: blurX,
-                  blurY: blurY,
-                  borderRadius: borderRadius,
-                  borderWidth: borderWidth,
-                  borderColor: borderColor,
-                  backgroundColor:
-                      backgroundColor ??
-                      (message.isSender
-                          ? Colors.blue.withValues(alpha: 0.15)
-                          : Colors.white.withValues(alpha: 0.15)),
-                  padding: padding ?? getDefaultPadding(),
-                  width: width,
-                  height: height,
-                  child: MessageContentBuilder(message: message),
-                ),
-              ),
+              child: styleBuilder(style),
             ),
           ),
 
           // Full-width selection overlay
           if (isSelecting)
             Positioned.fill(
-              // left: 0,
-              // top: 0,
-              // width: screenWidth,
-              // height: double.maxFinite,
               child: GestureDetector(
                 onTap: onTapWhileSelecting,
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 5),
-                  color: message.isSelected ? Colors.blue.withValues(alpha: 0.2) : Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  color: message.isSelected
+                      ? Colors.blue.withValues(alpha: 0.2)
+                      : Colors.transparent,
                 ),
               ),
             ),
@@ -139,30 +133,98 @@ class GlassBubble2 extends StatelessWidget {
       ),
     );
   }
-}
 
-Widget replyIconBackground(BuildContext context, {required bool alignLeft}) {
-    return Container(
-      alignment: alignLeft ? Alignment.centerLeft : Alignment.centerRight,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: SvgPicture.string(
-            IconPaths.messageReply,
-            width: 24,
-            height: 24,
-            colorFilter: ColorFilter.mode(
-              context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
+  // ------------------------
+  // Helpers
+  // ------------------------
+
+  EdgeInsets _getDefaultPadding() {
+    return message.media?.type == Mediatype.image
+        ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10)
+        : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
+  }
+
+  Color _getBubbleColor(BuildContext context) {
+    return message.isSender
+        ? (context.isLight
+            ? ThemeConstants.senderBlue
+            : ThemeConstants.senderBlueDark)
+        : (context.isLight
+            ? ThemeConstants.hometoolbarLight3
+            : ThemeConstants.darkIconBorder);
+  }
+
+  Color _getGlassColor() {
+    return message.isSender
+        ? Colors.blue.withValues(alpha: 0.15)
+        : Colors.white.withValues(alpha: 0.15);
+  }
+
+  // ------------------------
+  // Bubble Variants
+  // ------------------------
+  Widget opaqueBubble({required Color messageBubbleColor, required EdgeInsets bubblePadding}) {
+    return RippleWell(
+      borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
+      materialColor: messageBubbleColor,
+      onTap: isSelecting ? onTapWhileSelecting : onTap,
+      onLongPress: onLongPress,
+      child: Padding(
+        padding: bubblePadding,
+        child: MessageContentBuilder(message: message),
       ),
     );
   }
+
+  Widget glassBubble({required Color glassColor, required EdgeInsets glassPadding}) {
+    return RippleWell(
+      borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
+      materialColor: rippleColor,
+      onTap: isSelecting ? onTapWhileSelecting : onTap,
+      onLongPress: onLongPress,
+      child: GlassContainer(
+        blurX: blurX,
+        blurY: blurY,
+        borderRadius: borderRadius,
+        borderWidth: borderWidth,
+        borderColor: borderColor,
+        backgroundColor: backgroundColor ?? glassColor,
+        padding: glassPadding,
+        width: width,
+        height: height,
+        child: MessageContentBuilder(message: message),
+      ),
+    );
+  }
+}
+
+// ------------------------
+// Reply Background
+// ------------------------
+Widget replyIconBackground(BuildContext context, {required bool alignLeft}) {
+  return Container(
+    alignment: alignLeft ? Alignment.centerLeft : Alignment.centerRight,
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: SvgPicture.string(
+          IconPaths.messageReply,
+          width: 24,
+          height: 24,
+          colorFilter: ColorFilter.mode(
+            context.isLight
+                ? ThemeConstants.textLight
+                : ThemeConstants.textDark2,
+            BlendMode.srcIn,
+          ),
+        ),
+      ),
+    ),
+  );
+}

@@ -7,7 +7,7 @@ class Message {
   final String text;      // Text message (empty if media-only)
   final DateTime time;    // Timestamp
   final bool isSender;    // Whether current user sent it
-  final bool isSelected;
+  final bool isSelected;  // Function to see if current message is selected or not in the chat
   final Media? media;     // Media attached (null for text-only)
 
   static final Uuid _uuid = Uuid();
