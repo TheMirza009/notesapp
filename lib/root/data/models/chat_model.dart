@@ -1,16 +1,16 @@
 import 'package:isar/isar.dart';
 import 'package:uuid/uuid.dart';
-import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/data/models/media_model.dart';
+import 'message_model.dart';
+import 'media_model.dart';
 
-part 'chat_model.g.dart'; // ISAR generated file command
+part 'chat_model.g.dart';
 
 @collection
 class Chat {
-  Id id = Isar.autoIncrement; // Isar internal ID
+  Id id = Isar.autoIncrement;
 
   @Index(unique: true)
-  late String uuid; // UUID for cloud/export
+  late String uuid;
 
   String? title;
   late String preview;
@@ -18,14 +18,12 @@ class Chat {
   String? chatPhotoPath;
 
   IsarLinks<Message> messages = IsarLinks<Message>();
-  IsarLinks<Media> media = IsarLinks<Media>();
 
-  // Default constructor
   Chat() {
-    uuid = const Uuid().v7(); // Generate a UUID automatically
+    uuid = const Uuid().v7();
+    preview = "";
   }
 
-  // copyWith fixed
   Chat copyWith({
     String? title,
     String? preview,
@@ -48,28 +46,20 @@ class Chat {
       newChat.messages.addAll(this.messages.toList());
     }
 
-    if (media != null) {
-      newChat.media.addAll(media);
-    } else {
-      newChat.media.addAll(this.media.toList());
-    }
-
     return newChat;
   }
 
-  // Factory for empty chat
   factory Chat.emptyChat() {
+    final chat = Chat();
     final firstMessage = Message()
       ..text = "This is a new chat. Start typing to create your first note."
       ..isSender = false
+      ..isSelected = false
       ..time = DateTime.now();
 
-    final chat = Chat()
-      ..uuid = const Uuid().v7()
-      ..preview = firstMessage.text
-      ..date = DateTime.now();
-
     chat.messages.add(firstMessage);
+    chat.preview = firstMessage.text;
+    chat.date = firstMessage.time;
     return chat;
   }
 }

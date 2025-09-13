@@ -11,7 +11,6 @@ class ChatRepository {
 
     // Copy out links BEFORE transaction to avoid lazy-loading inside txn
     final messagesSnapshot = chat.messages.toList();
-    final mediaSnapshot = chat.media.toList();
 
     await isar.writeTxn(() async {
       await isar.chats.put(chat);
@@ -29,15 +28,6 @@ class ChatRepository {
         ..clear()
         ..addAll(messagesSnapshot);
       await chat.messages.save();
-
-      for (var m in mediaSnapshot) {
-        await isar.medias.put(m);
-      }
-
-      chat.media
-        ..clear()
-        ..addAll(mediaSnapshot);
-      await chat.media.save();
     });
   }
 

@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
+import 'package:notesapp/core/controllers/isar_kit.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/chat_list_isar_extensions.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -11,23 +13,43 @@ import 'package:notesapp/root/data/repository/chat_repository.dart';
 class ChatScreenNotifier extends Notifier<Chat> {
   final String initText = "This is a new chat. Start typing to create your first note.";
   bool isSelecting = false;
-  late String chatId;
+  final String chatId;
+
+  ChatScreenNotifier(this.chatId);
 
   @override
-  Chat build() {
-    // Grab chatList from global provider
-    if (chatId == null) return Chat.emptyChat();
-    final chatList = ref.watch(chatListProvider);
-    final chat = chatList.getChatByID(chatId);
-    return chat;
+Chat build() {
+  // Initially, return a placeholder chat (empty or with init text)
+  _loadChatAsync(); // start async loading in the background
+  return Chat.emptyChat(); // temporary placeholder
+}
+
+Future<void> _loadChatAsync() async {
+  final chatFromIsar = await IsarKit.isar.chats
+      .filter()
+      .uuidEqualTo(chatId)
+      .findFirst();
+
+  if (chatFromIsar != null) {
+    // Load messages
+    final messages = await IsarKit.isar.messages
+        .filter()
+        .chat((q) => q.idEqualTo(chatFromIsar.id))
+        .sortByTimeDesc()
+        .findAll();
+
+    // Update state with messages
+    state = chatFromIsar.copyWith(messages: messages);
   }
+}
+
 
   /// Set which chat this controller should manage
-  void init(String id) {
-    chatId = id;
-    state = ref.read(chatListProvider).getChatByID(id);
-    ref.invalidateSelf();
-  }
+  // void init(String id) {
+  //   chatId = id;
+  //   state = ref.read(chatListProvider).getChatByID(id);
+  //   ref.invalidateSelf();
+  // }
 
   /// Send a text message and persist it
   Future<void> sendMessage(String text) async {
@@ -149,4 +171,4 @@ class ChatScreenNotifier extends Notifier<Chat> {
 }
 
 /// Provider
-final chatScreenController = NotifierProvider<ChatScreenNotifier, Chat>(ChatScreenNotifier.new);
+NotifierProvider<ChatScreenNotifier, Chat> chatScreenController(String chatId) => NotifierProvider<ChatScreenNotifier, Chat>(() => ChatScreenNotifier(chatId));

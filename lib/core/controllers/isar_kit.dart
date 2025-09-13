@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Load_test/isar_test.dart/note_item.dart';
 import 'package:path_provider/path_provider.dart';
 
 
@@ -13,7 +14,7 @@ class IsarKit {
     if (_isar != null && _isar!.isOpen) return;
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [ChatSchema, MessageSchema, MediaSchema],
+      [ChatSchema, MessageSchema, MediaSchema, NoteItemSchema, TextDataSchema],
       directory: dir.path,
     );
   }

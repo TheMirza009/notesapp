@@ -15,7 +15,8 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
-import 'package:notesapp/root/screens/Load_test/load_test_screen.dart';
+import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
+import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_test_screen.dart';
 import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
@@ -162,7 +163,7 @@ class Homescreen extends ConsumerWidget {
                     Align(
                       alignment: Alignment.topCenter,
                       child: IconButton(onPressed: () {
-                        Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadTestScreen()));
+                        Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadChatListScreen()));
                       }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
                   ],
                 ),

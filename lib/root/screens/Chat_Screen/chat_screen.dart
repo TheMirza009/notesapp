@@ -31,13 +31,13 @@ class ChatScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(chatScreenController.notifier);
+    final notifier = ref.read(chatScreenController(chatId).notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifier.init(chatId);
+
     });
-    final currentChat = ref.watch(chatScreenController);
+    final currentChat = ref.watch(chatScreenController(chatId));
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
-    if (currentChat == null) {
+    if (currentChat.uuid == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -112,7 +112,7 @@ class ChatScreen extends ConsumerWidget {
                   ? NothingToSee() 
                   : ListView.builder(
                       padding: EdgeInsets.symmetric( horizontal: 0), // ThemeConstants.screenWidth * 0.03, ),
-                      itemCount: currentChat.messages.length + 1,
+                      itemCount: currentChat.messages.toList().length + 1,
                       itemBuilder: (context, index) {
                         if (index == currentChat.messages.length) {
                           return Container(

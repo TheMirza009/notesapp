@@ -69,12 +69,6 @@ const ChatSchema = CollectionSchema(
       name: r'messages',
       target: r'Message',
       single: false,
-    ),
-    r'media': LinkSchema(
-      id: -6869731157674132368,
-      name: r'media',
-      target: r'Media',
-      single: false,
     )
   },
   embeddedSchemas: {},
@@ -163,13 +157,12 @@ Id _chatGetId(Chat object) {
 }
 
 List<IsarLinkBase<dynamic>> _chatGetLinks(Chat object) {
-  return [object.messages, object.media];
+  return [object.messages];
 }
 
 void _chatAttach(IsarCollection<dynamic> col, Id id, Chat object) {
   object.id = id;
   object.messages.attach(col, col.isar.collection<Message>(), r'messages', id);
-  object.media.attach(col, col.isar.collection<Media>(), r'media', id);
 }
 
 extension ChatByIndex on IsarCollection<Chat> {
@@ -1052,61 +1045,6 @@ extension ChatQueryLinks on QueryBuilder<Chat, Chat, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.linkLength(
           r'messages', lower, includeLower, upper, includeUpper);
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> media(FilterQuery<Media> q) {
-    return QueryBuilder.apply(this, (query) {
-      return query.link(q, r'media');
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> mediaLengthEqualTo(
-      int length) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'media', length, true, length, true);
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> mediaIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'media', 0, true, 0, true);
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> mediaIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'media', 0, false, 999999, true);
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> mediaLengthLessThan(
-    int length, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'media', 0, true, length, include);
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> mediaLengthGreaterThan(
-    int length, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'media', length, include, 999999, true);
-    });
-  }
-
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> mediaLengthBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(
-          r'media', lower, includeLower, upper, includeUpper);
     });
   }
 }
