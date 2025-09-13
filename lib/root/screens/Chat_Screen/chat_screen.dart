@@ -15,7 +15,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/glass_bubble_2.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
@@ -70,7 +70,7 @@ class ChatScreen extends ConsumerWidget {
                       onPressed: () => Navigator.pop(context),
                       icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral,),
                     ),
-                  title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : currentChat.title!,
+                  title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : currentChat.title ?? "New Note",
                   lastEdited: currentChat.messages.isNotEmpty ? currentChat.messages.last.time : DateTime.now(),
                   isSelecting: notifier.isSelecting,
                   onTitleTap: () {
@@ -121,8 +121,8 @@ class ChatScreen extends ConsumerWidget {
                           );
                         }
                         
-                        final message = currentChat.messages[index];
-                        final info = currentChat.messages.layoutInfo(index);
+                        final message = currentChat.messages.toList()[index];
+                        final info = currentChat.messages.toList().layoutInfo(index);
                     
                         return Column(
                           children: [

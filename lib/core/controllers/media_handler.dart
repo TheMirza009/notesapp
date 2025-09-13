@@ -28,7 +28,7 @@ class MediaHandler {
       file = await _saveToStorage(file, 'Photos');
     }
 
-    return Media.fromFile(file);
+    return  Media.fromFilePath(file.path);// Media.fromFile(file);
   }
 
   /// Crop an existing image and save into Photos/Cropped
@@ -37,7 +37,7 @@ class MediaHandler {
     if (cropped == null) return null;
 
     final savedFile = await _saveToStorage(cropped, 'Photos/Cropped');
-    return Media.fromFile(savedFile);
+    return Media.fromFilePath(savedFile.path); // Media.fromFile(savedFile);
   }
 
   /// Pick a video → saved in Media/Videos
@@ -45,7 +45,7 @@ class MediaHandler {
     final XFile? pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile == null) return null;
     final savedFile = await _saveToStorage(File(pickedFile.path), 'Videos');
-    return Media.fromFile(savedFile);
+    return Media.fromFilePath(savedFile.path);
   }
 
   /// Pick a document → saved in Media/Documents
@@ -58,19 +58,24 @@ class MediaHandler {
 
     final file = File(result.files.single.path!);
     final savedFile = await _saveToStorage(file, 'Documents');
-    return Media.fromFile(savedFile);
+    return Media.fromFilePath(savedFile.path);
   }
 
-  /// Find and Delete given file based on its storage path
+  /// Find and delete a media file from storage (if local).
   static Future<void> deleteMedia(Media media) async {
-    if (media.content != null && await media.content!.exists()) {
+    final filePath = media.path;
+    if (filePath == null) return; // Remote link or null, nothing to delete
+
+    final file = File(filePath);
+    if (await file.exists()) {
       try {
-        await media.content!.delete();
+        await file.delete();
       } catch (e) {
-        debugPrint("Failed to delete media file: $e");
+        debugPrint("Failed to delete media file at $filePath: $e");
       }
     }
   }
+
 
   /// ===== Helpers =====
 

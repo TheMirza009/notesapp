@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -95,7 +96,7 @@ class Homescreen extends ConsumerWidget {
           chatNotifier.addChat(newChat);
           Navigator.push(
             context,
-            CupertinoPageRoute(builder: (_) => ChatScreen(chatId: newChat.id)),
+            CupertinoPageRoute(builder: (_) => ChatScreen(chatId: newChat.uuid)),
           );
         },
         icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
@@ -180,14 +181,14 @@ class Homescreen extends ConsumerWidget {
                         return Opacity(opacity: value, child: child);
                       },
                       child: ChatTile(
-                        title: chat.title!,
+                        title: chat.title ?? "New Note",
                         subtitle: chat.preview,
                         time: TimeFormat.formatChatTime(chat.date),
                         onDismissed: (_) => chatNotifier.removeChat(chat),
                         onTap: () {
                           Navigator.push(
                               context,
-                              CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.id)),
+                              CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.uuid)),
                             );
                         },
                       ),

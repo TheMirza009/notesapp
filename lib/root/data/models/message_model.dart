@@ -1,27 +1,31 @@
+import 'package:isar/isar.dart';
+import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:uuid/uuid.dart';
 
+part 'message_model.g.dart'; // Isar command for file generation
 
+@collection
 class Message {
-  final String id;
-  final String text;      // Text message (empty if media-only)
-  final DateTime time;    // Timestamp
-  final bool isSender;    // Whether current user sent it
-  final bool isSelected;  // Function to see if current message is selected or not in the chat
-  final Media? media;     // Media attached (null for text-only)
 
-  static final Uuid _uuid = Uuid();
+  // Internal Isar ID (auto-increment)
+  Id isarId = Isar.autoIncrement;
 
-  Message({
-    String? id,
-    required this.text,
-    required this.time,
-    this.isSender = true,
-    this.isSelected = false,
-    this.media,
-  }) : id = id ?? _uuid.v7();
+  // UUID v7 for export/cloud
+  late String id;
+  late String text;
+  late DateTime time;
+  late bool isSender;
+  late bool isSelected;
+  IsarLink<Media> media = IsarLink<Media>();
 
-  /// Creates a copy with optional overrides
+  @Backlink(to: 'messages')
+  final IsarLink<Chat> chat = IsarLink<Chat>(); // single link
+
+  Message() {
+    id = const Uuid().v7(); // Generate a UUID automatically
+  }
+
   Message copyWith({
     String? id,
     String? text,
@@ -30,18 +34,24 @@ class Message {
     bool? isSelected,
     Media? media,
   }) {
-    return Message(
-      id: id ?? this.id,
-      text: text ?? this.text,
-      time: time ?? this.time,
-      isSender: isSender ?? this.isSender,
-      isSelected: isSelected ?? this.isSelected,
-      media: media ?? this.media,
-    );
+    final newMessage = Message()
+      ..id = id ?? this.id
+      ..text = text ?? this.text
+      ..time = time ?? this.time
+      ..isSender = isSender ?? this.isSender
+      ..isSelected = isSelected ?? this.isSelected;
+
+    if (media != null) {
+      newMessage.media.value = media; // assign the value
+    } else if (this.media.value != null) {
+      newMessage.media.value = this.media.value; // copy existing value
+    }
+
+    return newMessage;
   }
 
   @override
   String toString() {
-    return 'Message(id: $id, isSender: $isSender, time: $time, text: "$text", media: $media)';
+    return 'Message(id: $id, isSender: $isSender, time: $time, text: "$text", media: ${media.value})';
   }
 }

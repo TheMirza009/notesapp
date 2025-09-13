@@ -139,7 +139,7 @@ class MessageBubble extends StatelessWidget {
   // ------------------------
 
   EdgeInsets _getDefaultPadding() {
-    return message.media?.type == Mediatype.image
+    return message.media.value!.type == Mediatype.image
         ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10)
         : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
   }

@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
-import 'package:notesapp/core/extensions/chat_list_extension.dart';
+import 'package:notesapp/core/extensions/chat_list_isar_extensions.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
-import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/data/repository/chat_repository.dart';
 
 class ChatScreenNotifier extends Notifier<Chat> {
   final String initText = "This is a new chat. Start typing to create your first note.";
@@ -16,6 +16,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
   @override
   Chat build() {
     // Grab chatList from global provider
+    if (chatId == null) return Chat.emptyChat();
     final chatList = ref.watch(chatListProvider);
     final chat = chatList.getChatByID(chatId);
     return chat;
@@ -28,89 +29,103 @@ class ChatScreenNotifier extends Notifier<Chat> {
     ref.invalidateSelf();
   }
 
-  void sendMessage(String text) {
-    final newMessage = Message(text: text, time: DateTime.now());
-    final updatedMessages = state.messages.removeMessageWithText(initText);
+  /// Send a text message and persist it
+  Future<void> sendMessage(String text) async {
+    final newMessage = Message()
+      ..text = text
+      ..time = DateTime.now();
+
+    final updatedMessages = state.messages.toList().removeMessageWithText(initText);
     final updatedChat = state.copyWith(
       messages: [...updatedMessages, newMessage],
       preview: newMessage.text,
       date: newMessage.time,
     );
-    updateChat(updatedChat);
+
+    await updateChat(updatedChat); // ⬅️ persist to Isar
   }
 
+  /// Pick image, wrap in a Message, and persist it
   Future<void> pickImage() async {
     final image = await MediaHandler.pickImage();
     if (image == null) return;
-    final newImageMessage = Message(text: "", time: DateTime.now(), media: image);
+
+    final newImageMessage = Message()
+      ..text = ""
+      ..time = DateTime.now()
+      ..media.value = image;
+
     final updatedChat = state.copyWith(
       messages: [...state.messages, newImageMessage],
       preview: "📷 Photo",
       date: newImageMessage.time,
     );
-    updateChat(updatedChat);
+
+    await updateChat(updatedChat); // ⬅️ persist to Isar
   }
 
-  void toggleSender(Message message) {
+  void toggleSender(Message message) async {
     if (message.id == null) return;
-    final updatedMessages = state.messages.toggleSenderById(message.id!);
+    final updatedMessages = state.messages.toList().toggleSenderById(message.id!);
     final updatedChat = state.copyWith(messages: updatedMessages);
-    updateChat(updatedChat);
+    await updateChat(updatedChat); // ⬅️ persist to Isar
   }
 
-  int selectCount() {
-    return state.messages.selectedCount;
-  }
+  int selectCount() => state.messages.toList().selectedCount;
 
-  void selectMessage(Message message) {
-    if (message.id == null) return;
-    isSelecting = true;
-    final updatedMessages = state.messages.selectMessageByID(message.id!);
-    final updatedChat = state.copyWith(messages: updatedMessages);
-    updateChat(updatedChat);
-  }
-
-  void unselectMessage(Message message) {
+  void selectMessage(Message message) async {
     if (message.id == null) return;
     isSelecting = true;
-    final updatedMessages = state.messages.unselectMessageByID(message.id!);
+    final updatedMessages = state.messages.toList().selectMessageByID(message.id!);
     final updatedChat = state.copyWith(messages: updatedMessages);
-    updateChat(updatedChat);
+    await updateChat(updatedChat); // ⬅️ persist to Isar
+  }
 
-    if (state.messages.allUnselected) {
+  void unselectMessage(Message message) async {
+    if (message.id == null) return;
+    isSelecting = true;
+    final updatedMessages = state.messages.toList().unselectMessageByID(message.id!);
+    final updatedChat = state.copyWith(messages: updatedMessages);
+    await updateChat(updatedChat); // ⬅️ persist to Isar
+
+    if (updatedMessages.allUnselected) {
       isSelecting = false;
     }
   }
 
-  void unSelectAllMessages() {
+  void unSelectAllMessages() async {
     isSelecting = false;
-    final updatedMessages = state.messages.unselectAll();
+    final updatedMessages = state.messages.toList().unselectAll();
     final updatedChat = state.copyWith(messages: updatedMessages);
-    updateChat(updatedChat);
+    await updateChat(updatedChat); // ⬅️ persist to Isar
   }
 
-  void deleteMessage(Message message) async {
+  Future<void> deleteMessage(Message message) async {
     if (message.id == null) return;
+
     // If it's not a text message, delete the file from storage
-    if (message.media != null && message.media!.type != Mediatype.text) {
-      await MediaHandler.deleteMedia(message.media!);
+    if (message.media.value != null && message.media.value!.type != Mediatype.text) {
+      await MediaHandler.deleteMedia(message.media.value!);
     }
-    final updatedMessages = state.messages.removeMessageById(message.id!);
+
+    final updatedMessages = state.messages.toList().removeMessageById(message.id!);
     final updatedChat = state.copyWith(messages: updatedMessages);
-    updateChat(updatedChat);
+    await updateChat(updatedChat); // ⬅️ persist to Isar
+
     unSelectAllMessages();
   }
 
-  void deleteSelected() {
-    if (state.messages.allUnselected) return;
-    final updatedMessages = state.messages.deleteSelectedMessages();
+  Future<void> deleteSelected() async {
+    if (state.messages.toList().allUnselected) return;
+    final updatedMessages = state.messages.toList().deleteSelectedMessages();
     final updatedChat = state.copyWith(messages: updatedMessages);
-    updateChat(updatedChat);
+    await updateChat(updatedChat); // ⬅️ persist to Isar
     isSelecting = false;
   }
   
-  void updateChat(Chat updatedChat) {
-    ref.read(chatListProvider.notifier).updateChat(updatedChat);
+  /// Centralized update (sync state + provider + Isar)
+  Future<void> updateChat(Chat updatedChat) async {
+    await ref.read(chatListProvider.notifier).updateChat(updatedChat);
     state = updatedChat; // keep local state synced
   }
 
@@ -126,7 +141,8 @@ class ChatScreenNotifier extends Notifier<Chat> {
   }
 
   void removeChatIfEmpty() {
-    if (state.messages.isEmpty || (state.messages.length == 1 && state.messages[0].text == initText)) {
+    final messages = state.messages.toList();
+    if (messages.isEmpty || (messages.length == 1 && messages[0].text == initText)) {
       ref.read(chatListProvider.notifier).removeChat(state);
     }
   }

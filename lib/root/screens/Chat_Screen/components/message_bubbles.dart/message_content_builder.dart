@@ -12,11 +12,11 @@ class MessageContentBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message.media == null || message.media!.type == Mediatype.text) {
+    if (message.media == null || message.media.value!.type == Mediatype.text) {
       return _buildTextWithTimestamp();
     }
 
-    switch (message.media!.type) {
+    switch (message.media.value!.type) {
       case Mediatype.text:
         return _buildTextWithTimestamp();
       case Mediatype.image:
@@ -67,7 +67,17 @@ class MessageContentBuilder extends StatelessWidget {
 
   /// IMAGE MESSAGE + gradient overlay + timestamp
   Widget _buildImageWithOverlay() {
-    final file = message.media!.content!;
+    final media = message.media.value;
+
+    if (media == null || media.path == null) {
+      return const SizedBox(
+        width: 100,
+        height: 100,
+        child: Center(child: Icon(Icons.broken_image)),
+      );
+    }
+
+    final file = File(media.path!);
     final maxHeight = ThemeConstants.screenHeight * 0.5;
 
     return FutureBuilder<double>(
@@ -120,7 +130,8 @@ class MessageContentBuilder extends StatelessWidget {
         );
       },
     );
-  }
+}
+
 
   Future<double> _getImageAspectRatio(File file) async {
     final image = await decodeImageFromList(file.readAsBytesSync());

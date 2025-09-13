@@ -1,69 +1,71 @@
-import 'dart:io';
-import 'package:mime/mime.dart';
+import 'package:isar/isar.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
+import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
 
-/// Represents a media file with relevant metadata.
+part 'media_model.g.dart'; // Isar command
+
+@collection
 class Media {
-  final String name;       // File name or URL
-  final File? content;     // Actual file (null for links)
-  final String extension;  // File extension
-  final Mediatype type;    // Media type (auto-detected)
+  Id isarId = Isar.autoIncrement; // Isar internal ID
 
-  const Media._({
-    required this.name,
-    this.content,
-    required this.extension,
-    required this.type,
-  });
+  late String name;
+  String? path; // file path (nullable for remote links)
+  late String extension;
 
+  @enumerated
+  late Mediatype type;
+
+  @Backlink(to: 'media')
+  final IsarLinks<Chat> chats = IsarLinks<Chat>();
+
+  @Backlink(to: 'media')
+  final IsarLinks<Message> messagesBacklink = IsarLinks<Message>();
+
+  
+  Media();
+
+  /// Factory for text-only placeholder
   factory Media.text() {
-    return const Media._(name: "", extension: "txt", type: Mediatype.text);
+    final media = Media();
+    media.name = "";
+    media.extension = "txt";
+    media.type = Mediatype.text;
+    media.path = null;
+    return media;
   }
 
-  /// Factory: create Media from a file on disk
-  factory Media.fromFile(File file) {
-    final name = file.uri.pathSegments.last;
-    final mimeType = lookupMimeType(file.path);
-    final ext = file.path.split('.').last.toLowerCase();
-
-    return Media._(
-      name: name,
-      content: file,
-      extension: ext,
-      type: _detectType(ext, mimeType),
-    );
+  /// Factory from a file path
+  factory Media.fromFilePath(String filePath) {
+    final media = Media();
+    final segments = filePath.split('/');
+    media.name = segments.isNotEmpty ? segments.last : filePath;
+    media.path = filePath;
+    final ext = media.name.split('.').last.toLowerCase();
+    media.extension = ext;
+    media.type = _detectType(ext, null);
+    return media;
   }
 
-  /// Factory: create Media from a link (URL)
+  /// Factory from a URL link
   factory Media.fromLink(String url) {
+    final media = Media();
     final uri = Uri.parse(url);
-    final name = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : url;
-    final ext = uri.path.contains('.') ? uri.path.split('.').last.toLowerCase() : '';
-
-    return Media._(
-      name: name,
-      content: null,
-      extension: ext,
-      type: Mediatype.link,
-    );
+    media.name = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : url;
+    media.path = url; // store URL as path for Isar
+    media.extension = media.name.contains('.') ? media.name.split('.').last.toLowerCase() : '';
+    media.type = Mediatype.link;
+    return media;
   }
 
-  /// Detects type based on extension or MIME type
   static Mediatype _detectType(String ext, String? mimeType) {
-    if (mimeType?.startsWith('image/') ?? false) return Mediatype.image;
-    if (mimeType?.startsWith('video/') ?? false) return Mediatype.video;
-    if (mimeType?.startsWith('audio/') ?? false) return Mediatype.audio;
-
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(ext)) return Mediatype.image;
     if (['mp4', 'mov', 'mkv', 'avi'].contains(ext)) return Mediatype.video;
     if (['mp3', 'wav', 'aac', 'ogg', 'flac'].contains(ext)) return Mediatype.audio;
-    if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'].contains(ext)) {
-      return Mediatype.document;
-    }
+    if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'].contains(ext)) return Mediatype.document;
     return Mediatype.unknown;
   }
 
   @override
-  String toString() =>
-      'Media(name: $name, type: $type, ext: $extension, path: ${content?.path ?? "remote"})';
+  String toString() => 'Media(name: $name, type: $type, ext: $extension, path: ${path ?? "remote"})';
 }

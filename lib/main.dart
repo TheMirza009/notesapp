@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/isar_kit.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
@@ -11,6 +12,7 @@ bool kisWindows = Platform.isWindows;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await IsarKit.init();
 
   // Lock orientation in portrait
   await SystemChrome.setPreferredOrientations([
