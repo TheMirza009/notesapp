@@ -12,11 +12,11 @@ class MessageContentBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message.media == null || message.media.value!.type == Mediatype.text) {
+    if (message.media == null || message.media.value?.type == Mediatype.text) {
       return _buildTextWithTimestamp();
     }
 
-    switch (message.media.value!.type) {
+    switch (message.media.value?.type) {
       case Mediatype.text:
         return _buildTextWithTimestamp();
       case Mediatype.image:
