@@ -24,7 +24,7 @@ class Message {
     id = const Uuid().v7();
     text = "";
     time = DateTime.now();
-    isSender = false;
+    isSender = true;
     isSelected = false;
   }
 

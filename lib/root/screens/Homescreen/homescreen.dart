@@ -92,12 +92,11 @@ class Homescreen extends ConsumerWidget {
       floatingActionButton: CustomIconButton(
         size: 60,
         splashColor: const Color.fromARGB(14, 96, 125, 139),
-        onPressed: () {
-          Chat newChat = Chat.emptyChat();
-          chatNotifier.addChat(newChat);
+        onPressed: () async {
+          Chat newChat = await chatNotifier.addChat();
           Navigator.push(
             context,
-            CupertinoPageRoute(builder: (_) => ChatScreen(chatId: newChat.uuid)),
+            CupertinoPageRoute(builder: (_) => ChatScreen(chatId: newChat.isarID))    
           );
         },
         icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
@@ -189,7 +188,7 @@ class Homescreen extends ConsumerWidget {
                         onTap: () {
                           Navigator.push(
                               context,
-                              CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.uuid)),
+                              CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.isarID)),
                             );
                         },
                       ),

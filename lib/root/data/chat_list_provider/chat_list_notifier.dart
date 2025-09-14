@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notesapp/core/controllers/isar_kit.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/data/repository/chat_repository.dart';
 
 /// Notifier that controls a list of chats stored in Isar
 class ChatListNotifier extends StateNotifier<List<Chat>> {
@@ -12,33 +11,32 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
   }
 
   Future<void> _loadChats() async {
-    state = await ChatRepository.loadAllChats();
+    state = await IsarDatabase.loadAllChats();
   }
 
-  Future<void> addChat(Chat chat) async {
-    await ChatRepository.saveChat(chat);
-    state = [...state, chat];
+  /// Create + persist + add to state
+  Future<Chat> addChat() async {
+    final newChat = Chat.emptyChat(); // Detached object in memory
+    await IsarDatabase.addNewChat(newChat); // DataBase
+    state = [...state, newChat]; // State update 
+    return newChat; // return it so UI can navigate
   }
 
   Future<void> removeChat(Chat chat) async {
-    await IsarKit.isar.writeTxn(() async {
-      await IsarKit.isar.chats.delete(chat.id);
+    await IsarDatabase.isar.writeTxn(() async {
+      await IsarDatabase.isar.chats.delete(chat.isarID);
     });
-    state = state.where((c) => c.id != chat.id).toList();
+    state = state.where((c) => c.isarID != chat.isarID).toList();
   }
 
   Future<void> clearChats() async {
-    await IsarKit.isar.writeTxn(() async {
-      await IsarKit.isar.chats.clear();
-      await IsarKit.isar.messages.clear();
-      await IsarKit.isar.medias.clear();
-    });
+    await IsarDatabase.clearRepo();
     state = [];
   }
 
   Future<void> updateChat(Chat updatedChat) async {
-    await ChatRepository.saveChat(updatedChat);
-    state = state.map((c) => c.id == updatedChat.id ? updatedChat : c).toList();
+    await IsarDatabase.saveChat(updatedChat);
+    state = state.map((c) => c.isarID == updatedChat.isarID ? updatedChat : c).toList();
   }
 
   Chat getChatByID(String uuid) {

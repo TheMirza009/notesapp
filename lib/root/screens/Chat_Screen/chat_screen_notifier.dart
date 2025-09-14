@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
-import 'package:notesapp/core/controllers/isar_kit.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/chat_list_isar_extensions.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -8,48 +8,45 @@ import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/data/repository/chat_repository.dart';
 
 class ChatScreenNotifier extends Notifier<Chat> {
   final String initText = "This is a new chat. Start typing to create your first note.";
   bool isSelecting = false;
-  final String chatId;
+  final Id chatId;
 
   ChatScreenNotifier(this.chatId);
 
   @override
 Chat build() {
-  // Initially, return a placeholder chat (empty or with init text)
-  _loadChatAsync(); // start async loading in the background
-  return Chat.emptyChat(); // temporary placeholder
+  // Start async loading
+  _loadChat();
+  final Chat chat = Chat()
+  ..messages = IsarLinks<Message>();
+
+  // Return a placeholder chat (won’t matter, since the real chat will replace it)
+  return chat;
 }
 
-Future<void> _loadChatAsync() async {
-  final chatFromIsar = await IsarKit.isar.chats
-      .filter()
-      .uuidEqualTo(chatId)
+
+  Future<void> _loadChat() async {
+  // Find the chat by Isar auto-increment ID
+  final chatFromIsar = await IsarDatabase.isar.chats
+      .where()
+      .isarIDEqualTo((chatId)) // assuming chatId is a String; convert to int
       .findFirst();
 
   if (chatFromIsar != null) {
-    // Load messages
-    final messages = await IsarKit.isar.messages
+    // Fetch messages that belong to this chat, sorted by time
+    final messages = await IsarDatabase.isar.messages
         .filter()
-        .chat((q) => q.idEqualTo(chatFromIsar.id))
-        .sortByTimeDesc()
+        .chat((q) => q.isarIDEqualTo(chatFromIsar.isarID))
         .findAll();
 
-    // Update state with messages
+    // Update state with real messages
     state = chatFromIsar.copyWith(messages: messages);
   }
 }
 
-
-  /// Set which chat this controller should manage
-  // void init(String id) {
-  //   chatId = id;
-  //   state = ref.read(chatListProvider).getChatByID(id);
-  //   ref.invalidateSelf();
-  // }
 
   /// Send a text message and persist it
   Future<void> sendMessage(String text) async {
@@ -171,4 +168,4 @@ Future<void> _loadChatAsync() async {
 }
 
 /// Provider
-NotifierProvider<ChatScreenNotifier, Chat> chatScreenController(String chatId) => NotifierProvider<ChatScreenNotifier, Chat>(() => ChatScreenNotifier(chatId));
+NotifierProvider<ChatScreenNotifier, Chat> chatScreenController(Id chatId) => NotifierProvider<ChatScreenNotifier, Chat>(() => ChatScreenNotifier(chatId));

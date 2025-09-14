@@ -47,7 +47,7 @@ const ChatSchema = CollectionSchema(
   serialize: _chatSerialize,
   deserialize: _chatDeserialize,
   deserializeProp: _chatDeserializeProp,
-  idName: r'id',
+  idName: r'isarID',
   indexes: {
     r'uuid': IndexSchema(
       id: 2134397340427724972,
@@ -123,7 +123,7 @@ Chat _chatDeserialize(
   final object = Chat();
   object.chatPhotoPath = reader.readStringOrNull(offsets[0]);
   object.date = reader.readDateTime(offsets[1]);
-  object.id = id;
+  object.isarID = id;
   object.preview = reader.readString(offsets[2]);
   object.title = reader.readStringOrNull(offsets[3]);
   object.uuid = reader.readString(offsets[4]);
@@ -153,7 +153,7 @@ P _chatDeserializeProp<P>(
 }
 
 Id _chatGetId(Chat object) {
-  return object.id;
+  return object.isarID;
 }
 
 List<IsarLinkBase<dynamic>> _chatGetLinks(Chat object) {
@@ -161,7 +161,7 @@ List<IsarLinkBase<dynamic>> _chatGetLinks(Chat object) {
 }
 
 void _chatAttach(IsarCollection<dynamic> col, Id id, Chat object) {
-  object.id = id;
+  object.isarID = id;
   object.messages.attach(col, col.isar.collection<Message>(), r'messages', id);
 }
 
@@ -220,7 +220,7 @@ extension ChatByIndex on IsarCollection<Chat> {
 }
 
 extension ChatQueryWhereSort on QueryBuilder<Chat, Chat, QWhere> {
-  QueryBuilder<Chat, Chat, QAfterWhere> anyId() {
+  QueryBuilder<Chat, Chat, QAfterWhere> anyIsarID() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
     });
@@ -228,66 +228,66 @@ extension ChatQueryWhereSort on QueryBuilder<Chat, Chat, QWhere> {
 }
 
 extension ChatQueryWhere on QueryBuilder<Chat, Chat, QWhereClause> {
-  QueryBuilder<Chat, Chat, QAfterWhereClause> idEqualTo(Id id) {
+  QueryBuilder<Chat, Chat, QAfterWhereClause> isarIDEqualTo(Id isarID) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
+        lower: isarID,
+        upper: isarID,
       ));
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterWhereClause> idNotEqualTo(Id id) {
+  QueryBuilder<Chat, Chat, QAfterWhereClause> isarIDNotEqualTo(Id isarID) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(
-              IdWhereClause.lessThan(upper: id, includeUpper: false),
+              IdWhereClause.lessThan(upper: isarID, includeUpper: false),
             )
             .addWhereClause(
-              IdWhereClause.greaterThan(lower: id, includeLower: false),
+              IdWhereClause.greaterThan(lower: isarID, includeLower: false),
             );
       } else {
         return query
             .addWhereClause(
-              IdWhereClause.greaterThan(lower: id, includeLower: false),
+              IdWhereClause.greaterThan(lower: isarID, includeLower: false),
             )
             .addWhereClause(
-              IdWhereClause.lessThan(upper: id, includeUpper: false),
+              IdWhereClause.lessThan(upper: isarID, includeUpper: false),
             );
       }
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterWhereClause> idGreaterThan(Id id,
+  QueryBuilder<Chat, Chat, QAfterWhereClause> isarIDGreaterThan(Id isarID,
       {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
-        IdWhereClause.greaterThan(lower: id, includeLower: include),
+        IdWhereClause.greaterThan(lower: isarID, includeLower: include),
       );
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterWhereClause> idLessThan(Id id,
+  QueryBuilder<Chat, Chat, QAfterWhereClause> isarIDLessThan(Id isarID,
       {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
-        IdWhereClause.lessThan(upper: id, includeUpper: include),
+        IdWhereClause.lessThan(upper: isarID, includeUpper: include),
       );
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterWhereClause> idBetween(
-    Id lowerId,
-    Id upperId, {
+  QueryBuilder<Chat, Chat, QAfterWhereClause> isarIDBetween(
+    Id lowerIsarID,
+    Id upperIsarID, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
+        lower: lowerIsarID,
         includeLower: includeLower,
-        upper: upperId,
+        upper: upperIsarID,
         includeUpper: includeUpper,
       ));
     });
@@ -536,42 +536,42 @@ extension ChatQueryFilter on QueryBuilder<Chat, Chat, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> idEqualTo(Id value) {
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> isarIDEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
+        property: r'isarID',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> idGreaterThan(
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> isarIDGreaterThan(
     Id value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'id',
+        property: r'isarID',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> idLessThan(
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> isarIDLessThan(
     Id value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'id',
+        property: r'isarID',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterFilterCondition> idBetween(
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> isarIDBetween(
     Id lower,
     Id upper, {
     bool includeLower = true,
@@ -579,7 +579,7 @@ extension ChatQueryFilter on QueryBuilder<Chat, Chat, QFilterCondition> {
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
+        property: r'isarID',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1136,15 +1136,15 @@ extension ChatQuerySortThenBy on QueryBuilder<Chat, Chat, QSortThenBy> {
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterSortBy> thenById() {
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByIsarID() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'id', Sort.asc);
+      return query.addSortBy(r'isarID', Sort.asc);
     });
   }
 
-  QueryBuilder<Chat, Chat, QAfterSortBy> thenByIdDesc() {
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByIsarIDDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'id', Sort.desc);
+      return query.addSortBy(r'isarID', Sort.desc);
     });
   }
 
@@ -1223,9 +1223,9 @@ extension ChatQueryWhereDistinct on QueryBuilder<Chat, Chat, QDistinct> {
 }
 
 extension ChatQueryProperty on QueryBuilder<Chat, Chat, QQueryProperty> {
-  QueryBuilder<Chat, int, QQueryOperations> idProperty() {
+  QueryBuilder<Chat, int, QQueryOperations> isarIDProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'id');
+      return query.addPropertyName(r'isarID');
     });
   }
 

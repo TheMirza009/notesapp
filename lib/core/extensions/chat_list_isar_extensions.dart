@@ -5,7 +5,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 /// Extension for ChatList with custom methods
 extension ChatListX on List<Chat> {
   Chat getChatByID(String id) => firstWhere(
-        (c) => c.id.toString() == id,
+        (c) => c.isarID.toString() == id,
         orElse: () => Chat.emptyChat(),
       );
 }

@@ -72,21 +72,47 @@ class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
   }
 
   Future<void> _addChat(String text) async {
-    final newChat = Chat.emptyChat();
-    newChat.title = text;
-    newChat.preview = "Messages for: $text";
+  final newChat = Chat();
+  newChat.title = text;
 
-    late Chat savedChat;
+  // Create the first message
+  final firstMessage = Message()
+    ..text = "This is a new chat. Start typing to create your first note."
+    ..isSender = false
+    ..isSelected = false
+    ..time = DateTime.now();
 
-    await _isar.writeTxn(() async {
-      final id = await _isar.chats.put(newChat);
-      savedChat = await _isar.chats.get(id) ?? newChat; // get attached version
-    });
+  late Chat savedChat;
 
-    setState(() {
-      chats.add(savedChat);
-    });
-  }
+  await _isar.writeTxn(() async {
+    // 1. Save message first
+    await _isar.messages.put(firstMessage);
+
+    // 2. Save chat first
+    await _isar.chats.put(newChat);
+
+    // 3. Add message to chat link
+    newChat.messages.add(firstMessage);
+
+    // 4. Persist the link
+    await newChat.messages.save();
+
+    // 5. Update chat preview and date
+    newChat.preview = firstMessage.text;
+    newChat.date = firstMessage.time;
+    await _isar.chats.put(newChat); // save updated preview/date
+
+    savedChat = await _isar.chats.get(newChat.isarID) ?? newChat;
+  });
+
+  setState(() {
+    chats.add(savedChat);
+  });
+}
+
+
+
+
 
   Future<void> deleteChat(Chat chat) async {
     await _isar.writeTxn(() async {
@@ -98,7 +124,7 @@ class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
       if (messageIds.isNotEmpty) {
         await _isar.messages.deleteAll(messageIds);
       }
-      await _isar.chats.delete(chat.id);
+      await _isar.chats.delete(chat.isarID);
     });
 
     setState(() {
@@ -222,7 +248,7 @@ class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
                         itemBuilder: (context, index) {
                           final chat = chats[index];
                           return Dismissible(
-                            key: ValueKey(chat.id),
+                            key: ValueKey(chat.isarID),
                             direction: DismissDirection.endToStart,
                             background: Container(
                               color: Colors.red,
@@ -244,7 +270,7 @@ class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
                                   ),
                                 subtitle: Text(
                                             chat.messages.isNotEmpty 
-                                            ? (chat.messages.last.text ?? "No messages yet.") 
+                                            ? ( chat.preview /* chat.messages.last.text */ ?? "No messages yet.") 
                                             : "No messages yet.",
                                   style: TextStyle(color: ThemeConstants.iconColorNeutral),
                                   ),

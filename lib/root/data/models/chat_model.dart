@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:uuid/uuid.dart';
 import 'message_model.dart';
 import 'media_model.dart';
@@ -7,7 +8,7 @@ part 'chat_model.g.dart';
 
 @collection
 class Chat {
-  Id id = Isar.autoIncrement;
+  Id isarID = Isar.autoIncrement;
 
   @Index(unique: true)
   late String uuid;
@@ -33,7 +34,7 @@ class Chat {
     List<Media>? media,
   }) {
     final newChat = Chat()
-      ..id = id
+      ..isarID = isarID
       ..uuid = uuid
       ..title = title ?? this.title
       ..preview = preview ?? this.preview
@@ -51,15 +52,18 @@ class Chat {
 
   factory Chat.emptyChat() {
     final chat = Chat();
-    final firstMessage = Message()
-      ..text = "This is a new chat. Start typing to create your first note."
-      ..isSender = false
-      ..isSelected = false
-      ..time = DateTime.now();
+
+    final firstMessage =
+      Message()
+        ..text = "This is a new chat. Start typing to create your first note."
+        ..isSender = false
+        ..isSelected = false
+        ..time = DateTime.now();
 
     chat.messages.add(firstMessage);
     chat.preview = firstMessage.text;
     chat.date = firstMessage.time;
-    return chat;
+
+    return chat; // ✅ no DB side-effect here
   }
 }

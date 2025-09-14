@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/core/extensions/chat_list_isar_extensions.dart';
+import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
@@ -39,13 +43,42 @@ class _TestChatScreenState extends State<TestChatScreen> {
   Future<void> loadMessages() async {
     // Load the messages linked to this chat
     await widget.chat.messages.load();
+    Future.wait(widget.chat.messages.map((message) => message.media.load()));
 
     setState(() {
       messages = widget.chat.messages.toList();
     });
   }
 
+  Future<void> pickImage() async {
+   final image = await MediaHandler.pickImage();
+   if (image == null) return;
+
+   final newImageMessage = Message()
+   ..text = ""
+   ..isSelected = false
+   ..isSender = true
+   ..time = DateTime.now()
+   ..media.value = image; 
+
+   await isar.writeTxn(() async {
+    await isar.medias.put(image!);
+    await isar.messages.put(newImageMessage);
+    await newImageMessage.media.save();
+    widget.chat.messages.add(newImageMessage);
+    await widget.chat.messages.save();
+    widget.chat.preview = "📷 Photo";
+    widget.chat.date = newImageMessage.time;
+    await isar.chats.put(widget.chat);
+   });
+
+   setState(() {
+     messages.add(newImageMessage);
+   });
+  }
+
   Future<void> sendMessage(String text) async {
+
     // Message creation
     final newMessage = Message()
     ..text = text
@@ -135,6 +168,7 @@ class _TestChatScreenState extends State<TestChatScreen> {
                 final Message message = messages[index];
                 // return GlassContainer(child: Text(message.text));
               return MessageBubble(
+                style: BubbleStyle.opaque,
                 message: message,
                 onTap: () {
                   setState(() {
@@ -151,7 +185,7 @@ class _TestChatScreenState extends State<TestChatScreen> {
           ),
           BottomMessageBar(
             onEmojiTap: () {},
-            onAttachmentTap: () {},
+            onAttachmentTap: () => pickImage(),
             onMicTap: () {},
             onSend: (text) {
               print(text);

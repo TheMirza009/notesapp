@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -26,21 +27,15 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
-  final String chatId;
+  final Id chatId;
   const ChatScreen({super.key, required this.chatId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatScreenController(chatId).notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-
-    });
     final currentChat = ref.watch(chatScreenController(chatId));
-    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
-    if (currentChat.uuid == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
 
+    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
     String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
 
@@ -54,10 +49,12 @@ class ChatScreen extends ConsumerWidget {
           body: Container(
             height: ThemeConstants.screenHeight,
             width: ThemeConstants.screenWidth,
-            decoration: BoxDecoration(gradient: backgroundGradient, image: DecorationImage(
-              image: NetworkImage(imageURL2),
-              fit: BoxFit.fitHeight,
-              )),
+            decoration: BoxDecoration(gradient: backgroundGradient, 
+            // image: DecorationImage(
+            //   image: NetworkImage(imageURL2),
+            //   fit: BoxFit.fitHeight,
+            //   ),
+            ),
             child: Column(
               children: [
                 ChatAppBar(
@@ -138,7 +135,6 @@ class ChatScreen extends ConsumerWidget {
                                         ? notifier.unselectMessage(message)
                                         : notifier.selectMessage(message);
                                   },
-                                  // dismissBackground: dismissBackground(context, alignLeft: !message.isSender),
                                   onTap: () => notifier.toggleSender(message),
                                   onLongPress: (pos) {
                                     notifier.selectMessage(message);
