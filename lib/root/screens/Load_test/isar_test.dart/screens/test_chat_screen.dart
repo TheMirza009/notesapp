@@ -19,15 +19,24 @@ class TestChatScreen extends StatefulWidget {
 
 class _TestChatScreenState extends State<TestChatScreen> {
   List<Message> messages = [];
+  late final Isar isar;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _loadMessages();
+    isar = Isar.getInstance('isar')!;
+    loadMessages();
   }
 
-  Future<void> _loadMessages() async {
+  Future<void> getIsarInstance() async {
+    isar = Isar.getInstance('isar')!;
+    if (isar == null) {
+      throw Exception("Isar has not been initialized.");
+    }
+  }
+
+  Future<void> loadMessages() async {
     // Load the messages linked to this chat
     await widget.chat.messages.load();
 
@@ -36,12 +45,7 @@ class _TestChatScreenState extends State<TestChatScreen> {
     });
   }
 
-  Future<void> _sendMessage(String text) async {
-    final isar = Isar.getInstance('isar');
-    if (isar == null) {
-      throw Exception("Isar has not been initialized.");
-    }
-
+  Future<void> sendMessage(String text) async {
     // Message creation
     final newMessage = Message()
     ..text = text
@@ -68,8 +72,43 @@ class _TestChatScreenState extends State<TestChatScreen> {
     setState(() {
       messages.add(newMessage);
     });
-
   }
+
+  Future<void> updateMessage(Message message) async {
+    await isar.writeTxn(() async {
+      // Check if the message exists in DB
+      final existing = await isar.messages.get(message.isarId);
+
+      if (existing != null) {
+        // Exists -> update fields
+        existing.isSender = message.isSender;
+        existing.text = message.text;
+        existing.isSelected = message.isSelected;
+
+        await isar.messages.put(existing); // update
+        print("Message updated: ${existing.id}");
+      } else {
+        // Does not exist -> insert new
+        await isar.messages.put(message);
+        print("Message inserted: ${message.id}");
+      }
+    });
+
+    // setState(() {});
+  }
+
+  Future<void> deleteMessage(Message message) async {
+    await isar.writeTxn(() async {
+      await isar.messages.delete(message.isarId);
+      widget.chat.messages.remove(message);
+      await widget.chat.messages.save();
+    });
+
+    setState(() {
+      messages.remove(message);
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -94,8 +133,20 @@ class _TestChatScreenState extends State<TestChatScreen> {
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final Message message = messages[index];
-                return GlassContainer(child: Text(message.text));
-              return MessageBubble(message: message, );
+                // return GlassContainer(child: Text(message.text));
+              return MessageBubble(
+                message: message,
+                onTap: () {
+                  setState(() {
+                    message.isSender = !message.isSender;
+                  });
+                  updateMessage(message);
+                },
+                onLongPress: (p0) {
+                  deleteMessage(message);
+                },
+
+              );
             }),
           ),
           BottomMessageBar(
@@ -104,7 +155,7 @@ class _TestChatScreenState extends State<TestChatScreen> {
             onMicTap: () {},
             onSend: (text) {
               print(text);
-              _sendMessage(text);
+              sendMessage(text);
             },
           )
         ],
