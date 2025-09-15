@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -11,83 +14,95 @@ import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar.
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
-/// ------------------ Chat State ------------------
+class ChatNotifier extends AutoDisposeNotifier<Chat> {
+  late final Isar isar;
+  final Chat initialChat;
 
-class ChatState {
-  final Chat chat;
-  final List<Message> messages;
+  ChatNotifier(this.initialChat);
 
-  ChatState({required this.chat, required this.messages});
+  @override
+  Chat build() {
+    isar = Isar.getInstance('isar')!;
+    loadFromDatabase();
+    return initialChat; // return non-null fallback
+  }
 
-  ChatState copyWith({Chat? chat, List<Message>? messages}) {
-    return ChatState(
-      chat: chat ?? this.chat,
-      messages: messages ?? this.messages,
-    );
+  Future<void> loadFromDatabase() async {
+  final freshChat = await isar.chats.get(initialChat.isarID);
+  if (freshChat != null) {
+    await freshChat.messages.load();
+    await Future.wait(freshChat.messages.map((m) => m.media.load()));
+    state = freshChat;
   }
 }
 
-/// ------------------ Chat Notifier ------------------
-
-class ChatNotifier extends FamilyNotifier<ChatState, Chat> {
-  late final Isar isar;
-
-  @override
-  ChatState build(Chat chat) {
-    isar = Isar.getInstance('isar')!;
-    final stateInitial = ChatState(chat: chat, messages: []);
-    loadMessages(chat); // async load messages
-    return stateInitial;
-  }
-
-  Future<void> loadMessages(Chat chat) async {
-    await chat.messages.load();
-    await Future.wait(chat.messages.map((m) => m.media.load()));
-    state = state.copyWith(messages: chat.messages.toList());
-  }
-
   Future<void> pickImage() async {
-    final image = await MediaHandler.pickImage();
-    if (image == null) return;
+    final pickedMedia = await MediaHandler.pickImage();
+    if (pickedMedia == null) return;
 
-    final newImageMessage = Message()
-      ..text = ""
-      ..isSender = true
-      ..isSelected = false
-      ..time = DateTime.now()
-      ..media.value = image;
+    // Compute aspect ratio asynchronously
+    final file = File(pickedMedia.path!);
+    final bytes = await file.readAsBytes();
+    final decodedImage = await decodeImageFromList(bytes);
+    pickedMedia.aspectRatio = decodedImage.width / decodedImage.height;
 
+    // Persist the media with the cached aspect ratio
     await isar.writeTxn(() async {
-      await isar.medias.put(image);
-      await isar.messages.put(newImageMessage);
-      await newImageMessage.media.save();
-      state.chat.messages.add(newImageMessage);
-      await state.chat.messages.save();
-      state.chat.preview = "📷 Photo";
-      state.chat.date = newImageMessage.time;
-      await isar.chats.put(state.chat);
+      await isar.medias.put(pickedMedia);
     });
 
-    state = state.copyWith(messages: [...state.messages, newImageMessage]);
+    // Reload persisted media
+    final persistedMedia = await isar.medias.get(pickedMedia.isarId);
+    if (persistedMedia == null) return;
+
+    // Create message
+    final newMessage =
+        Message()
+          ..text = ""
+          ..isSender = true
+          ..isSelected = false
+          ..time = DateTime.now()
+          ..media.value = persistedMedia;
+
+    // Persist message and attach to chat
+    await isar.writeTxn(() async {
+      await isar.messages.put(newMessage);
+      await newMessage.media.save();
+
+      initialChat.messages.add(newMessage);
+      await initialChat.messages.save();
+
+      initialChat.preview = "📷 Photo";
+      initialChat.date = newMessage.time;
+      await isar.chats.put(initialChat);
+    });
+
+    await newMessage.media.load();
+
+    // Update UI
+    state = initialChat;
   }
 
+
   Future<void> sendMessage(String text) async {
-    final newMessage = Message()
-      ..text = text
-      ..isSender = true
-      ..isSelected = false
-      ..time = DateTime.now();
+    final newMessage =
+        Message()
+          ..text = text
+          ..isSender = true
+          ..isSelected = false
+          ..time = DateTime.now();
 
     await isar.writeTxn(() async {
       await isar.messages.put(newMessage);
-      state.chat.messages.add(newMessage);
-      await state.chat.messages.save();
-      state.chat.preview = text;
-      state.chat.date = newMessage.time;
-      await isar.chats.put(state.chat);
-    });
 
-    state = state.copyWith(messages: [...state.messages, newMessage]);
+      // attach to the chat relation and persist
+      initialChat.messages.add(newMessage);
+      await initialChat.messages.save();
+
+      initialChat.preview = text;
+      initialChat.date = newMessage.time;
+      await isar.chats.put(initialChat);
+    });
   }
 
   Future<void> updateMessage(Message message) async {
@@ -102,27 +117,30 @@ class ChatNotifier extends FamilyNotifier<ChatState, Chat> {
         await isar.messages.put(message);
       }
     });
-    loadMessages(state.chat);
   }
 
   Future<void> deleteMessage(Message message) async {
     await isar.writeTxn(() async {
       await isar.messages.delete(message.isarId);
-      state.chat.messages.remove(message);
-      await state.chat.messages.save();
-    });
 
-    state = state.copyWith(
-      messages: state.messages.where((m) => m != message).toList(),
-    );
+      // remove relation and persist
+      initialChat.messages.remove(message);
+      await initialChat.messages.save();
+      await isar.chats.put(initialChat);
+    });
+    if (message.media.value!.type == Mediatype.image) {
+      await MediaHandler.deleteMedia(message.media.value!);
+    }
   }
 }
 
 /// ------------------ Riverpod Provider ------------------
-
-final chatProvider = NotifierProvider.family<ChatNotifier, ChatState, Chat>(
-  () => ChatNotifier(),
-);
+/// Factory function to create a provider bound to a specific chat
+AutoDisposeNotifierProvider<ChatNotifier, Chat> chatProvider(Chat chat) {
+  return AutoDisposeNotifierProvider<ChatNotifier, Chat>(
+    () => ChatNotifier(chat),
+  );
+}
 
 /// ------------------ UI ------------------
 
@@ -132,13 +150,24 @@ class TestChatScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatState = ref.watch(chatProvider(chat));
-    final chatNotifier = ref.read(chatProvider(chat).notifier);
+    // watch the provider that is bound to this chat
+    final chatState = ref.watch(chatProvider(chat)); // ✅ state is Chat
+    final chatNotifier = ref.read(
+      chatProvider(chat).notifier,
+    ); // ✅ access methods
+
+    // Defensive: if for any reason chatState is null (shouldn't be with Notifier<Chat>),
+    // show a loader.
+    if (chatState == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final messages = chatState.messages.toList();
 
     return Scaffold(
       backgroundColor: ThemeConstants.textLight,
       appBar: AppBar(
-        title: Text("Chat: ${chat.title}"),
+        title: Text("Chat: ${chatState.title}"),
         backgroundColor: ThemeConstants.messageBarDark,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -150,23 +179,25 @@ class TestChatScreen extends ConsumerWidget {
       body: Column(
         children: [
           Expanded(
-            child: chatState.messages.isEmpty
-                ? const NothingToSee()
-                : ListView.builder(
-                    itemCount: chatState.messages.length,
-                    itemBuilder: (context, index) {
-                      final message = chatState.messages[index];
-                      return MessageBubble(
-                        style: BubbleStyle.opaque,
-                        message: message,
-                        onTap: () {
-                          message.isSender = !message.isSender;
-                          chatNotifier.updateMessage(message);
-                        },
-                        onLongPress: (_) => chatNotifier.deleteMessage(message),
-                      );
-                    },
-                  ),
+            child:
+                messages.isEmpty
+                    ? const NothingToSee()
+                    : ListView.builder(
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        return MessageBubble(
+                          style: BubbleStyle.opaque,
+                          message: message,
+                          onTap: () {
+                            message.isSender = !message.isSender;
+                            chatNotifier.updateMessage(message);
+                          },
+                          onLongPress:
+                              (_) => chatNotifier.deleteMessage(message),
+                        );
+                      },
+                    ),
           ),
           BottomMessageBar(
             onEmojiTap: () {},

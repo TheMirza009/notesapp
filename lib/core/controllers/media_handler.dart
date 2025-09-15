@@ -70,6 +70,7 @@ class MediaHandler {
     if (await file.exists()) {
       try {
         await file.delete();
+        print("Deleted file: ${media.name}");
       } catch (e) {
         debugPrint("Failed to delete media file at $filePath: $e");
       }

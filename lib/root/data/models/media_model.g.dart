@@ -17,23 +17,28 @@ const MediaSchema = CollectionSchema(
   name: r'Media',
   id: 6434281596432674333,
   properties: {
-    r'extension': PropertySchema(
+    r'aspectRatio': PropertySchema(
       id: 0,
+      name: r'aspectRatio',
+      type: IsarType.double,
+    ),
+    r'extension': PropertySchema(
+      id: 1,
       name: r'extension',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'name',
       type: IsarType.string,
     ),
     r'path': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'path',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'type',
       type: IsarType.byte,
       enumMap: _MediatypeEnumValueMap,
@@ -84,10 +89,11 @@ void _mediaSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.extension);
-  writer.writeString(offsets[1], object.name);
-  writer.writeString(offsets[2], object.path);
-  writer.writeByte(offsets[3], object.type.index);
+  writer.writeDouble(offsets[0], object.aspectRatio);
+  writer.writeString(offsets[1], object.extension);
+  writer.writeString(offsets[2], object.name);
+  writer.writeString(offsets[3], object.path);
+  writer.writeByte(offsets[4], object.type.index);
 }
 
 Media _mediaDeserialize(
@@ -97,11 +103,12 @@ Media _mediaDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Media();
-  object.extension = reader.readString(offsets[0]);
+  object.aspectRatio = reader.readDoubleOrNull(offsets[0]);
+  object.extension = reader.readString(offsets[1]);
   object.isarId = id;
-  object.name = reader.readString(offsets[1]);
-  object.path = reader.readStringOrNull(offsets[2]);
-  object.type = _MediatypeValueEnumMap[reader.readByteOrNull(offsets[3])] ??
+  object.name = reader.readString(offsets[2]);
+  object.path = reader.readStringOrNull(offsets[3]);
+  object.type = _MediatypeValueEnumMap[reader.readByteOrNull(offsets[4])] ??
       Mediatype.text;
   return object;
 }
@@ -114,12 +121,14 @@ P _mediaDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
       return (_MediatypeValueEnumMap[reader.readByteOrNull(offset)] ??
           Mediatype.text) as P;
     default:
@@ -246,6 +255,84 @@ extension MediaQueryWhere on QueryBuilder<Media, Media, QWhereClause> {
 }
 
 extension MediaQueryFilter on QueryBuilder<Media, Media, QFilterCondition> {
+  QueryBuilder<Media, Media, QAfterFilterCondition> aspectRatioIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'aspectRatio',
+      ));
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> aspectRatioIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'aspectRatio',
+      ));
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> aspectRatioEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'aspectRatio',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> aspectRatioGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'aspectRatio',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> aspectRatioLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'aspectRatio',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> aspectRatioBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'aspectRatio',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterFilterCondition> extensionEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -820,6 +907,18 @@ extension MediaQueryLinks on QueryBuilder<Media, Media, QFilterCondition> {
 }
 
 extension MediaQuerySortBy on QueryBuilder<Media, Media, QSortBy> {
+  QueryBuilder<Media, Media, QAfterSortBy> sortByAspectRatio() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aspectRatio', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByAspectRatioDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aspectRatio', Sort.desc);
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterSortBy> sortByExtension() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'extension', Sort.asc);
@@ -870,6 +969,18 @@ extension MediaQuerySortBy on QueryBuilder<Media, Media, QSortBy> {
 }
 
 extension MediaQuerySortThenBy on QueryBuilder<Media, Media, QSortThenBy> {
+  QueryBuilder<Media, Media, QAfterSortBy> thenByAspectRatio() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aspectRatio', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByAspectRatioDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aspectRatio', Sort.desc);
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterSortBy> thenByExtension() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'extension', Sort.asc);
@@ -932,6 +1043,12 @@ extension MediaQuerySortThenBy on QueryBuilder<Media, Media, QSortThenBy> {
 }
 
 extension MediaQueryWhereDistinct on QueryBuilder<Media, Media, QDistinct> {
+  QueryBuilder<Media, Media, QDistinct> distinctByAspectRatio() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'aspectRatio');
+    });
+  }
+
   QueryBuilder<Media, Media, QDistinct> distinctByExtension(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -964,6 +1081,12 @@ extension MediaQueryProperty on QueryBuilder<Media, Media, QQueryProperty> {
   QueryBuilder<Media, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<Media, double?, QQueryOperations> aspectRatioProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'aspectRatio');
     });
   }
 

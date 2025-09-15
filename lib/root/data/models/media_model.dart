@@ -1,5 +1,4 @@
 import 'package:isar/isar.dart';
-import 'chat_model.dart';
 import 'message_model.dart';
 import '../enums/media_type.dart';
 
@@ -15,6 +14,9 @@ class Media {
 
   @enumerated
   late Mediatype type;
+
+  /// New field to store width / height ratio
+  double? aspectRatio;
 
   @Backlink(to: 'media')
   final IsarLinks<Message> messagesBacklink = IsarLinks<Message>();
@@ -60,5 +62,5 @@ class Media {
   }
 
   @override
-  String toString() => 'Media(name: $name, type: $type, ext: $extension, path: ${path ?? "remote"})';
+  String toString() => 'Media(name: $name, type: $type, ext: $extension, path: ${path ?? "remote"}, aspectRatio: $aspectRatio)';
 }

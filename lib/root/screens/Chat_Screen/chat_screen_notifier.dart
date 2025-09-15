@@ -19,7 +19,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
   @override
 Chat build() {
   // Start async loading
-  _loadChat();
+  loadMessages();
   final Chat chat = Chat()
   ..messages = IsarLinks<Message>();
 
@@ -29,7 +29,8 @@ Chat build() {
 
 
   Future<void> loadMessages() async {
-    final chat = IsarDatabase.isar.chats.get(chatId);
+    final chat = await IsarDatabase.isar.chats.get(chatId);
+    if (chat == null) return;
     await chat.messages.load();
     await Future.wait(chat.messages.map((m) => m.media.load()));
     state = state.copyWith(messages: chat.messages.toList());
