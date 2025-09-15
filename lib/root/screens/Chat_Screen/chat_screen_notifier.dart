@@ -28,24 +28,17 @@ Chat build() {
 }
 
 
-  Future<void> _loadChat() async {
-  // Find the chat by Isar auto-increment ID
-  final chatFromIsar = await IsarDatabase.isar.chats
-      .where()
-      .isarIDEqualTo((chatId)) // assuming chatId is a String; convert to int
-      .findFirst();
-
-  if (chatFromIsar != null) {
-    // Fetch messages that belong to this chat, sorted by time
-    final messages = await IsarDatabase.isar.messages
-        .filter()
-        .chat((q) => q.isarIDEqualTo(chatFromIsar.isarID))
-        .findAll();
-
-    // Update state with real messages
-    state = chatFromIsar.copyWith(messages: messages);
+  Future<void> loadMessages() async {
+    final chat = IsarDatabase.isar.chats.get(chatId);
+    await chat.messages.load();
+    await Future.wait(chat.messages.map((m) => m.media.load()));
+    state = state.copyWith(messages: chat.messages.toList());
   }
-}
+
+  printCurrentMessages() async {
+    await IsarDatabase.isar.chats.get(chatId);
+    print(state.title);
+  }
 
 
   /// Send a text message and persist it

@@ -1,158 +1,148 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
-import 'package:notesapp/core/extensions/chat_list_isar_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
-import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
-class TestChatScreen extends StatefulWidget {
-  final Chat chat;
-  const TestChatScreen({super.key, required this.chat});
+/// ------------------ Chat State ------------------
 
-  @override
-  State<TestChatScreen> createState() => _TestChatScreenState();
+class ChatState {
+  final Chat chat;
+  final List<Message> messages;
+
+  ChatState({required this.chat, required this.messages});
+
+  ChatState copyWith({Chat? chat, List<Message>? messages}) {
+    return ChatState(
+      chat: chat ?? this.chat,
+      messages: messages ?? this.messages,
+    );
+  }
 }
 
+/// ------------------ Chat Notifier ------------------
 
-class _TestChatScreenState extends State<TestChatScreen> {
-  List<Message> messages = [];
+class ChatNotifier extends FamilyNotifier<ChatState, Chat> {
   late final Isar isar;
 
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
+  ChatState build(Chat chat) {
     isar = Isar.getInstance('isar')!;
-    loadMessages();
+    final stateInitial = ChatState(chat: chat, messages: []);
+    loadMessages(chat); // async load messages
+    return stateInitial;
   }
 
-  Future<void> getIsarInstance() async {
-    isar = Isar.getInstance('isar')!;
-    if (isar == null) {
-      throw Exception("Isar has not been initialized.");
-    }
-  }
-
-  Future<void> loadMessages() async {
-    // Load the messages linked to this chat
-    await widget.chat.messages.load();
-    Future.wait(widget.chat.messages.map((message) => message.media.load()));
-
-    setState(() {
-      messages = widget.chat.messages.toList();
-    });
+  Future<void> loadMessages(Chat chat) async {
+    await chat.messages.load();
+    await Future.wait(chat.messages.map((m) => m.media.load()));
+    state = state.copyWith(messages: chat.messages.toList());
   }
 
   Future<void> pickImage() async {
-   final image = await MediaHandler.pickImage();
-   if (image == null) return;
+    final image = await MediaHandler.pickImage();
+    if (image == null) return;
 
-   final newImageMessage = Message()
-   ..text = ""
-   ..isSelected = false
-   ..isSender = true
-   ..time = DateTime.now()
-   ..media.value = image; 
+    final newImageMessage = Message()
+      ..text = ""
+      ..isSender = true
+      ..isSelected = false
+      ..time = DateTime.now()
+      ..media.value = image;
 
-   await isar.writeTxn(() async {
-    await isar.medias.put(image!);
-    await isar.messages.put(newImageMessage);
-    await newImageMessage.media.save();
-    widget.chat.messages.add(newImageMessage);
-    await widget.chat.messages.save();
-    widget.chat.preview = "📷 Photo";
-    widget.chat.date = newImageMessage.time;
-    await isar.chats.put(widget.chat);
-   });
+    await isar.writeTxn(() async {
+      await isar.medias.put(image);
+      await isar.messages.put(newImageMessage);
+      await newImageMessage.media.save();
+      state.chat.messages.add(newImageMessage);
+      await state.chat.messages.save();
+      state.chat.preview = "📷 Photo";
+      state.chat.date = newImageMessage.time;
+      await isar.chats.put(state.chat);
+    });
 
-   setState(() {
-     messages.add(newImageMessage);
-   });
+    state = state.copyWith(messages: [...state.messages, newImageMessage]);
   }
 
   Future<void> sendMessage(String text) async {
-
-    // Message creation
     final newMessage = Message()
-    ..text = text
-    ..isSender = true
-    ..isSelected = false
-    ..time = DateTime.now();
+      ..text = text
+      ..isSender = true
+      ..isSelected = false
+      ..time = DateTime.now();
 
-    // Database save
     await isar.writeTxn(() async {
-
-      // add to messages database
       await isar.messages.put(newMessage);
-
-      // connect to chat object
-      widget.chat.messages.add(newMessage); // adding to local detached chat object
-      await widget.chat.messages.save();
-
-      // update chat
-      widget.chat.preview = newMessage.text;
-      widget.chat.date = newMessage.time;
-      await isar.chats.put(widget.chat);
+      state.chat.messages.add(newMessage);
+      await state.chat.messages.save();
+      state.chat.preview = text;
+      state.chat.date = newMessage.time;
+      await isar.chats.put(state.chat);
     });
 
-    setState(() {
-      messages.add(newMessage);
-    });
+    state = state.copyWith(messages: [...state.messages, newMessage]);
   }
 
   Future<void> updateMessage(Message message) async {
     await isar.writeTxn(() async {
-      // Check if the message exists in DB
       final existing = await isar.messages.get(message.isarId);
-
       if (existing != null) {
-        // Exists -> update fields
         existing.isSender = message.isSender;
         existing.text = message.text;
         existing.isSelected = message.isSelected;
-
-        await isar.messages.put(existing); // update
-        print("Message updated: ${existing.id}");
+        await isar.messages.put(existing);
       } else {
-        // Does not exist -> insert new
         await isar.messages.put(message);
-        print("Message inserted: ${message.id}");
       }
     });
-
-    // setState(() {});
+    loadMessages(state.chat);
   }
 
   Future<void> deleteMessage(Message message) async {
     await isar.writeTxn(() async {
       await isar.messages.delete(message.isarId);
-      widget.chat.messages.remove(message);
-      await widget.chat.messages.save();
+      state.chat.messages.remove(message);
+      await state.chat.messages.save();
     });
 
-    setState(() {
-      messages.remove(message);
-    });
+    state = state.copyWith(
+      messages: state.messages.where((m) => m != message).toList(),
+    );
   }
+}
 
+/// ------------------ Riverpod Provider ------------------
+
+final chatProvider = NotifierProvider.family<ChatNotifier, ChatState, Chat>(
+  () => ChatNotifier(),
+);
+
+/// ------------------ UI ------------------
+
+class TestChatScreen extends ConsumerWidget {
+  final Chat chat;
+  const TestChatScreen({super.key, required this.chat});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatState = ref.watch(chatProvider(chat));
+    final chatNotifier = ref.read(chatProvider(chat).notifier);
+
     return Scaffold(
       backgroundColor: ThemeConstants.textLight,
       appBar: AppBar(
-        title: Text("Chat: ${widget.chat.title}"),
+        title: Text("Chat: ${chat.title}"),
         backgroundColor: ThemeConstants.messageBarDark,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          tooltip: '', // <-- disable tooltip
+          tooltip: '',
           onPressed: () => Navigator.maybePop(context),
         ),
         elevation: 0,
@@ -160,38 +150,30 @@ class _TestChatScreenState extends State<TestChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: messages.isEmpty 
-            ? NothingToSee() 
-            : ListView.builder(
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final Message message = messages[index];
-                // return GlassContainer(child: Text(message.text));
-              return MessageBubble(
-                style: BubbleStyle.opaque,
-                message: message,
-                onTap: () {
-                  setState(() {
-                    message.isSender = !message.isSender;
-                  });
-                  updateMessage(message);
-                },
-                onLongPress: (p0) {
-                  deleteMessage(message);
-                },
-
-              );
-            }),
+            child: chatState.messages.isEmpty
+                ? const NothingToSee()
+                : ListView.builder(
+                    itemCount: chatState.messages.length,
+                    itemBuilder: (context, index) {
+                      final message = chatState.messages[index];
+                      return MessageBubble(
+                        style: BubbleStyle.opaque,
+                        message: message,
+                        onTap: () {
+                          message.isSender = !message.isSender;
+                          chatNotifier.updateMessage(message);
+                        },
+                        onLongPress: (_) => chatNotifier.deleteMessage(message),
+                      );
+                    },
+                  ),
           ),
           BottomMessageBar(
             onEmojiTap: () {},
-            onAttachmentTap: () => pickImage(),
+            onAttachmentTap: () => chatNotifier.pickImage(),
             onMicTap: () {},
-            onSend: (text) {
-              print(text);
-              sendMessage(text);
-            },
-          )
+            onSend: (text) => chatNotifier.sendMessage(text),
+          ),
         ],
       ),
     );

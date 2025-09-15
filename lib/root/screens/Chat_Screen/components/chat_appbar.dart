@@ -18,6 +18,7 @@ class ChatAppBar extends StatelessWidget {
   final Widget? leading;
   final bool? isSelecting;
   final void Function()? onOptionsPressed;
+  final void Function()? onSearchTap;
   final List<Widget>? actions;
 
   const ChatAppBar({
@@ -25,6 +26,7 @@ class ChatAppBar extends StatelessWidget {
     required this.title,
     required this.lastEdited,
     required this.onTitleTap,
+    required this.onSearchTap,
     this.leading,
     this.onOptionsPressed, 
     this.isSelecting = false,
@@ -95,9 +97,7 @@ class ChatAppBar extends StatelessWidget {
       ),
       actions: actions ?? [
         IconButton(
-          onPressed: () {
-            print("Search tapped"); // Placeholder
-          },
+          onPressed: onSearchTap,
           icon: Icon(Icons.search), // color: ThemeConstants.iconLight),
         ),
         CustomContextMenu(

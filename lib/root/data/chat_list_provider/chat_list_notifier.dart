@@ -16,8 +16,18 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
 
   /// Create + persist + add to state
   Future<Chat> addChat() async {
-    final newChat = Chat.emptyChat(); // Detached object in memory
-    await IsarDatabase.addNewChat(newChat); // DataBase
+
+    final newMessage = Message()
+        ..text = "This is a new chat. Start typing to create your first note."
+        ..isSender = false
+        ..isSelected = false
+        ..time = DateTime.now();
+
+    final newChat = Chat()
+    ..title = "New Note"
+    ..date = DateTime.now(); // Detached object in memory
+
+    await IsarDatabase.addNewChat(newChat, newMessage); // DataBase
     state = [...state, newChat]; // State update 
     return newChat; // return it so UI can navigate
   }

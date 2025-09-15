@@ -78,6 +78,7 @@ class ChatScreen extends ConsumerWidget {
                       ),
                     );
                   },
+                  onSearchTap: () => notifier.printCurrentMessages(),
                   onOptionsPressed: () {
                     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
                     showMenu<String>(
@@ -105,11 +106,11 @@ class ChatScreen extends ConsumerWidget {
                     : null,
                 ),
                 Expanded(
-                  child: currentChat.messages.isEmpty 
+                  child: currentChat.messages.toList().isEmpty 
                   ? NothingToSee() 
                   : ListView.builder(
                       padding: EdgeInsets.symmetric( horizontal: 0), // ThemeConstants.screenWidth * 0.03, ),
-                      itemCount: currentChat.messages.toList().length + 1,
+                      itemCount: currentChat.messages.length + 1,
                       itemBuilder: (context, index) {
                         if (index == currentChat.messages.length) {
                           return Container(

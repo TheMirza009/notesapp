@@ -50,28 +50,34 @@ class IsarDatabase {
         .limit(limit)
         .findAll();
   }
-static Future<void> addNewChat(Chat chat) async {
+
+static Future<Chat> addNewChat(Chat newChat, Message newMessage) async {
+  late Chat savedChat;
+
   await isar.writeTxn(() async {
-    // Persist the chat first to get its isarID
-    final chatId = await isar.chats.put(chat);
-    chat.isarID = chatId;
+    // Save both objects
+    await isar.chats.put(newChat);
+    await isar.messages.put(newMessage);
 
-    // Link all messages to the chat
-    final messages = chat.messages.toList();
-    for (final message in messages) {
-      message.chat.value = chat;
-    }
+    // Re-fetch managed chat
+    savedChat = await isar.chats.get(newChat.isarID) ?? newChat;
 
-    // Persist all messages at once
-    if (messages.isNotEmpty) {
-      await isar.messages.putAll(messages);
-    }
+    // Link message to chat
+    savedChat.messages.add(newMessage);
+    await savedChat.messages.save();
 
-    // Save the links
-    await chat.messages.save();
+    // ALSO: Link chat to message
+    newMessage.chat.value = savedChat;
+    await isar.messages.put(newMessage);
+
+    // Update preview/date
+    savedChat.preview = newMessage.text;
+    savedChat.date = newMessage.time;
+    await isar.chats.put(savedChat);
   });
-}
 
+  return savedChat;
+}
 
 
 
