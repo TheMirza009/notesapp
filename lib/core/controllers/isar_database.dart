@@ -51,33 +51,44 @@ class IsarDatabase {
         .findAll();
   }
 
-static Future<Chat> addNewChat(Chat newChat, Message newMessage) async {
+static Future<Chat> addNewChat() async {
   late Chat savedChat;
 
   await isar.writeTxn(() async {
-    // Save both objects
+    final newChat = Chat()
+      ..title = "New Note"
+      ..date = DateTime.now()
+      ..messages = IsarLinks<Message>();
+
+    final newMessage = Message()
+      ..id = "0000"
+      ..text = "This is a new chat. Start typing to create your first note."
+      ..isSender = false
+      ..isSelected = false
+      ..time = DateTime.now();
+
+    // Save both
     await isar.chats.put(newChat);
     await isar.messages.put(newMessage);
 
-    // Re-fetch managed chat
-    savedChat = await isar.chats.get(newChat.isarID) ?? newChat;
+    // Link message
+    newChat.messages.add(newMessage);
+    await newChat.messages.save();
 
-    // Link message to chat
-    savedChat.messages.add(newMessage);
-    await savedChat.messages.save();
+    // Update preview & date
+    newChat.preview = newMessage.text;
+    newChat.date = newMessage.time;
+    await isar.chats.put(newChat);
 
-    // ALSO: Link chat to message
-    newMessage.chat.value = savedChat;
-    await isar.messages.put(newMessage);
-
-    // Update preview/date
-    savedChat.preview = newMessage.text;
-    savedChat.date = newMessage.time;
-    await isar.chats.put(savedChat);
+    // ✅ Re-fetch fully managed chat
+    savedChat = (await isar.chats.get(newChat.isarID))!;
+    await savedChat.messages.load();
   });
 
   return savedChat;
 }
+
+
 
 
 

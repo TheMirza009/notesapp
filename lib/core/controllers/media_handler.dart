@@ -15,29 +15,31 @@ class MediaHandler {
   /// - If [isProfilePicture] = true → crop + save to ProfilePictures.
   /// - Else → save to Photos.
   static Future<Media?> pickImage({bool isProfilePicture = false}) async {
+    // Pick image from gallery
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null) return null;
 
     File file = File(pickedFile.path);
 
+    // Optional cropping for profile pictures
     if (isProfilePicture) {
-      final cropped = await _cropImage(file);
-      file = cropped ?? file;
-      file = await _saveToStorage(file, 'Profile Pictures');
-    } else {
-      file = await _saveToStorage(file, 'Photos');
+      final croppedFile = await _cropImage(file);
+      if (croppedFile != null) file = croppedFile;
     }
 
-    return  Media.fromFilePath(file.path);// Media.fromFile(file);
-  }
+    // Save file to storage folder
+    final savedFile = await _saveToStorage(file, isProfilePicture ? 'Profile Pictures' : 'Photos');
 
-  /// Crop an existing image and save into Photos/Cropped
-  static Future<Media?> cropImage(File imageFile) async {
-    final File? cropped = await _cropImage(imageFile);
-    if (cropped == null) return null;
+    // Compute aspect ratio
+    final bytes = await savedFile.readAsBytes();
+    final decodedImage = await decodeImageFromList(bytes);
+    final aspectRatio = decodedImage.width / decodedImage.height;
 
-    final savedFile = await _saveToStorage(cropped, 'Photos/Cropped');
-    return Media.fromFilePath(savedFile.path); // Media.fromFile(savedFile);
+    // Create Media object with aspect ratio
+    final media = Media.fromFilePath(savedFile.path);
+    media.aspectRatio = aspectRatio;
+
+    return media;
   }
 
   /// Pick a video → saved in Media/Videos

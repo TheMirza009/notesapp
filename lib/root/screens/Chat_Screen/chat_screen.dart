@@ -12,6 +12,7 @@ import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
@@ -27,15 +28,16 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
-  final Id chatId;
-  const ChatScreen({super.key, required this.chatId});
+  final Chat chat;
+  const ChatScreen({super.key, required this.chat});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(chatScreenController(chatId).notifier);
-    final currentChat = ref.watch(chatScreenController(chatId));
+    final currentChat = ref.watch(chatScreenController(chat));
+    final notifier = ref.read(chatScreenController(chat).notifier);
+    final messages = currentChat.messages.toList();
 
-    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
+    final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
     String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
 
@@ -78,7 +80,7 @@ class ChatScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  onSearchTap: () => notifier.printCurrentMessages(),
+                  onSearchTap: () => notifier.loadFromDatabase(),
                   onOptionsPressed: () {
                     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
                     showMenu<String>(
@@ -106,27 +108,27 @@ class ChatScreen extends ConsumerWidget {
                     : null,
                 ),
                 Expanded(
-                  child: currentChat.messages.toList().isEmpty 
+                  child: messages.isEmpty 
                   ? NothingToSee() 
                   : ListView.builder(
                       padding: EdgeInsets.symmetric( horizontal: 0), // ThemeConstants.screenWidth * 0.03, ),
-                      itemCount: currentChat.messages.length + 1,
+                      itemCount: messages.length + 1,
                       itemBuilder: (context, index) {
-                        if (index == currentChat.messages.length) {
+                        if (index == messages.length) {
                           return Container(
                             height: 150,
                             color: Colors.transparent,
                           );
                         }
                         
-                        final message = currentChat.messages.toList()[index];
-                        final info = currentChat.messages.toList().layoutInfo(index);
+                        final message = messages[index];
+                        final info = messages.layoutInfo(index);
                     
                         return Column(
                           children: [
                               if (info.showDateChip) DateChip(message.time),
                                 MessageBubble(
-                                  style: BubbleStyle.glass,
+                                  style: BubbleStyle.opaque,
                                   message: message,
                                   isSelecting: notifier.isSelecting,
                                   topPadding: info.topPadding,
@@ -136,7 +138,9 @@ class ChatScreen extends ConsumerWidget {
                                         ? notifier.unselectMessage(message)
                                         : notifier.selectMessage(message);
                                   },
-                                  onTap: () => notifier.toggleSender(message),
+                                  onTap: () {
+                                    message.isSender = !message.isSender;
+                                    notifier.updateMessage(message);},
                                   onLongPress: (pos) {
                                     notifier.selectMessage(message);
                                     CustomContextMenu.showMenuAt(
@@ -157,7 +161,7 @@ class ChatScreen extends ConsumerWidget {
                 BottomMessageBar(
                   onEmojiTap: () => debugPrint("Emoji tapped"),
                   onAttachmentTap: () => notifier.pickImage(),
-                  onMicTap: () => debugPrint(notifier.initText),
+                  onMicTap: () => debugPrint(notifier.state.uuid),
                   onSend: notifier.sendMessage,
                 ),
               ],

@@ -14,7 +14,7 @@ import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar.
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
-class ChatNotifier extends AutoDisposeNotifier<Chat> {
+class ChatNotifier extends Notifier<Chat> {
   late final Isar isar;
   final Chat initialChat;
 
@@ -28,24 +28,19 @@ class ChatNotifier extends AutoDisposeNotifier<Chat> {
   }
 
   Future<void> loadFromDatabase() async {
-  final freshChat = await isar.chats.get(initialChat.isarID);
-  if (freshChat != null) {
-    await freshChat.messages.load();
-    await Future.wait(freshChat.messages.map((m) => m.media.load()));
-    state = freshChat;
+    final freshChat = await isar.chats.get(initialChat.isarID);
+    if (freshChat != null) {
+      await freshChat.messages.load();
+      await Future.wait(freshChat.messages.map((m) => m.media.load()));
+      state = freshChat;
+    }
   }
-}
 
   Future<void> pickImage() async {
     final pickedMedia = await MediaHandler.pickImage();
     if (pickedMedia == null) return;
 
-    // Compute aspect ratio asynchronously
-    final file = File(pickedMedia.path!);
-    final bytes = await file.readAsBytes();
-    final decodedImage = await decodeImageFromList(bytes);
-    pickedMedia.aspectRatio = decodedImage.width / decodedImage.height;
-
+    deleteInitMessage();
     // Persist the media with the cached aspect ratio
     await isar.writeTxn(() async {
       await isar.medias.put(pickedMedia);
@@ -79,12 +74,11 @@ class ChatNotifier extends AutoDisposeNotifier<Chat> {
 
     await newMessage.media.load();
 
-    // Update UI
     state = initialChat;
   }
 
-
   Future<void> sendMessage(String text) async {
+    deleteInitMessage();
     final newMessage =
         Message()
           ..text = text
@@ -103,6 +97,15 @@ class ChatNotifier extends AutoDisposeNotifier<Chat> {
       initialChat.date = newMessage.time;
       await isar.chats.put(initialChat);
     });
+  }
+
+  void deleteInitMessage() {
+    const String initID = "0000";
+    const String initText = "This is a new chat. Start typing to create your first note.";
+    bool initCheck = initialChat.messages.first.id == initID && initialChat.messages.first.text == initText;
+    if (initCheck) {
+      deleteMessage(initialChat.messages.first);
+    }
   }
 
   Future<void> updateMessage(Message message) async {
@@ -128,7 +131,7 @@ class ChatNotifier extends AutoDisposeNotifier<Chat> {
       await initialChat.messages.save();
       await isar.chats.put(initialChat);
     });
-    if (message.media.value!.type == Mediatype.image) {
+    if (message.media.value?.type == Mediatype.image) {
       await MediaHandler.deleteMedia(message.media.value!);
     }
   }
@@ -136,8 +139,8 @@ class ChatNotifier extends AutoDisposeNotifier<Chat> {
 
 /// ------------------ Riverpod Provider ------------------
 /// Factory function to create a provider bound to a specific chat
-AutoDisposeNotifierProvider<ChatNotifier, Chat> chatProvider(Chat chat) {
-  return AutoDisposeNotifierProvider<ChatNotifier, Chat>(
+NotifierProvider<ChatNotifier, Chat> chatProvider(Chat chat) {
+  return NotifierProvider<ChatNotifier, Chat>(
     () => ChatNotifier(chat),
   );
 }
@@ -151,23 +154,21 @@ class TestChatScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // watch the provider that is bound to this chat
-    final chatState = ref.watch(chatProvider(chat)); // ✅ state is Chat
-    final chatNotifier = ref.read(
-      chatProvider(chat).notifier,
-    ); // ✅ access methods
+    final currentChat = ref.watch(chatProvider(chat)); // ✅ state is Chat
+    final notifier = ref.read(chatProvider(chat).notifier,); // ✅ access methods
 
     // Defensive: if for any reason chatState is null (shouldn't be with Notifier<Chat>),
     // show a loader.
-    if (chatState == null) {
+    if (currentChat == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final messages = chatState.messages.toList();
+    final messages = currentChat.messages.toList();
 
     return Scaffold(
       backgroundColor: ThemeConstants.textLight,
       appBar: AppBar(
-        title: Text("Chat: ${chatState.title}"),
+        title: Text("Chat: ${currentChat.title}"),
         backgroundColor: ThemeConstants.messageBarDark,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -191,19 +192,19 @@ class TestChatScreen extends ConsumerWidget {
                           message: message,
                           onTap: () {
                             message.isSender = !message.isSender;
-                            chatNotifier.updateMessage(message);
+                            notifier.updateMessage(message);
                           },
                           onLongPress:
-                              (_) => chatNotifier.deleteMessage(message),
+                              (_) => notifier.deleteMessage(message),
                         );
                       },
                     ),
           ),
           BottomMessageBar(
             onEmojiTap: () {},
-            onAttachmentTap: () => chatNotifier.pickImage(),
+            onAttachmentTap: () => notifier.pickImage(),
             onMicTap: () {},
-            onSend: (text) => chatNotifier.sendMessage(text),
+            onSend: (text) => notifier.sendMessage(text),
           ),
         ],
       ),

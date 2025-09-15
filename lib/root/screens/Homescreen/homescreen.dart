@@ -9,6 +9,7 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
@@ -43,6 +44,24 @@ class Homescreen extends ConsumerWidget {
     Color dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
     String addNotePath = isLight ? IconPaths.addNoteLight : IconPaths.addNoteDark;
     final FocusNode _searchFocusNode = FocusNode();
+
+    void navigateToChatScreen(Chat chat) {
+      Navigator.push(
+        context,
+        CupertinoPageRoute(builder: (_) => ChatScreen(chat: chat)),
+      );
+    }
+
+    void createNewChat() async {
+      final newChat = await chatNotifier.addChat(); // already managed
+      await newChat.messages.load();
+      Navigator.push(
+        context,
+        CupertinoPageRoute(
+          builder: (_) => ChatScreen(chat: newChat),
+        ),
+      );
+    }
 
     void handleContextMenuAction(value) {
       switch (value) {
@@ -92,13 +111,7 @@ class Homescreen extends ConsumerWidget {
       floatingActionButton: CustomIconButton(
         size: 60,
         splashColor: const Color.fromARGB(14, 96, 125, 139),
-        onPressed: () async {
-          Chat newChat = await chatNotifier.addChat();
-          Navigator.push(
-            context,
-            CupertinoPageRoute(builder: (_) => ChatScreen(chatId: newChat.isarID))    
-          );
-        },
+        onPressed: createNewChat,
         icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
       ),
       appBar: AppBar(
@@ -185,12 +198,7 @@ class Homescreen extends ConsumerWidget {
                         subtitle: chat.preview,
                         time: TimeFormat.formatChatTime(chat.date),
                         onDismissed: (_) => chatNotifier.removeChat(chat),
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              CupertinoPageRoute(builder: (_) => ChatScreen(chatId: chat.isarID)),
-                            );
-                        },
+                        onTap: () => navigateToChatScreen(chat),
                       ),
                     );
                   },

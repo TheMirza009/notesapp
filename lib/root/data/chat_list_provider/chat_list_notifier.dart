@@ -11,25 +11,15 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
   }
 
   Future<void> _loadChats() async {
-    state = await IsarDatabase.loadAllChats();
+    final loadedChats = await IsarDatabase.loadAllChats();
+    state = loadedChats;
   }
 
   /// Create + persist + add to state
   Future<Chat> addChat() async {
-
-    final newMessage = Message()
-        ..text = "This is a new chat. Start typing to create your first note."
-        ..isSender = false
-        ..isSelected = false
-        ..time = DateTime.now();
-
-    final newChat = Chat()
-    ..title = "New Note"
-    ..date = DateTime.now(); // Detached object in memory
-
-    await IsarDatabase.addNewChat(newChat, newMessage); // DataBase
-    state = [...state, newChat]; // State update 
-    return newChat; // return it so UI can navigate
+    final savedChat = await IsarDatabase.addNewChat();
+    state = [...state, savedChat]; // update provider state
+    return savedChat; // for immediate navigation
   }
 
   Future<void> removeChat(Chat chat) async {

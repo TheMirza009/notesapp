@@ -72,43 +72,45 @@ class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
   }
 
   Future<void> _addChat(String text) async {
-  final newChat = Chat();
-  newChat.title = text;
+    final newChat = Chat();
+    newChat.title = text;
 
-  // Create the first message
-  final firstMessage = Message()
-    ..text = "This is a new chat. Start typing to create your first note."
-    ..isSender = false
-    ..isSelected = false
-    ..time = DateTime.now();
+    // Create the first message
+    final firstMessage =
+        Message()
+          ..id = "0000"
+          ..text = "This is a new chat. Start typing to create your first note."
+          ..isSender = false
+          ..isSelected = false
+          ..time = DateTime.now();
 
-  late Chat savedChat;
+    late Chat savedChat;
 
-  await _isar.writeTxn(() async {
-    // 1. Save message first
-    await _isar.messages.put(firstMessage);
+    await _isar.writeTxn(() async {
+      // 1. Save message first
+      await _isar.messages.put(firstMessage);
 
-    // 2. Save chat first
-    await _isar.chats.put(newChat);
+      // 2. Save chat first
+      await _isar.chats.put(newChat);
 
-    // 3. Add message to chat link
-    newChat.messages.add(firstMessage);
+      // 3. Add message to chat link
+      newChat.messages.add(firstMessage);
 
-    // 4. Persist the link
-    await newChat.messages.save();
+      // 4. Persist the link
+      await newChat.messages.save();
 
-    // 5. Update chat preview and date
-    newChat.preview = firstMessage.text;
-    newChat.date = firstMessage.time;
-    await _isar.chats.put(newChat); // save updated preview/date
+      // 5. Update chat preview and date
+      newChat.preview = firstMessage.text;
+      newChat.date = firstMessage.time;
+      await _isar.chats.put(newChat); // save updated preview/date
 
-    savedChat = await _isar.chats.get(newChat.isarID) ?? newChat;
-  });
+      savedChat = await _isar.chats.get(newChat.isarID) ?? newChat;
+    });
 
-  setState(() {
-    chats.add(savedChat);
-  });
-}
+    setState(() {
+      chats.add(savedChat);
+    });
+  }
 
 
 
