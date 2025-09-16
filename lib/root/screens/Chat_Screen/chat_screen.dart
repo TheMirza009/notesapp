@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,11 +9,13 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/message_list_layout.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
@@ -36,6 +40,10 @@ class ChatScreen extends ConsumerWidget {
     final currentChat = ref.watch(chatScreenController(chat));
     final notifier = ref.read(chatScreenController(chat).notifier);
     final messages = currentChat.messages.toList();
+
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   notifier.initialize(); // fire-and-forget, runs only once inside notifier
+    // });
 
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
@@ -69,9 +77,9 @@ class ChatScreen extends ConsumerWidget {
                       onPressed: () => Navigator.pop(context),
                       icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral,),
                     ),
-                  title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : currentChat.title ?? "New Note",
                   lastEdited: currentChat.messages.isNotEmpty ? currentChat.messages.last.time : DateTime.now(),
                   isSelecting: notifier.isSelecting,
+                  title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : currentChat.title ?? "New Note",
                   onTitleTap: () {
                     Navigator.push(
                       context,
@@ -80,7 +88,7 @@ class ChatScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  onSearchTap: () => print("notifier.loadFromDatabase()"),
+                  onSearchTap: () => notifier.initialize(),
                   onOptionsPressed: () {
                     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
                     showMenu<String>(
@@ -139,14 +147,23 @@ class ChatScreen extends ConsumerWidget {
                                         : notifier.selectMessage(message);
                                   },
                                   onTap: () {
-                                    message.isSender = !message.isSender;
-                                    notifier.updateMessage(message);},
+                                      if (message.isImage) {
+                                        print(message);
+                                        // Navigator.push(
+                                        //   context,
+                                        //   MaterialPageRoute( builder: (_) => Scaffold( appBar: AppBar(), body: Center(child: Image.file( File( message .media .value! .path!, ), )), ), ),
+                                        // );
+                                      } else {
+                                        message.isSender = !message.isSender;
+                                        notifier.updateMessage(message);
+                                      }
+                                    },
                                   onLongPress: (pos) {
                                     notifier.selectMessage(message);
                                     CustomContextMenu.showMenuAt(
                                       context,
                                       position: pos,
-                                      menuItems: messageHoldOptions,
+                                      menuItems: messageHoldOptions(isImage: message.isImage),
                                       triangleHorizontalOffset: message.isSender ? 120 : 40,
                                       onSelected: (val) => notifier.handleMessageMenuAction(val, message),
                                     );

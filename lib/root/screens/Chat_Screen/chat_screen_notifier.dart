@@ -10,6 +10,15 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
+
+/// ------------------ Provider ------------------
+NotifierProvider<ChatScreenNotifier, Chat> chatScreenController(Chat chat) =>
+    NotifierProvider<ChatScreenNotifier, Chat>(
+      () => ChatScreenNotifier(chat),
+    );
+
+/// ------------------ Notifier ------------------
+
 class ChatScreenNotifier extends Notifier<Chat> {
   Chat initialChat;
   final Isar isar = IsarDatabase.isar;
@@ -22,8 +31,16 @@ class ChatScreenNotifier extends Notifier<Chat> {
   Chat build() {
     state = initialChat;
     state.title = ref.watch(chatListProvider.notifier).getChatByID(initialChat.uuid).title;
-    loadFromDatabase();
+    initialize();
     return state;
+  }
+
+  bool _initialized = false;
+  void initialize() async {
+    if (_initialized == false) {
+      _initialized = true;
+      await loadFromDatabase();
+    }
   }
 
   Future<void> loadFromDatabase() async {
@@ -32,6 +49,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
     await freshChat.messages.load(); 
     await Future.wait(freshChat.messages.map((m) => m.media.load()));
     state = freshChat;
+    print("Loaded: ${freshChat}");
   }
 
 
@@ -57,6 +75,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
     });
     ref.read(chatListProvider.notifier).getChatByID(initialChat.uuid).preview = newMessage.text;
     state = initialChat;
+    // await loadFromDatabase();
   }
 
   Future<void> pickImage() async {
@@ -153,7 +172,6 @@ class ChatScreenNotifier extends Notifier<Chat> {
         await isar.messages.put(message);
       }
     });
-
     state = initialChat;
   }
 
@@ -199,6 +217,10 @@ class ChatScreenNotifier extends Notifier<Chat> {
       case 'copy':
         Utils.copyToClipboard(message.text);
         break;
+      case 'toggleSender':
+        message.isSender = !message.isSender;
+        updateMessage(message);
+        break;
     }
   }
 
@@ -228,9 +250,3 @@ class ChatScreenNotifier extends Notifier<Chat> {
     }
   }
 }
-
-/// ------------------ Provider ------------------
-NotifierProvider<ChatScreenNotifier, Chat> chatScreenController(Chat chat) =>
-    NotifierProvider<ChatScreenNotifier, Chat>(
-      () => ChatScreenNotifier(chat),
-    );

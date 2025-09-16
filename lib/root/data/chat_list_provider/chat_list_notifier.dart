@@ -16,6 +16,7 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
     final loadedChats = await IsarDatabase.loadAllChats();
     _allChats = loadedChats; // keep master copy
     state = loadedChats;     // visible copy
+    print("Chats loaded: $loadedChats");
   }
 
   /// Create + persist + add to state

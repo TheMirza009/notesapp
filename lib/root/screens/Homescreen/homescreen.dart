@@ -190,7 +190,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 10.0),
                             child: Icon(Icons.search, color: ThemeConstants.iconLight,),
                           ),
-                          trailing: [_searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear), onPressed: clearSearch,) : SizedBox.shrink()] ,
+                          trailing: [_searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: clearSearch,) : SizedBox.shrink()] ,
                           hintText: "Search in notes...",
                           hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
                           onChanged: (value) => chatNotifier.searchChats(value),

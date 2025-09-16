@@ -120,7 +120,14 @@ List<PopupMenuItem<String>> get chatScreenOptions => [
 ];
 
 /// Options: Message Hold
-List<PopupMenuItem<String>> get messageHoldOptions  => [
+List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
+  if (isImage) PopupMenuItem(
+    value: 'toggleSender',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.switchSender2),
+      text: "Toggle Sender",
+    ),
+  ),
   PopupMenuItem(
     value: 'reply',
     child: buildOptionTile(
