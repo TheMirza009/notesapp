@@ -32,18 +32,14 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
-  final Chat chat;
-  const ChatScreen({super.key, required this.chat});
+  final Chat currentChat;
+  final ChatScreenNotifier notifier;
+  const ChatScreen({super.key, required this.currentChat, required this.notifier});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentChat = ref.watch(chatScreenController(chat));
-    final notifier = ref.read(chatScreenController(chat).notifier);
-    final messages = currentChat.messages.toList();
-
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   notifier.initialize(); // fire-and-forget, runs only once inside notifier
-    // });
+    final chatState = ref.watch(chatScreenController);
+    final messages = chatState.messages.toList();
 
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
@@ -88,7 +84,7 @@ class ChatScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  onSearchTap: () => notifier.initialize(),
+                  onSearchTap: () => print("notifier.loadFromDatabase()"),
                   onOptionsPressed: () {
                     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
                     showMenu<String>(

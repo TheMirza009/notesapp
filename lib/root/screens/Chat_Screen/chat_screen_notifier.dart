@@ -12,58 +12,49 @@ import 'package:notesapp/root/data/models/message_model.dart';
 
 
 /// ------------------ Provider ------------------
-NotifierProvider<ChatScreenNotifier, Chat> chatScreenController(Chat chat) =>
-    NotifierProvider<ChatScreenNotifier, Chat>(
-      () => ChatScreenNotifier(chat),
-    );
-
-/// ------------------ Notifier ------------------
-
+final chatScreenController = NotifierProvider<ChatScreenNotifier, Chat>(
+  () => ChatScreenNotifier(
+        Chat()..title = "Placeholder" // dummy chat, will never be used
+      ),
+);
 class ChatScreenNotifier extends Notifier<Chat> {
   Chat initialChat;
-  final Isar isar = IsarDatabase.isar;
-  bool isSelecting = false;
-  late final ChatListNotifier chatListNotifier;
 
   ChatScreenNotifier(this.initialChat);
 
+  bool _initialized = false;
+  final Isar isar = IsarDatabase.isar;
+  bool isSelecting = false;
+
   @override
   Chat build() {
-    state = initialChat;
-    state.title = ref.watch(chatListProvider.notifier).getChatByID(initialChat.uuid).title;
-    initialize();
-    return state;
+    if (!_initialized) {
+      _initialized = true;
+      _initialize();
+    }
+    return initialChat;
   }
 
-  bool _initialized = false;
-  void initialize() async {
-    if (_initialized == false) {
-      _initialized = true;
-      await loadFromDatabase();
+  Future<void> _initialize() async {
+    final freshChat = await isar.chats.get(initialChat.isarID);
+    if (freshChat != null) {
+      await freshChat.messages.load();
+      await Future.wait(freshChat.messages.map((m) => m.media.load()));
+      print("Loaded: $freshChat");
+      state = freshChat;
     }
   }
 
-  Future<void> loadFromDatabase() async {
-    final freshChat = await isar.chats.get(initialChat.isarID);
-    if (freshChat == null) return;
-    await freshChat.messages.load(); 
-    await Future.wait(freshChat.messages.map((m) => m.media.load()));
-    state = freshChat;
-    print("Loaded: ${freshChat}");
-  }
-
-
-  /// ------------------ Messaging ------------------
+  // ---------------- Messaging ----------------
 
   Future<void> sendMessage(String text) async {
     deleteInitMessage();
 
-    final newMessage =
-        Message()
-          ..text = text
-          ..isSender = true
-          ..isSelected = false
-          ..time = DateTime.now();
+    final newMessage = Message()
+      ..text = text
+      ..isSender = true
+      ..isSelected = false
+      ..time = DateTime.now();
 
     await isar.writeTxn(() async {
       await isar.messages.put(newMessage);
@@ -71,11 +62,13 @@ class ChatScreenNotifier extends Notifier<Chat> {
       await initialChat.messages.save();
       initialChat.preview = newMessage.text;
       initialChat.date = newMessage.time;
-      await isar.chats.put(initialChat); // ensure chat is managed
+      await isar.chats.put(initialChat);
     });
-    ref.read(chatListProvider.notifier).getChatByID(initialChat.uuid).preview = newMessage.text;
+
+    // Sync with chat list
+    ref.read(chatListProvider.notifier).updateChat(initialChat);
+
     state = initialChat;
-    // await loadFromDatabase();
   }
 
   Future<void> pickImage() async {
@@ -84,7 +77,6 @@ class ChatScreenNotifier extends Notifier<Chat> {
 
     deleteInitMessage();
 
-    // Persist media
     await isar.writeTxn(() async {
       await isar.medias.put(pickedMedia);
     });
@@ -92,18 +84,15 @@ class ChatScreenNotifier extends Notifier<Chat> {
     final persistedMedia = await isar.medias.get(pickedMedia.isarId);
     if (persistedMedia == null) return;
 
-    final newMessage =
-        Message()
-          ..text = ""
-          ..isSender = true
-          ..isSelected = false
-          ..time = DateTime.now()
-          ..media.value = persistedMedia;
+    final newMessage = Message()
+      ..isSender = true
+      ..isSelected = false
+      ..time = DateTime.now()
+      ..media.value = persistedMedia;
 
     await isar.writeTxn(() async {
       await isar.messages.put(newMessage);
       await newMessage.media.save();
-
       initialChat.messages.add(newMessage);
       await initialChat.messages.save();
 
@@ -113,6 +102,8 @@ class ChatScreenNotifier extends Notifier<Chat> {
     });
 
     await newMessage.media.load();
+    ref.read(chatListProvider.notifier).updateChat(initialChat);
+
     state = initialChat;
   }
 
@@ -159,6 +150,15 @@ class ChatScreenNotifier extends Notifier<Chat> {
   int selectCount() => initialChat.messages.where((m) => m.isSelected).length;
 
   /// ------------------ Update / Delete ------------------
+  /// 
+  Future<void> _refreshState() async {
+    final freshChat = await isar.chats.get(initialChat.isarID);
+    if (freshChat != null) {
+      await freshChat.messages.load();
+      await Future.wait(freshChat.messages.map((m) => m.media.load()));
+      state = freshChat; // new instance from Isar → Riverpod sees update
+    }
+  }
 
   Future<void> updateMessage(Message message) async {
     await isar.writeTxn(() async {
@@ -172,7 +172,8 @@ class ChatScreenNotifier extends Notifier<Chat> {
         await isar.messages.put(message);
       }
     });
-    state = initialChat;
+    initialChat = state;
+     await _refreshState();
   }
 
   Future<void> deleteMessage(Message message) async {
@@ -231,7 +232,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
       await isar.chats.put(updated);
     });
     ref.read(chatListProvider.notifier).updateChat(updated);
-    initialChat = updated;
+    // initialChat = updated;
     state = updated;
     print("Init title: ${initialChat.title}");
     print("State title: ${state.title}");
@@ -250,3 +251,4 @@ class ChatScreenNotifier extends Notifier<Chat> {
     }
   }
 }
+

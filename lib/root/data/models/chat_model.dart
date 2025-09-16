@@ -30,7 +30,7 @@ class Chat {
     String? preview,
     DateTime? date,
     String? chatPhotoPath,
-    List<Message>? messages,
+    IsarLinks<Message>? messages,
     List<Media>? media,
   }) {
     final newChat = Chat()

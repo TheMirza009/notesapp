@@ -3,6 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 
+
+/// The provider
+final chatListProvider = StateNotifierProvider<ChatListNotifier, List<Chat>>((ref) {
+  return ChatListNotifier();
+});
+
+
 /// Notifier that controls a list of chats stored in Isar
 class ChatListNotifier extends StateNotifier<List<Chat>> {
   List<Chat> _allChats = []; // master list, source of truth
@@ -68,9 +75,3 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
     state = _allChats;
   }
 }
-
-
-/// The provider
-final chatListProvider = StateNotifierProvider<ChatListNotifier, List<Chat>>((ref) {
-  return ChatListNotifier();
-});

@@ -17,6 +17,8 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_override.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_test_screen.dart';
@@ -70,20 +72,40 @@ class _HomescreenState extends ConsumerState<Homescreen> {
     void navigateToChatScreen(Chat chat) {
       Navigator.push(
         context,
-        CupertinoPageRoute(builder: (_) => ChatScreen(chat: chat)),
+        CupertinoPageRoute(
+          builder:
+              (_) => ProviderScope(
+                overrides: [
+                  chatScreenController.overrideWith(
+                    () => ChatScreenNotifier(chat),
+                  ),
+                ],
+                child: ChatScreenOverride(), // 👈 wrap inside a private widget
+              ),
+        ),
       );
     }
 
     void createNewChat() async {
-      final newChat = await chatNotifier.addChat(); // already managed
+      final newChat = await chatNotifier.addChat();
       await newChat.messages.load();
+
       Navigator.push(
         context,
         CupertinoPageRoute(
-          builder: (_) => ChatScreen(chat: newChat),
+          builder:
+              (_) => ProviderScope(
+                overrides: [
+                  chatScreenController.overrideWith(
+                    () => ChatScreenNotifier(newChat),
+                  ),
+                ],
+                child: ChatScreenOverride(), // 👈 wrap inside a private widget
+              ),
         ),
       );
     }
+
 
     void handleContextMenuAction(value) {
       switch (value) {
