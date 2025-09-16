@@ -1,22 +1,28 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 
 /// Notifier that controls a list of chats stored in Isar
 class ChatListNotifier extends StateNotifier<List<Chat>> {
+  List<Chat> _allChats = []; // master list, source of truth
+
   ChatListNotifier() : super([]) {
-    _loadChats();
+    loadChats();
   }
 
-  Future<void> _loadChats() async {
+  /// Load all chats from DB
+  Future<void> loadChats() async {
     final loadedChats = await IsarDatabase.loadAllChats();
-    state = loadedChats;
+    _allChats = loadedChats; // keep master copy
+    state = loadedChats;     // visible copy
   }
 
   /// Create + persist + add to state
   Future<Chat> addChat() async {
     final savedChat = await IsarDatabase.addNewChat();
-    state = [...state, savedChat]; // update provider state
+    _allChats = [..._allChats, savedChat];
+    state = [...state, savedChat];
     return savedChat; // for immediate navigation
   }
 
@@ -24,21 +30,41 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
     await IsarDatabase.isar.writeTxn(() async {
       await IsarDatabase.isar.chats.delete(chat.isarID);
     });
+    _allChats = _allChats.where((c) => c.isarID != chat.isarID).toList();
     state = state.where((c) => c.isarID != chat.isarID).toList();
   }
 
   Future<void> clearChats() async {
     await IsarDatabase.clearRepo();
+    _allChats = [];
     state = [];
   }
 
   Future<void> updateChat(Chat updatedChat) async {
     await IsarDatabase.saveChat(updatedChat);
+    _allChats = _allChats.map((c) => c.isarID == updatedChat.isarID ? updatedChat : c).toList();
     state = state.map((c) => c.isarID == updatedChat.isarID ? updatedChat : c).toList();
   }
 
-  Chat getChatByID(String uuid) {
-    return state.firstWhere((chat) => chat.uuid == uuid);
+   Chat getChatByID(String uuid) {
+    return _allChats.firstWhere((chat) => chat.uuid == uuid);
+  }
+
+  /// Search chats by title
+  void searchChats(String query) {
+    if (query.isEmpty) {
+      clearSearch(); // reset to full list
+      return;
+    }
+    final lowercaseQuery = query.toLowerCase();
+    state = _allChats
+        .where((chat) => (chat.title ?? "").toLowerCase().contains(lowercaseQuery))
+        .toList();
+  }
+
+  /// Clear search field and restore full list
+  void clearSearch() {
+    state = _allChats;
   }
 }
 

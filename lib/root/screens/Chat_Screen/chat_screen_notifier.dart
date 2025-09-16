@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/core/extensions/message_list_layout.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
@@ -161,6 +162,7 @@ class ChatScreenNotifier extends Notifier<Chat> {
       await isar.messages.delete(message.isarId);
 
       initialChat.messages.remove(message);
+      // initialChat.preview = initialChat.messages.toList().last.text;
       await initialChat.messages.save();
       await isar.chats.put(initialChat);
     });

@@ -11,9 +11,11 @@ import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
+import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
@@ -28,23 +30,43 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 
-class Homescreen extends ConsumerWidget {
+class Homescreen extends ConsumerStatefulWidget {
   const Homescreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Homescreen> createState() => _HomescreenState();
+}
+
+class _HomescreenState extends ConsumerState<Homescreen> {
+  final FocusNode _searchFocusNode = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
+
+    @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
 
     // Declarations
+    final chatNotifier = ref.read(chatListProvider.notifier);
     Size screensize = MediaQuery.sizeOf(context);
     final List<Chat> chatlist = ref.watch(chatListProvider);
-    final chatNotifier = ref.read(chatListProvider.notifier);
     bool isLight = Theme.brightnessOf(context) == Brightness.light;
     LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
     Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     Color dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
     String addNotePath = isLight ? IconPaths.addNoteLight : IconPaths.addNoteDark;
-    final FocusNode _searchFocusNode = FocusNode();
 
+    void clearSearch() {
+      _searchController.clear();
+      _searchFocusNode.unfocus();
+      chatNotifier.clearSearch();
+    }
+    
     void navigateToChatScreen(Chat chat) {
       Navigator.push(
         context,
@@ -158,6 +180,7 @@ class Homescreen extends ConsumerWidget {
                         ),
                         child: SearchBar(
                           focusNode: _searchFocusNode,
+                          controller: _searchController,
                           autoFocus: false,
                           shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
                           padding: WidgetStatePropertyAll(EdgeInsets.zero),
@@ -167,8 +190,11 @@ class Homescreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10.0),
                             child: Icon(Icons.search, color: ThemeConstants.iconLight,),
                           ),
+                          trailing: [_searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear), onPressed: clearSearch,) : SizedBox.shrink()] ,
                           hintText: "Search in notes...",
                           hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                          onChanged: (value) => chatNotifier.searchChats(value),
+
                         ),
                       ),
                     ),
@@ -195,7 +221,7 @@ class Homescreen extends ConsumerWidget {
                       },
                       child: ChatTile(
                         title: chat.title ?? "New Note",
-                        subtitle: chat.preview,
+                        subtitle: chat.lastMessageText,
                         time: TimeFormat.formatChatTime(chat.date),
                         onDismissed: (_) => chatNotifier.removeChat(chat),
                         onTap: () => navigateToChatScreen(chat),
@@ -218,15 +244,3 @@ class Homescreen extends ConsumerWidget {
     );
   }
 }
-
-// Widget buildContextMenuArea({
-//   required Widget child,
-//   required List<Widget> menuItems,
-// }) {
-//   return ContextMenuArea(
-//     child: Padding(padding: const EdgeInsets.all(8.0), child: child),
-//     builder: (context) {
-//       return menuItems;
-//       },
-//   );
-// }
