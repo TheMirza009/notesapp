@@ -80,7 +80,7 @@ class ChatScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  onSearchTap: () => notifier.loadFromDatabase(),
+                  onSearchTap: () => print("notifier.loadFromDatabase()"),
                   onOptionsPressed: () {
                     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
                     showMenu<String>(

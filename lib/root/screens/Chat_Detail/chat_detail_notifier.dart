@@ -13,7 +13,6 @@ class ChatDetailNotifier extends StateNotifier<Chat> {
 
     // 2. Update the global list so the rest of the app sees the change
     await ref.read(chatListProvider.notifier).updateChat(updatedChat);
-    ref.read(chatScreenController(updatedChat).notifier).state.title = newTitle;
-    await ref.read(chatScreenController(updatedChat).notifier).loadFromDatabase();
+
   }
 }

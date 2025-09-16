@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
-import 'package:notesapp/root/data/models/media_model.dart';
-import 'package:notesapp/root/data/models/message_model.dart';
 
 /// Notifier that controls a list of chats stored in Isar
 class ChatListNotifier extends StateNotifier<List<Chat>> {

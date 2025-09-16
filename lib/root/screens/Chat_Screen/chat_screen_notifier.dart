@@ -19,9 +19,10 @@ class ChatScreenNotifier extends Notifier<Chat> {
 
   @override
   Chat build() {
-    chatListNotifier = ref.read(chatListProvider.notifier);
+    state = initialChat;
+    state.title = ref.watch(chatListProvider.notifier).getChatByID(initialChat.uuid).title;
     loadFromDatabase();
-    return initialChat;
+    return state;
   }
 
   Future<void> loadFromDatabase() async {
@@ -30,7 +31,6 @@ class ChatScreenNotifier extends Notifier<Chat> {
     await freshChat.messages.load(); 
     await Future.wait(freshChat.messages.map((m) => m.media.load()));
     state = freshChat;
-    // print(state.messages.first);
   }
 
 
@@ -93,7 +93,6 @@ class ChatScreenNotifier extends Notifier<Chat> {
     });
 
     await newMessage.media.load();
-
     state = initialChat;
   }
 
@@ -200,6 +199,21 @@ class ChatScreenNotifier extends Notifier<Chat> {
         break;
     }
   }
+
+  Future<void> updateTitle(String newTitle) async {
+    final updated = initialChat.copyWith(title: newTitle);
+
+    await isar.writeTxn(() async {
+      await isar.chats.put(updated);
+    });
+    ref.read(chatListProvider.notifier).updateChat(updated);
+    initialChat = updated;
+    state = updated;
+    print("Init title: ${initialChat.title}");
+    print("State title: ${state.title}");
+  }
+
+
 
   void removeChatIfEmpty() {
     const String initID = "0000";
