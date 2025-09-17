@@ -16,8 +16,8 @@ import 'package:svg_flutter/svg.dart';
 
 /// Provider for ChatDetailNotifier
 final chatDetailProvider =
-    StateNotifierProvider<ChatDetailNotifier, ChatDetailState>(
-  (ref) => ChatDetailNotifier(),
+    NotifierProvider<ChatDetailNotifier, ChatDetailState>(
+  () => ChatDetailNotifier(),
 );
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
@@ -38,9 +38,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     titleController = TextEditingController(text: widget.chat.title ?? "New Chat");
 
     // Initialize provider with chat once
-    Future.microtask(() {
-      ref.read(chatDetailProvider.notifier).init(widget.chat);
-    });
+    // Future.microtask(() {
+    //   ref.read(chatDetailProvider.notifier).init(widget.chat);
+    // });
   }
 
   @override
@@ -60,7 +60,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   void _finishEditing(ChatDetailNotifier notifier) {
     final newText = titleController.text.trim();
-    notifier.updateTitle(newText, ref);
+    notifier.updateTitle(newText);
     setState(() => isEditing = false);
   }
 

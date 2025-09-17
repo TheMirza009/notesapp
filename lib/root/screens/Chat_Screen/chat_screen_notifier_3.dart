@@ -12,33 +12,33 @@ import 'package:isar/isar.dart';
 
 /// Provider for the notifier
 final chatMessagesController =
-    NotifierProvider<ChatMessagesNotifier, List<Message>>(
+    NotifierProvider.autoDispose<ChatMessagesNotifier, List<Message>>(
   () => ChatMessagesNotifier(),
 );
 
-class ChatMessagesNotifier extends Notifier<List<Message>> {
-  late final Isar _isar;
-  Chat? chat; // read-only reference
+class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
+  final _isar = IsarDatabase.isar;
+  Chat? _chat; // read-only reference
   bool isLoading = false;
   bool isSelecting = false;
 
   @override
   List<Message> build() {
-    _isar = IsarDatabase.isar;
-    chat = ref.watch(chatListProvider.notifier).selectedChat;
-
-    if (chat == null) return [];
-
+    final selectedChat = ref.watch(chatListProvider).selectedChat;
+    if (selectedChat == null) {
+      return []; // gracefully return empty, no crash
+    }
+    _chat = selectedChat;
     _hydrateMessages();
-    return []; // optimistic empty state while loading
+    return [];
   }
 
   /// Load messages from DB and update state
   Future<void> _hydrateMessages() async {
-    if (chat == null || isLoading) return;
+    if (_chat == null || isLoading) return;
     isLoading = true;
 
-    final freshChat = await _isar.chats.get(chat!.isarID);
+    final freshChat = await _isar.chats.get(_chat!.isarID);
     if (freshChat != null) {
       await freshChat.messages.load();
       await Future.wait(freshChat.messages.map((m) => m.media.load()));
@@ -76,7 +76,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
   /// Send a text message
   Future<void> sendMessage(String text) async {
-    if (chat == null) return;
+    if (_chat == null) return;
 
 
     final newMessage = Message()
@@ -86,10 +86,10 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
     await _isar.writeTxn(() async {
       await _isar.messages.put(newMessage);
-      if (chat != null) {
-        chat!.messages.add(newMessage);
-        await chat!.messages.save();
-        await _isar.chats.put(chat!);
+      if (_chat != null) {
+        _chat!.messages.add(newMessage);
+        await _chat!.messages.save();
+        await _isar.chats.put(_chat!);
       }
     });
 
@@ -118,10 +118,10 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
     await _isar.writeTxn(() async {
       await _isar.messages.put(newMessage);
-      if (chat != null) {
-        chat!.messages.add(newMessage);
-        await chat!.messages.save();
-        await _isar.chats.put(chat!);
+      if (_chat != null) {
+        _chat!.messages.add(newMessage);
+        await _chat!.messages.save();
+        await _isar.chats.put(_chat!);
       }
     });
 
@@ -129,7 +129,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   }
 
   Future<void> deleteInitMessage() async {
-    if (chat == null || state == null || state!.isEmpty) return;
+    if (_chat == null || state == null || state!.isEmpty) return;
 
     const String initID = "0000";
     const String initText = "This is a new chat. Start typing to create your first note.";
@@ -145,10 +145,10 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   Future<void> deleteMessage(Message message) async {
     await _isar.writeTxn(() async {
       await _isar.messages.delete(message.isarId);
-      if (chat != null) {
-        chat!.messages.remove(message);
-        await chat!.messages.save();
-        await _isar.chats.put(chat!);
+      if (_chat != null) {
+        _chat!.messages.remove(message);
+        await _chat!.messages.save();
+        await _isar.chats.put(_chat!);
       }
     });
 
@@ -167,16 +167,16 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     await _isar.writeTxn(() async {
       for (final m in selected) {
         await _isar.messages.delete(m.isarId);
-        if (chat != null) {
-          chat!.messages.remove(m);
+        if (_chat != null) {
+          _chat!.messages.remove(m);
         }
 
         if (m.media.value != null && m.media.value!.type != Mediatype.text) {
           await MediaHandler.deleteMedia(m.media.value!);
         }
       }
-      if (chat != null) await chat!.messages.save();
-      if (chat != null) await _isar.chats.put(chat!);
+      if (_chat != null) await _chat!.messages.save();
+      if (_chat != null) await _isar.chats.put(_chat!);
     });
 
     unSelectAllMessages();
@@ -212,20 +212,33 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
   /// Clears the selected chat
   void clearChat() {
-    ref.read(chatListProvider.notifier).selectedChat = null;
+    ref.read(chatListProvider.notifier).clearSelectedChat();
     state = [];
   }
 
-  void removeChatIfEmpty() {
-    const String initID = "0000";
-    const String initText = "This is a new chat. Start typing to create your first note.";
-    
-    final messages = chat!.messages;
-    if (messages.isEmpty || (messages.length == 1 && messages.first.text == initText && messages.first.text == initID)) {
-      // deleteMessage(messages.first);
-      ref.read(chatListProvider.notifier).removeChat(chat!);
-    }
+  void removeChatIfEmpty() async {
+  if (_chat == null) return;
+
+  await _chat!.messages.load();
+
+  const String initText = "This is a new chat. Start typing to create your first note.";
+  const String initID = "0000";
+
+  final messages = _chat!.messages;
+
+  if (messages.isEmpty) {
+    ref.read(chatListProvider.notifier).removeChat(_chat!);
+    return;
   }
+
+  if (messages.length == 1 &&
+      messages.first.text == initText &&
+      messages.first.id == initID) {
+    ref.read(chatListProvider.notifier).removeChat(_chat!);
+  }
+}
+
+
 
     /// Context menu actions
   void handleMessageMenuAction(String action, Message message) {

@@ -55,7 +55,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
     // Declarations
     final chatNotifier = ref.read(chatListProvider.notifier);
     Size screensize = MediaQuery.sizeOf(context);
-    final List<Chat> chatlist = ref.watch(chatListProvider);
+    final List<Chat> chatlist = ref.watch(chatListProvider).chats;
     bool isLight = Theme.brightnessOf(context) == Brightness.light;
     LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
     Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
@@ -69,7 +69,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
     }
     
     void navigateToChatScreen(Chat chat) {
-      chatNotifier.selectChat(chat);
+      ref.read(chatListProvider.notifier).selectChat(chat);
       Navigator.push(
         context,
         CupertinoPageRoute(
@@ -81,7 +81,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
     void createNewChat() async {
       final newChat = await chatNotifier.addChat();
       await newChat.messages.load();
-      chatNotifier.selectChat(newChat);
+      ref.read(chatListProvider.notifier).selectChat(newChat);
       Navigator.push(
         context,
         CupertinoPageRoute(

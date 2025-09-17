@@ -24,34 +24,27 @@ class ChatDetailState {
   factory ChatDetailState.initial() => const ChatDetailState();
 }
 
-class ChatDetailNotifier extends StateNotifier<ChatDetailState> {
-  ChatDetailNotifier() : super(ChatDetailState.initial());
-
-  void init(Chat chat) {
-    state = state.copyWith(chat: chat);
-    getPhotos();
+class ChatDetailNotifier extends Notifier<ChatDetailState> {
+  @override
+  ChatDetailState build() {
+    final selectedChat = ref.watch(chatListProvider).selectedChat;
+    return ChatDetailState(chat: selectedChat, photos: []);
   }
 
   Future<void> getPhotos() async {
-    if (state.chat == null) return;
+    final chat = ref.read(chatListProvider).selectedChat;
+    if (chat == null) return;
 
-    await state.chat!.messages.load();
-    final photoMessages = state.chat!.messages
-        .where((m) => m.media.value?.type == Mediatype.image)
-        .toList();
+    await chat.messages.load();
+    final photoMessages =
+        chat.messages.where((m) => m.media.value?.type == Mediatype.image).toList();
 
     final photos = photoMessages.map((m) => m.media.value!).toList();
-    state = state.copyWith(photos: photos);
+    state = state.copyWith(photos: photos, chat: chat);
   }
 
-  Future<void> updateTitle(String newTitle, WidgetRef ref) async {
-    if (state.chat == null) return;
-
-    final updatedChat = state.chat!.copyWith(title: newTitle);
-    state = state.copyWith(chat: updatedChat);
-
-    await ref.read(chatListProvider.notifier).updateChat(updatedChat);
+  Future<void> updateTitle(String newTitle) async {
     ref.read(chatListProvider.notifier).changeSelectedChatTitle(newTitle);
-    // await ref.read(chatScreenController.notifier).updateChatTitle(newTitle);
+    state = state.copyWith(chat: ref.read(chatListProvider).selectedChat);
   }
 }
