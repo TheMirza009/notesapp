@@ -40,6 +40,18 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
     state = state.copyWith(chats: loadedChats);
   }
 
+  Future<void> refreshChat(int isarId) async {
+  final fresh = await IsarDatabase.isar.chats.get(isarId);
+  if (fresh == null) return;
+
+  await fresh.messages.load();
+  _allChats = _allChats.map((c) => c.isarID == isarId ? fresh : c).toList();
+  final updatedChats = state.chats.map((c) => c.isarID == isarId ? fresh : c).toList();
+  final newSelected = state.selectedChat?.isarID == isarId ? fresh : state.selectedChat;
+
+  state = state.copyWith(chats: updatedChats, selectedChat: newSelected);
+}
+
   /// Create + persist + add to state
   Future<Chat> addChat() async {
     final savedChat = await IsarDatabase.addNewChat();

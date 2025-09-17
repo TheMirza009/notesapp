@@ -219,22 +219,26 @@ class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
   void removeChatIfEmpty() async {
   if (_chat == null) return;
 
-  await _chat!.messages.load();
+  // Always re-fetch a managed copy
+  final managedChat = await _isar.chats.get(_chat!.isarID);
+  if (managedChat == null) return;
 
-  const String initText = "This is a new chat. Start typing to create your first note.";
-  const String initID = "0000";
+  await managedChat.messages.load();
 
-  final messages = _chat!.messages;
-
-  if (messages.isEmpty) {
-    ref.read(chatListProvider.notifier).removeChat(_chat!);
+  // Handle empty case
+  if (managedChat.messages.isEmpty) {
+    ref.read(chatListProvider.notifier).removeChat(managedChat);
     return;
   }
 
-  if (messages.length == 1 &&
-      messages.first.text == initText &&
-      messages.first.id == initID) {
-    ref.read(chatListProvider.notifier).removeChat(_chat!);
+  // Handle init placeholder
+  const String initText = "This is a new chat. Start typing to create your first note.";
+  const String initID = "0000";
+
+  if (managedChat.messages.length == 1 &&
+      managedChat.messages.first.text == initText &&
+      managedChat.messages.first.id == initID) {
+    ref.read(chatListProvider.notifier).removeChat(managedChat);
   }
 }
 
