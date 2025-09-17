@@ -12,12 +12,10 @@ import 'package:riverpod/riverpod.dart';
 import 'package:isar/isar.dart';
 
 /// Provider for the notifier
-/// Persistent provider for chat messages
 final chatMessagesController =
     NotifierProvider<ChatMessagesNotifier, List<Message>>(
   () => ChatMessagesNotifier(),
 );
-
 
 class ChatMessagesNotifier extends Notifier<List<Message>> {
   final _isar = IsarDatabase.isar;
@@ -27,55 +25,30 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
   @override
   List<Message> build() {
-    final selectedChat = ref.read(chatListProvider).selectedChat;
-    if (selectedChat == null) return [];
-
-    // Only update _chat if it changed
-    if (_chat?.isarID != selectedChat.isarID) {
-      _chat = selectedChat;
-
-      // Optimistically show existing messages if available
-      final cachedMessages = _chat!.messages.toList();
-      if (cachedMessages.isNotEmpty) {
-        state = cachedMessages;
-      }
-
-      // Hydrate from DB in background
-      _hydrateMessages();
+    final selectedChat = ref.watch(chatListProvider).selectedChat;
+    if (selectedChat == null) {
+      return []; // gracefully return empty, no crash
     }
-
-    return state;
+    _chat = selectedChat;
+    _hydrateMessages();
+    return [];
   }
-
 
   /// Load messages from DB and update state
   Future<void> _hydrateMessages() async {
     if (_chat == null || isLoading) return;
     isLoading = true;
 
-    // Fetch the managed chat from Isar
     final freshChat = await _isar.chats.get(_chat!.isarID);
     if (freshChat != null) {
       await freshChat.messages.load();
+      await Future.wait(freshChat.messages.map((m) => m.media.load()));
 
-      // Immediately update state with text messages only
-      state = freshChat.messages
-          .where((m) => m.media.value == null) // exclude images for now
-          .toList();
-
-      // Load images asynchronously
-      for (final msg in freshChat.messages.where((m) => m.media.value != null)) {
-        await msg.media.load();
-        state = [...state, msg]; // add each image message as it loads
-      }
-
-      // Refresh reference
-      _chat = freshChat;
+      state = freshChat.messages.toList();
     }
 
     isLoading = false;
   }
-
 
   /// Update or add a message
   Future<void> updateMessage(Message message) async {

@@ -171,9 +171,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       crossAxisCount: 3,
                       children: List.generate(
                         photoMessages.length,
-                        (index) => Image.file(
-                          File(photoMessages[index].path!),
-                          fit: BoxFit.cover,
+                        (index) => Container(
+                          margin: EdgeInsets.all(0.75),
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5)
+                          ),
+                          child: _FadeInImage(
+                            File(photoMessages[index].path!), 
+                            index,
+                            ),
                         ),
                       ),
                     ),
@@ -199,6 +206,42 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Widget to fade in a single image
+class _FadeInImage extends StatefulWidget {
+  final File file;
+  final int? index;
+  const _FadeInImage(this.file, this.index);
+
+  @override
+  State<_FadeInImage> createState() => _FadeInImageState();
+}
+
+class _FadeInImageState extends State<_FadeInImage> {
+  double opacity = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger fade-in after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(Duration(milliseconds: ((widget.index ?? 1) * 100)), 
+      () => setState(() => opacity = 1.0));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: Duration(milliseconds: 300),
+      opacity: opacity,
+      child: Image.file(
+        widget.file,
+        fit: BoxFit.cover,
       ),
     );
   }
