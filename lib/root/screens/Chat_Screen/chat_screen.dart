@@ -22,6 +22,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_2.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
@@ -39,9 +40,9 @@ class ChatScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(chatScreenController.notifier);
-    final currentChat = ref.watch(chatScreenController);
-    final messages = currentChat!.messages.toList() ?? [];
+    final notifier = ref.read(chatMessagesController.notifier);
+    final messages = ref.watch(chatMessagesController);
+    String chatTitle = ref.watch(chatListProvider.notifier).selectedChat!.title ?? "New Note";
 
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
@@ -78,14 +79,14 @@ class ChatScreen extends ConsumerWidget {
                         },
                       icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral,),
                     ),
-                  lastEdited: currentChat.messages.isNotEmpty ? currentChat.messages.last.time : DateTime.now(),
+                  lastEdited: messages.isNotEmpty ? messages.last.time : DateTime.now(),
                   isSelecting: notifier.isSelecting,
-                  title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : currentChat.title ?? "New Note",
+                  title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : chatTitle,
                   onTitleTap: () {
                     Navigator.push(
                       context,
                       CupertinoPageRoute(
-                        builder: (_) => ChatDetailScreen(chat: currentChat),
+                        builder: (_) => ChatDetailScreen(chat: chat),
                       ),
                     );
                   },
@@ -164,7 +165,7 @@ class ChatScreen extends ConsumerWidget {
                                     CustomContextMenu.showMenuAt(
                                       context,
                                       position: pos,
-                                      menuItems: messageHoldOptions(),
+                                      menuItems: messageHoldOptions(isImage: message.isImage),
                                       triangleHorizontalOffset: message.isSender ? 120 : 40,
                                       onSelected: (val) => notifier.handleMessageMenuAction(val, message),
                                     );

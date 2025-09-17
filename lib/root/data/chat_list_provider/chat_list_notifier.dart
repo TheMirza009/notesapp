@@ -81,4 +81,11 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
     state = state;
     print(selectedChat!.title);
   }
+
+  void changeSelectedChatTitle(String newTitle) {
+    if (selectedChat == null) return;
+    selectedChat = selectedChat!.copyWith(title: newTitle);
+    state = state;
+    print("new Title: ${selectedChat!.title}");
+  }
 }
