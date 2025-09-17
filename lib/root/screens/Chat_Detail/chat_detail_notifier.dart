@@ -4,6 +4,7 @@ import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_2.dart';
 
 class ChatDetailState {
   final Chat? chat;
@@ -47,6 +48,7 @@ class ChatDetailNotifier extends StateNotifier<ChatDetailState> {
     final updatedChat = state.chat!.copyWith(title: newTitle);
     state = state.copyWith(chat: updatedChat);
 
-    await ref.read(chatListProvider.notifier).updateChat(updatedChat);
+    // await ref.read(chatListProvider.notifier).updateChat(updatedChat);
+    await ref.read(chatScreenController.notifier).updateChatTitle(newTitle);
   }
 }

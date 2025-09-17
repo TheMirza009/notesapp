@@ -144,8 +144,8 @@ class ChatScreen extends ConsumerWidget {
                                   bottomPadding: info.bottomPadding,
                                   onTapWhileSelecting: () {
                                     message.isSelected
-                                        ? notifier.unselectMessage()
-                                        : notifier.selectMessage();
+                                        ? notifier.unselectMessage(message)
+                                        : notifier.selectMessage(message);
                                   },
                                   onTap: () {
                                       if (message.isImage) {
@@ -160,13 +160,13 @@ class ChatScreen extends ConsumerWidget {
                                       }
                                     },
                                   onLongPress: (pos) {
-                                    notifier.selectMessage();
+                                    notifier.selectMessage(message);
                                     CustomContextMenu.showMenuAt(
                                       context,
                                       position: pos,
                                       menuItems: messageHoldOptions(),
                                       triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                      onSelected: (val) => notifier.handleMessageMenuAction(),
+                                      onSelected: (val) => notifier.handleMessageMenuAction(val, message),
                                     );
                                   },
                                 ),
@@ -178,7 +178,7 @@ class ChatScreen extends ConsumerWidget {
 
                 BottomMessageBar(
                   onEmojiTap: () => debugPrint("Emoji tapped"),
-                  onAttachmentTap: () {},
+                  onAttachmentTap: () => notifier.pickImage(),
                   onMicTap: () => debugPrint("notifier.state"),
                   onSend: (txt) => notifier.sendMessage(txt),
                 ),
