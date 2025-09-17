@@ -12,12 +12,14 @@ import 'package:riverpod/riverpod.dart';
 import 'package:isar/isar.dart';
 
 /// Provider for the notifier
+/// Persistent provider for chat messages
 final chatMessagesController =
-    NotifierProvider.autoDispose<ChatMessagesNotifier, List<Message>>(
+    NotifierProvider<ChatMessagesNotifier, List<Message>>(
   () => ChatMessagesNotifier(),
 );
 
-class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
+
+class ChatMessagesNotifier extends Notifier<List<Message>> {
   final _isar = IsarDatabase.isar;
   Chat? _chat; // read-only reference
   bool isLoading = false;
@@ -25,30 +27,55 @@ class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
 
   @override
   List<Message> build() {
-    final selectedChat = ref.watch(chatListProvider).selectedChat;
-    if (selectedChat == null) {
-      return []; // gracefully return empty, no crash
+    final selectedChat = ref.read(chatListProvider).selectedChat;
+    if (selectedChat == null) return [];
+
+    // Only update _chat if it changed
+    if (_chat?.isarID != selectedChat.isarID) {
+      _chat = selectedChat;
+
+      // Optimistically show existing messages if available
+      final cachedMessages = _chat!.messages.toList();
+      if (cachedMessages.isNotEmpty) {
+        state = cachedMessages;
+      }
+
+      // Hydrate from DB in background
+      _hydrateMessages();
     }
-    _chat = selectedChat;
-    _hydrateMessages();
-    return [];
+
+    return state;
   }
+
 
   /// Load messages from DB and update state
   Future<void> _hydrateMessages() async {
     if (_chat == null || isLoading) return;
     isLoading = true;
 
+    // Fetch the managed chat from Isar
     final freshChat = await _isar.chats.get(_chat!.isarID);
     if (freshChat != null) {
       await freshChat.messages.load();
-      await Future.wait(freshChat.messages.map((m) => m.media.load()));
 
-      state = freshChat.messages.toList();
+      // Immediately update state with text messages only
+      state = freshChat.messages
+          .where((m) => m.media.value == null) // exclude images for now
+          .toList();
+
+      // Load images asynchronously
+      for (final msg in freshChat.messages.where((m) => m.media.value != null)) {
+        await msg.media.load();
+        state = [...state, msg]; // add each image message as it loads
+      }
+
+      // Refresh reference
+      _chat = freshChat;
     }
 
     isLoading = false;
   }
+
 
   /// Update or add a message
   Future<void> updateMessage(Message message) async {
@@ -100,21 +127,21 @@ class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
 
   /// Pick image and send as message
   Future<void> pickImage() async {
-    final pickedMedia = await MediaHandler.pickImage();
-    if (pickedMedia == null || _chat == null) return;
+    final pickedMedia = await MediaHandler.pickImage(); // Media Picker Call
+    if (pickedMedia == null || _chat == null) return;   // Early return on cancel
 
     // remove init placeholder if present
-    await deleteInitMessage();
+    await deleteInitMessage();                          // Delete initMessage
 
     // Save Media first
-    await _isar.writeTxn(() async {
-      await _isar.medias.put(pickedMedia);
-    });
+    await _isar.writeTxn(() async {                     // Start first Database write
+      await _isar.medias.put(pickedMedia);              // Upsert to Media repo
+    });                                                 // Get fresh copy from Database
 
-    final persistedMedia = await _isar.medias.get(pickedMedia.isarId);
-    if (persistedMedia == null) return;
+    final persistedMedia = await _isar.medias.get(pickedMedia.isarId); 
+    if (persistedMedia == null) return;                           
 
-    final newMessage =
+    final newMessage =                                            // 0 - Message Creation
         Message()
           ..text = "📷 Photo"
           ..isSender = true
@@ -137,16 +164,15 @@ class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
 
   // Update UI state with the *managed* message instance if possible.
   // The `newMessage` now has isar id and media relation stored.
-  state = [...state, newMessage];
+  state = [...state, newMessage];                                 // 10 - State update
 
   // Optionally hydrate to ensure freshest managed instances (uncomment if needed)
   // await _hydrateMessages();
 }
 
-
-
+  /// Message to delete initial Message ("This is a new chat...")
   Future<void> deleteInitMessage() async {
-    if (_chat == null || state == null || state!.isEmpty) return;
+    if (_chat == null || state == null || state.isEmpty) return;
 
     const String initID = "0000";
     const String initText = "This is a new chat. Start typing to create your first note.";
@@ -241,31 +267,34 @@ class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
     state = [];
   }
 
+  /// Method to automatically remove chat if empty
   void removeChatIfEmpty() async {
-  if (_chat == null) return;
+    if (_chat == null) return;
 
-  // Always re-fetch a managed copy
-  final managedChat = await _isar.chats.get(_chat!.isarID);
-  if (managedChat == null) return;
+    // Always re-fetch a managed copy
+    final managedChat = await _isar.chats.get(_chat!.isarID);
+    if (managedChat == null) return;
+    await managedChat.messages.load();
 
-  await managedChat.messages.load();
+    // Handle empty case
+    if (managedChat.messages.isEmpty) {
+      ref.read(chatListProvider.notifier).removeChat(managedChat);
+      return;
+    }
 
-  // Handle empty case
-  if (managedChat.messages.isEmpty) {
-    ref.read(chatListProvider.notifier).removeChat(managedChat);
-    return;
+    // Handle init placeholder
+    const String initText = "This is a new chat. Start typing to create your first note.";
+    const String initID = "0000";
+
+    bool initMessageCheck = 
+        managedChat.messages.length == 1 &&
+        managedChat.messages.first.text == initText &&
+        managedChat.messages.first.id == initID;
+
+    if (initMessageCheck) {
+      ref.read(chatListProvider.notifier).removeChat(managedChat);
+    }
   }
-
-  // Handle init placeholder
-  const String initText = "This is a new chat. Start typing to create your first note.";
-  const String initID = "0000";
-
-  if (managedChat.messages.length == 1 &&
-      managedChat.messages.first.text == initText &&
-      managedChat.messages.first.id == initID) {
-    ref.read(chatListProvider.notifier).removeChat(managedChat);
-  }
-}
 
 
 

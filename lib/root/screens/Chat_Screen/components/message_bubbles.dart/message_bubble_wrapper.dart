@@ -102,10 +102,13 @@ class MessageBubble extends StatelessWidget {
       onDismissed: onDismissed,
       child: Stack(
         children: [
-          Align(
-            alignment:
-                message.isSender ? Alignment.centerRight : Alignment.centerLeft,
-            child: Padding(
+          AnimatedAlign(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOutQuint,
+            alignment:  message.isSender ? Alignment.centerRight : Alignment.centerLeft,
+            child: AnimatedPadding(
+              duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOutQuint,
               padding: EdgeInsets.only(
                 left: message.isSender ? 45.0 : 8,
                 right: message.isSender ? 8 : 45,
