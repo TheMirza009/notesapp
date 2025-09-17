@@ -36,6 +36,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.chat.title ?? "New Chat");
+    // Future.microtask(() {
+    //   ref.read(chatDetailProvider.notifier).getPhotos();
+    // });
 
     // Initialize provider with chat once
     // Future.microtask(() {

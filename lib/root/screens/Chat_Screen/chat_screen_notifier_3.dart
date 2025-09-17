@@ -99,34 +99,50 @@ class ChatMessagesNotifier extends AutoDisposeNotifier<List<Message>> {
 
   /// Pick image and send as message
   Future<void> pickImage() async {
-    final pickedMedia = await MediaHandler.pickImage();
-    if (pickedMedia == null) return;
+  final pickedMedia = await MediaHandler.pickImage();
+  if (pickedMedia == null || _chat == null) return;
 
-    deleteInitMessage();
+  // remove init placeholder if present
+  await deleteInitMessage();
 
-    await _isar.writeTxn(() async {
-      await _isar.medias.put(pickedMedia);
-    });
+  // Save Media first
+  await _isar.writeTxn(() async {
+    await _isar.medias.put(pickedMedia);
+  });
 
-    final persistedMedia = await _isar.medias.get(pickedMedia.isarId);
-    if (persistedMedia == null) return;
+  final persistedMedia = await _isar.medias.get(pickedMedia.isarId);
+  if (persistedMedia == null) return;
 
-    final newMessage = Message()
-      ..isSender = true
-      ..time = DateTime.now()
-      ..media.value = persistedMedia;
+  final newMessage = Message()
+    ..text = "📷 Photo"
+    ..isSender = true
+    ..time = DateTime.now()
+    ..media.value = persistedMedia;
 
-    await _isar.writeTxn(() async {
-      await _isar.messages.put(newMessage);
-      if (_chat != null) {
-        _chat!.messages.add(newMessage);
-        await _chat!.messages.save();
-        await _isar.chats.put(_chat!);
-      }
-    });
+  // Save message and its media relation in one transaction
+  await _isar.writeTxn(() async {
+    
+    await _isar.messages.put(newMessage);                       // 1 - persist message (assigns isarId)
+    await newMessage.media.save();                              // 2 - persist the media-to-message relation (this is the crucial step)
+    final managedChat = await _isar.chats.get(_chat!.isarID);   // 3 - attach to a managed chat (re-fetch to ensure it's managed)
+    if (managedChat != null) {                                  // 4 - Make sure _chat is not null
+      await managedChat.messages.load();                        // 5 - Reload assigned messages
+      managedChat.messages.add(newMessage);                     // 6 - add new message to loaded chat
+      await managedChat.messages.save();                        // 7 - Persist the message-to-Chat relationship               
+      await _isar.chats.put(managedChat);                       // 8 - Upsert the reloaded chat back to isar
+      _chat = managedChat;                                      // 9 - refresh reference
+    }
+  });
 
-    state = [...state, newMessage];
-  }
+  // Update UI state with the *managed* message instance if possible.
+  // The `newMessage` now has isar id and media relation stored.
+  state = [...state, newMessage];
+
+  // Optionally hydrate to ensure freshest managed instances (uncomment if needed)
+  // await _hydrateMessages();
+}
+
+
 
   Future<void> deleteInitMessage() async {
     if (_chat == null || state == null || state!.isEmpty) return;

@@ -33,16 +33,28 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
   }
 
   Future<void> getPhotos() async {
-    final chat = ref.read(chatListProvider).selectedChat;
-    if (chat == null) return;
+  final chat = ref.read(chatListProvider).selectedChat;
+  if (chat == null) return;
 
-    await chat.messages.load();
-    final photoMessages =
-        chat.messages.where((m) => m.media.value?.type == Mediatype.image).toList();
+  // Reload the chat from Isar to guarantee it's fully managed
+  final freshChat = await IsarDatabase.isar.chats.get(chat.isarID);
+  if (freshChat == null) return;
 
-    final photos = photoMessages.map((m) => m.media.value!).toList();
-    state = state.copyWith(photos: photos, chat: chat);
-  }
+  // Load messages + their media
+  await freshChat.messages.load();
+  await Future.wait(freshChat.messages.map((m) async {
+    await m.media.load();
+  }));
+
+  final photoMessages =
+      freshChat.messages.where((m) => m.media.value?.type == Mediatype.image).toList();
+
+  final photos = photoMessages.map((m) => m.media.value!).toList();
+
+  // Update state with managed chat and loaded photos
+  state = state.copyWith(chat: freshChat, photos: photos);
+}
+
 
   Future<void> updateTitle(String newTitle) async {
   final chat = ref.read(chatListProvider).selectedChat;
