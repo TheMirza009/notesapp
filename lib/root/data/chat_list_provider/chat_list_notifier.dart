@@ -13,6 +13,7 @@ final chatListProvider = StateNotifierProvider<ChatListNotifier, List<Chat>>((re
 /// Notifier that controls a list of chats stored in Isar
 class ChatListNotifier extends StateNotifier<List<Chat>> {
   List<Chat> _allChats = []; // master list, source of truth
+  Chat? selectedChat;
 
   ChatListNotifier() : super([]) {
     loadChats();
@@ -73,5 +74,11 @@ class ChatListNotifier extends StateNotifier<List<Chat>> {
   /// Clear search field and restore full list
   void clearSearch() {
     state = _allChats;
+  }
+
+  void selectChat(Chat chat) {
+    selectedChat = chat;
+    state = state;
+    print(selectedChat!.title);
   }
 }

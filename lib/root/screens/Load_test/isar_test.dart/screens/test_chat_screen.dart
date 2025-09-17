@@ -33,6 +33,7 @@ class ChatNotifier extends Notifier<Chat> {
       await freshChat.messages.load();
       await Future.wait(freshChat.messages.map((m) => m.media.load()));
       state = freshChat;
+      print("Loading chat: ${freshChat.title}");
     }
   }
 

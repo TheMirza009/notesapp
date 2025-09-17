@@ -14,12 +14,14 @@ import 'package:notesapp/core/extensions/message_list_layout.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_2.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
@@ -32,14 +34,14 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 
 class ChatScreen extends ConsumerWidget {
-  final Chat currentChat;
-  final ChatScreenNotifier notifier;
-  const ChatScreen({super.key, required this.currentChat, required this.notifier});
+  final Chat chat;
+  const ChatScreen({super.key, required this.chat});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatState = ref.watch(chatScreenController);
-    final messages = chatState.messages.toList();
+    final notifier = ref.read(chatScreenController.notifier);
+    final currentChat = ref.watch(chatScreenController);
+    final messages = currentChat!.messages.toList() ?? [];
 
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
@@ -48,6 +50,7 @@ class ChatScreen extends ConsumerWidget {
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
         notifier.removeChatIfEmpty();
+        ref.read(chatListProvider.notifier).selectedChat = null;
       },
       child: GestureDetector(
         onTap: () => notifier.unSelectAllMessages(),
@@ -70,7 +73,9 @@ class ChatScreen extends ConsumerWidget {
                       icon: Icon(Icons.clear, color: ThemeConstants.iconColorNeutral,),
                     )
                     : IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        },
                       icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral,),
                     ),
                   lastEdited: currentChat.messages.isNotEmpty ? currentChat.messages.last.time : DateTime.now(),
@@ -139,8 +144,8 @@ class ChatScreen extends ConsumerWidget {
                                   bottomPadding: info.bottomPadding,
                                   onTapWhileSelecting: () {
                                     message.isSelected
-                                        ? notifier.unselectMessage(message)
-                                        : notifier.selectMessage(message);
+                                        ? notifier.unselectMessage()
+                                        : notifier.selectMessage();
                                   },
                                   onTap: () {
                                       if (message.isImage) {
@@ -155,13 +160,13 @@ class ChatScreen extends ConsumerWidget {
                                       }
                                     },
                                   onLongPress: (pos) {
-                                    notifier.selectMessage(message);
+                                    notifier.selectMessage();
                                     CustomContextMenu.showMenuAt(
                                       context,
                                       position: pos,
-                                      menuItems: messageHoldOptions(isImage: message.isImage),
+                                      menuItems: messageHoldOptions(),
                                       triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                      onSelected: (val) => notifier.handleMessageMenuAction(val, message),
+                                      onSelected: (val) => notifier.handleMessageMenuAction(),
                                     );
                                   },
                                 ),
@@ -173,9 +178,9 @@ class ChatScreen extends ConsumerWidget {
 
                 BottomMessageBar(
                   onEmojiTap: () => debugPrint("Emoji tapped"),
-                  onAttachmentTap: () => notifier.pickImage(),
-                  onMicTap: () => debugPrint(notifier.state.uuid),
-                  onSend: notifier.sendMessage,
+                  onAttachmentTap: () {},
+                  onMicTap: () => debugPrint("notifier.state"),
+                  onSend: (txt) => notifier.sendMessage(txt),
                 ),
               ],
             ),
