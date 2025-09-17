@@ -112,16 +112,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 child: InkWell(
                   splashColor: const Color.fromARGB(87, 220, 247, 255),
                   onTap: () async {
-                    final Media? file = await MediaHandler.pickImage();
-                    if (file != null) print(file.name);
+                    // final Media? file = await MediaHandler.pickImage();
+                    // if (file != null) print(file.name);
+                    await notifier.updateChatPhoto();
                   },
                   customBorder: const CircleBorder(),
                   child: Center(
-                    child: DocumentIcon(
-                      size: screenSize.height / 3,
-                      borderWidth: 12,
-                      iconPadding: const EdgeInsets.all(26),
-                    ),
+                    child:
+                      chat!.chatPhotoPath != null
+                        ? Image.file(
+                          File(chat.chatPhotoPath!),
+                          height: screenSize.height / 3,
+                          fit: BoxFit.cover,
+                        )
+                        : DocumentIcon(
+                          size: screenSize.height / 3,
+                          borderWidth: 12,
+                          iconPadding: const EdgeInsets.all(26),
+                        ),
                   ),
                 ),
               ),

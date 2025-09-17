@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -22,7 +23,7 @@ class MediaHandler {
     File file = File(pickedFile.path);
 
     // Optional cropping for profile pictures
-    if (isProfilePicture) {
+    if (isProfilePicture && !kisWindows) {
       final croppedFile = await _cropImage(file);
       if (croppedFile != null) file = croppedFile;
     }

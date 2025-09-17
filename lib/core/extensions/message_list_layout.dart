@@ -52,3 +52,20 @@ extension MessageListLayout on List<Message> {
     );
   }
 }
+
+extension BoolChecks on List<Message> {
+  bool hasDuplicateMediaPath(Message target) {
+    final targetPath = target.media.value?.path;
+    if (targetPath == null) return false;
+
+    // Collect all messages with the same path
+    final matches = where((m) => m.media.value?.path == targetPath).toList();
+
+    // true if more than 1 message shares this path
+    return matches.length > 1;
+  }
+}
+
+
+
+

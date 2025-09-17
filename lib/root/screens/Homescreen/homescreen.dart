@@ -228,6 +228,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                       child: ChatTile(
                         title: chat.title ?? "New Note",
                         subtitle: chat.lastMessageText,
+                        chatPhotoPath: chat.chatPhotoPath,
                         time: TimeFormat.formatChatTime(chat.date),
                         onDismissed: (_) => chatNotifier.removeChat(chat),
                         onTap: () => navigateToChatScreen(chat),

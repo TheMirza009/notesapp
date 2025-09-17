@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
@@ -8,6 +10,7 @@ class ChatTile extends StatelessWidget {
   final String time;
   final bool showDivider;
   final Widget? chatIcon;
+  final String? chatPhotoPath;
   final VoidCallback? onTap; // Nullable onTap function
   final VoidCallback? onLongPress;
   final  Function(DismissDirection)? onDismissed;
@@ -23,6 +26,7 @@ class ChatTile extends StatelessWidget {
     this.onTap, // onTap parameter
     this.onLongPress,
     this.onDismissed,
+    this.chatPhotoPath,
   });
 
   @override
@@ -64,7 +68,20 @@ class ChatTile extends StatelessWidget {
                 child: Row(
                   children: [
                     // Leading Icon
-                    chatIcon ?? DocumentIcon(), // Custom DocumentIcon widget as leading
+                    chatPhotoPath == null 
+                    ? chatIcon ?? DocumentIcon() 
+                    : Container(
+                      height: 50,
+                      width: 50,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                      ),
+                      child: Image.file(
+                            File(chatPhotoPath!),
+                            fit: BoxFit.cover,
+                          ),
+                    ), // Custom DocumentIcon widget as leading
                     
                     // Title and Time in a Row
                     Expanded(

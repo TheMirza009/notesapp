@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:contextmenu/contextmenu.dart';
@@ -20,6 +21,7 @@ class ChatAppBar extends StatelessWidget {
   final void Function()? onOptionsPressed;
   final void Function()? onSearchTap;
   final List<Widget>? actions;
+  final String? chatPhotoPath;
 
   const ChatAppBar({
     super.key, 
@@ -31,6 +33,7 @@ class ChatAppBar extends StatelessWidget {
     this.onOptionsPressed, 
     this.isSelecting = false,
     this.actions,
+    this.chatPhotoPath,
   });
 
   @override
@@ -63,7 +66,18 @@ class ChatAppBar extends StatelessWidget {
               child: Row(
                 key: ValueKey(isSelecting),
                 children: [
-                  DocumentIcon(size: 40),
+                  chatPhotoPath == null
+                      ? DocumentIcon(size: 40)
+                      : Container(
+                        height: 40,
+                        width: 40,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(shape: BoxShape.circle),
+                        child: Image.file(
+                          File(chatPhotoPath!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                   // Icon(
                   //   Icons.account_circle,
                   //   size: 50.0, // Icon size inside the circle

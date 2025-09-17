@@ -42,7 +42,9 @@ class ChatScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatMessagesController.notifier);
     final messages = ref.watch(chatMessagesController);
-    String chatTitle = ref.watch(chatListProvider).selectedChat!.title ?? "New Note";
+    final selectedChat = ref.watch(chatListProvider).selectedChat;
+    String chatTitle = selectedChat!.title ?? "New Note";
+    String? chatPhoto = selectedChat.chatPhotoPath;
 
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
@@ -67,6 +69,7 @@ class ChatScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ChatAppBar(
+                  chatPhotoPath: chatPhoto,
                   leading: notifier.isSelecting
                     ? IconButton(
                       onPressed: () => notifier.unSelectAllMessages(),
