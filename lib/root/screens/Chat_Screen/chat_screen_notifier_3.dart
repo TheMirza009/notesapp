@@ -1,13 +1,19 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/message_list_layout.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:isar/isar.dart';
 
@@ -235,8 +241,13 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   int selectCount() => state.where((m) => m.isSelected).length;
 
   /// Clears the selected chat
-  void clearChat() {
-    ref.read(chatListProvider.notifier).clearSelectedChat();
+  void clearChat() async {
+    // ref.read(chatListProvider.notifier).clearSelectedChat();
+    await _isar.writeTxn(() async {
+      await _chat!.messages.filter().deleteAll();
+      await _chat!.messages.save();
+      await _isar.chats.put(_chat!);
+    });
     state = [];
   }
 
@@ -293,4 +304,54 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
         break;
     }
   }
+
+  void handleChatScreenOptions(String action, Chat chat) {
+    switch (action) {
+      case "chatInfo":
+        Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)));
+        break;
+      case "clearChat":
+        showCupertinoDialog(
+            context: navigatorKey.currentContext!,
+            builder: (_) => CustomAlertDialog(
+              title: "Delete all notes",
+              content: "Are you sure you want to delete all notes?",
+              iconColor: Colors.redAccent,
+              iconData: (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
+              iconSize: 25,
+              option: TextButton(
+                onPressed: () {
+                  Navigator.pop(navigatorKey.currentContext!);
+                  clearChat();
+                },
+                child: Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ),
+          );
+    }
+  } 
 }
+
+// final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+//                     showMenu<String>(
+//                       context: context,
+//                       position: RelativeRect.fromLTRB(
+//                         10,
+//                         200,
+//                         overlay.size.width - 10,
+//                         overlay.size.height - 200,
+//                       ),
+//                       items: const [
+//                         PopupMenuItem<String>(
+//                           value: "data",
+//                           child: Text("Data"),
+//                         ),
+//                         PopupMenuItem<String>(
+//                           value: "settings",
+//                           child: Text("Settings"),
+//                         ),
+//                       ],
+//                     );

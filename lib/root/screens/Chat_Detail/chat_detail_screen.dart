@@ -177,7 +177,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(5)
                           ),
-                          child: _FadeInImage(
+                          child: FadeInDynamic(
                             File(photoMessages[index].path!), 
                             index,
                             ),
@@ -212,16 +212,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 }
 
 // Widget to fade in a single image
-class _FadeInImage extends StatefulWidget {
-  final File file;
+class FadeInDynamic extends StatefulWidget {
+  final dynamic child;
   final int? index;
-  const _FadeInImage(this.file, this.index);
+  const FadeInDynamic(this.child, this.index, {super.key});
 
   @override
-  State<_FadeInImage> createState() => _FadeInImageState();
+  State<FadeInDynamic> createState() => _FadeInDynamicState();
 }
 
-class _FadeInImageState extends State<_FadeInImage> {
+class _FadeInDynamicState extends State<FadeInDynamic> {
   double opacity = 0.0;
 
   @override
@@ -240,7 +240,7 @@ class _FadeInImageState extends State<_FadeInImage> {
       duration: Duration(milliseconds: 300),
       opacity: opacity,
       child: Image.file(
-        widget.file,
+        widget.child,
         fit: BoxFit.cover,
       ),
     );

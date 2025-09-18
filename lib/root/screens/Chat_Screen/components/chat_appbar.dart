@@ -18,7 +18,7 @@ class ChatAppBar extends StatelessWidget {
   final VoidCallback onTitleTap;
   final Widget? leading;
   final bool? isSelecting;
-  final void Function()? onOptionsPressed;
+  final void Function(String value)? onOptionsPressed;
   final void Function()? onSearchTap;
   final List<Widget>? actions;
   final String? chatPhotoPath;
@@ -116,7 +116,9 @@ class ChatAppBar extends StatelessWidget {
         ),
         CustomContextMenu(
           icon: Icon(Icons.more_vert), 
-          menuItems: chatScreenOptions, )
+          menuItems: chatScreenOptions, 
+          onSelected: (value) => onOptionsPressed!(value) ,
+          )
       ],
     );
   }

@@ -93,27 +93,8 @@ class ChatScreen extends ConsumerWidget {
                     );
                   },
                   onSearchTap: () => print("notifier.loadFromDatabase()"),
-                  onOptionsPressed: () {
-                    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-                    showMenu<String>(
-                      context: context,
-                      position: RelativeRect.fromLTRB(
-                        10,
-                        200,
-                        overlay.size.width - 10,
-                        overlay.size.height - 200,
-                      ),
-                      items: const [
-                        PopupMenuItem<String>(
-                          value: "data",
-                          child: Text("Data"),
-                        ),
-                        PopupMenuItem<String>(
-                          value: "settings",
-                          child: Text("Settings"),
-                        ),
-                      ],
-                    );
+                  onOptionsPressed: (value) {
+                    notifier.handleChatScreenOptions(value, chat);
                   },
                   actions: notifier.isSelecting
                     ? [ IconButton(onPressed: () => notifier.deleteSelected(), icon: Icon(Icons.delete_outline_rounded))]
@@ -153,10 +134,10 @@ class ChatScreen extends ConsumerWidget {
                                   onTap: () {
                                       if (message.isImage) {
                                         print(message);
-                                        // Navigator.push(
-                                        //   context,
-                                        //   MaterialPageRoute( builder: (_) => Scaffold( appBar: AppBar(), body: Center(child: Image.file( File( message .media .value! .path!, ), )), ), ),
-                                        // );
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute( builder: (_) => Scaffold( appBar: AppBar(), body: Center(child: Image.file( File( message .media .value! .path!, ), )), ), ),
+                                        );
                                       } else {
                                         message.isSender = !message.isSender;
                                         notifier.updateMessage(message);

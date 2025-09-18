@@ -89,8 +89,7 @@ class MessageBubble extends StatelessWidget {
 
     return Dismissible(
       key: ValueKey(message.id),
-      direction:
-          message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
+      direction: message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
       dismissThresholds: const {
         DismissDirection.startToEnd: 1.0,
         DismissDirection.endToStart: 1.0,
