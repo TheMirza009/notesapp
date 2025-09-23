@@ -12,6 +12,8 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
+import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+import 'package:notesapp/root/widgets/photo_view/photo_view_wrapper.dart';
 import 'package:svg_flutter/svg.dart';
 
 /// Provider for ChatDetailNotifier
@@ -36,14 +38,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.chat.title ?? "New Chat");
-    // Future.microtask(() {
-    //   ref.read(chatDetailProvider.notifier).getPhotos();
-    // });
-
-    // Initialize provider with chat once
-    // Future.microtask(() {
-    //   ref.read(chatDetailProvider.notifier).init(widget.chat);
-    // });
   }
 
   @override
@@ -177,10 +171,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(5)
                           ),
-                          child: FadeInDynamic(
-                            File(photoMessages[index].path!), 
-                            index,
-                            ),
+                          child: InkWell(
+                          onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      // (_) => PhotoViewWrapper(
+                                      //   imagePath: photoMessages[index].path!,
+                                      //   minScale: 0.4,
+                                      // ),
+                                      (_) => GalleryViewWrapper(
+                                        chatTitle: chat!.title,
+                                        galleryItems: photoMessages,
+                                        initialIndex: index,
+                                      ),
+                                ),
+                              ),
+                            child: FadeInDynamic(
+                              File(photoMessages[index].path!), 
+                              index,
+                              ),
+                          ),
                         ),
                       ),
                     ),

@@ -33,25 +33,37 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
+
+  # ================= SORTED DEPENDENCIES ================= #
+  # UI
+  chat_bubbles: ^1.7.0
   cupertino_icons: ^1.0.8
-  contextmenu: ^3.0.0
-  image_cropper: ^9.1.0
-  image_picker: ^1.1.2
-  path_provider: ^2.1.5
   google_fonts: ^6.2.1
   iconify_flutter: ^0.0.7
   svg_flutter: ^0.0.1
+
+  # State management
   flutter_riverpod: ^2.6.1
-  chat_bubbles: ^1.7.0
+
+  # Date / time / formatting
   intl: ^0.20.2
-  uuid: ^4.5.1
-  pull_to_refresh_flutter3: ^2.0.2
-  mime: ^2.0.0
+
+  # Media handling
   file_picker: ^10.3.2
   flutter_image_compress: ^2.4.0
-  share_plus: ^12.0.0
+  image_cropper: ^9.1.0
+  image_picker: ^1.1.2
+  mime: ^2.0.0
+
+  # Storage / persistence
   isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.5
+
+  # Utilities
+  contextmenu: ^3.0.0
+  pull_to_refresh_flutter3: ^2.0.2
+  share_plus: ^10.0.3
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +78,14 @@ dev_dependencies:
   isar_generator: ^3.1.0+1
   build_runner: ^2.4.13
   analyzer: ^5.13.0
+  photox: ^0.2.1
+  photo_view: ^0.15.0
+  isar_flutter_libs: ^3.1.0+1
+
+dependency_overrides:
+  isar_flutter_libs:
+    path: plugins/isar_flutter_libs
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

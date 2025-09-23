@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:contextmenu/contextmenu.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
@@ -22,6 +23,9 @@ import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_test_screen.dart';
 import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
+import 'package:notesapp/root/screens/Profile/parent_slide_wrapper.dart';
+import 'package:notesapp/root/screens/Profile/profile_screen.dart';
+import 'package:notesapp/root/screens/Profile/reverse_cupertino_page_route.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
@@ -41,6 +45,7 @@ class Homescreen extends ConsumerStatefulWidget {
 class _HomescreenState extends ConsumerState<Homescreen> {
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
+    bool isSliding = false;
 
     @override
   void dispose() {
@@ -93,7 +98,13 @@ class _HomescreenState extends ConsumerState<Homescreen> {
 
     void handleContextMenuAction(value) {
       switch (value) {
-        case "profile": Navigator.push(context, CupertinoPageRoute(builder: (_) => SlideScreenTest()));
+        case "profile":
+          setState(() {
+            isSliding = true; // slide parent to the right
+          });
+          // schedule push after frame to let animation start
+
+      break;
         case "settings": print("Settings");
         case "deleteAll":
           showCupertinoDialog(
@@ -135,116 +146,130 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       },
     );
 
-    return Scaffold(
-      floatingActionButton: CustomIconButton(
-        size: 60,
-        splashColor: const Color.fromARGB(14, 96, 125, 139),
-        onPressed: createNewChat,
-        icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
+
+    return ParentSlideWrapper(
+      overlay: ProfileScreen(
+        leading: IconButton(
+        onPressed: () {
+          setState(() {
+            isSliding = false;
+          });
+        },
+        icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
       ),
-      appBar: AppBar(
-        // backgroundColor: ThemeConstants.hometoolbarLight,
-        elevation: 0,
-        backgroundColor: headerColor,
-        shadowColor: Colors.transparent,
-        toolbarHeight: 65,
-        title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: circularAvatar(),
+      ),
+      trigger: isSliding,
+      child: Scaffold(
+        floatingActionButton: CustomIconButton(
+          size: 60,
+          splashColor: const Color.fromARGB(14, 96, 125, 139),
+          onPressed: createNewChat,
+          icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
         ),
-        actions: [
-          CustomContextMenu(
-            icon: const Icon(Icons.more_vert),
-            menuItems: homeScreenOptions,
-            onSelected: (value) => handleContextMenuAction(value)
+        appBar: AppBar(
+          // backgroundColor: ThemeConstants.hometoolbarLight,
+          elevation: 0,
+          backgroundColor: headerColor,
+          shadowColor: Colors.transparent,
+          toolbarHeight: 65,
+          title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: circularAvatar(),
           ),
-        ],
-      ),
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Container(
-          height: screensize.height,
-          width: screensize.width,
-          padding: EdgeInsets.only(top: 12),
-          decoration: BoxDecoration(gradient: backgroundGradient),
-          child: 
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
-                child: Row(
-                  spacing: Platform.isWindows ? 5 : 0,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-
-                    Expanded(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: 40,
-                        ),
-                        child: SearchBar(
-                          focusNode: _searchFocusNode,
-                          controller: _searchController,
-                          autoFocus: false,
-                          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
-                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                          shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                          backgroundColor: WidgetStatePropertyAll(headerColor),
-                          leading: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                            child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+          actions: [
+            CustomContextMenu(
+              icon: const Icon(Icons.more_vert),
+              menuItems: homeScreenOptions,
+              onSelected: (value) => handleContextMenuAction(value)
+            ),
+          ],
+        ),
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Container(
+            height: screensize.height,
+            width: screensize.width,
+            padding: EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(gradient: backgroundGradient),
+            child: 
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
+                  child: Row(
+                    spacing: Platform.isWindows ? 5 : 0,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+      
+                      Expanded(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: 40,
                           ),
-                          trailing: [_searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: clearSearch,) : SizedBox.shrink()] ,
-                          hintText: "Search in notes...",
-                          hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
-                          onChanged: (value) => chatNotifier.searchChats(value),
-
+                          child: SearchBar(
+                            focusNode: _searchFocusNode,
+                            controller: _searchController,
+                            autoFocus: false,
+                            shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+                            padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                            shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                            backgroundColor: WidgetStatePropertyAll(headerColor),
+                            leading: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                            ),
+                            trailing: [_searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: clearSearch,) : SizedBox.shrink()] ,
+                            hintText: "Search in notes...",
+                            hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                            onChanged: (value) => chatNotifier.searchChats(value),
+      
+                          ),
                         ),
                       ),
-                    ),
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: IconButton(onPressed: () {
-                        Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadChatListScreen()));
-                      }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
-                  ],
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: IconButton(onPressed: () {
+                          Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadChatListScreen()));
+                        }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: chatlist.isEmpty
-                ? NothingToSee()
-                : ListView.separated(
-                  itemCount: chatlist.length,
-                  itemBuilder: (context, index) {
-                    final chat = chatlist[index];
-                     return TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 300),
-                      builder: (context, value, child) {
-                        return Opacity(opacity: value, child: child);
-                      },
-                      child: ChatTile(
-                        title: chat.title ?? "New Note",
-                        subtitle: chat.lastMessageText,
-                        chatPhotoPath: chat.chatPhotoPath,
-                        time: TimeFormat.formatChatTime(chat.date),
-                        onDismissed: (_) => chatNotifier.removeChat(chat),
-                        onTap: () => navigateToChatScreen(chat),
-                      ),
+                Expanded(
+                  child: chatlist.isEmpty
+                  ? NothingToSee()
+                  : ListView.separated(
+                    itemCount: chatlist.length,
+                    itemBuilder: (context, index) {
+                      final chat = chatlist[index];
+                       return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 1),
+                        duration: const Duration(milliseconds: 300),
+                        builder: (context, value, child) {
+                          return Opacity(opacity: value, child: child);
+                        },
+                        child: ChatTile(
+                          title: chat.title ?? "New Note",
+                          subtitle: chat.lastMessageText,
+                          chatPhotoPath: chat.chatPhotoPath,
+                          time: TimeFormat.formatChatTime(chat.date),
+                          onDismissed: (_) => chatNotifier.removeChat(chat),
+                          onTap: () => navigateToChatScreen(chat),
+                        ),
+                      );
+                    },
+                    separatorBuilder: (context, index) {
+                      return Divider(
+                      thickness: 1,
+                      indent: ThemeConstants.screenWidth * (1 - 0.93),
+                      color: dividerColor,
                     );
-                  },
-                  separatorBuilder: (context, index) {
-                    return Divider(
-                    thickness: 1,
-                    indent: ThemeConstants.screenWidth * (1 - 0.93),
-                    color: dividerColor,
-                  );
-                  },
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

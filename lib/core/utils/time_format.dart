@@ -54,4 +54,27 @@ class TimeFormat {
       return DateFormat('d MMM yyyy').format(lastEdited);
     }
   }
+
+  static String imageTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    String dayPart;
+    if (dateOnly == today) {
+      dayPart = "Today";
+    } else if (dateOnly == yesterday) {
+      dayPart = "Yesterday";
+    } else {
+      // show date: 13 September (year if different)
+      dayPart = DateFormat('d MMMM').format(dateTime);
+      if (dateTime.year != now.year) {
+        dayPart += " ${dateTime.year}";
+      }
+    }
+
+    final timePart = DateFormat('hh:mm a').format(dateTime); // 02:45 PM
+    return "$dayPart, $timePart";
+  }
 }

@@ -40,7 +40,7 @@ class Utils {
   }
 
   /// SHARE TEXT
-  static void shareToApps(String text) async {
-    await SharePlus.instance.share(ShareParams(text: text));
+static Future<void> shareToApps(String text) async {
+    await Share.share(text);
   }
 }

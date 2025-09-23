@@ -1,3 +1,4 @@
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 /// Dart-3 style recorded extension
@@ -65,6 +66,17 @@ extension BoolChecks on List<Message> {
     return matches.length > 1;
   }
 }
+
+extension MessageGalleryExtensions on List<Message> {
+  List<String> imagePaths() {
+    return this
+        .map((message) => message.media?.value) // get media value or null
+        .where((media) => media?.type == Mediatype.image) // filter images
+        .map((media) => media!.path!) // safe after filtering nulls
+        .toList();
+  }
+}
+
 
 
 

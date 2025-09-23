@@ -33,6 +33,7 @@ import 'package:notesapp/root/widgets/context_menus/custom_context_menu_2.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
+import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 
 class ChatScreen extends ConsumerWidget {
   final Chat chat;
@@ -133,10 +134,18 @@ class ChatScreen extends ConsumerWidget {
                                   },
                                   onTap: () {
                                       if (message.isImage) {
+                                        final imageMessages =  messages.where((m) => m.isImage && m.media.value?.path != null) .map((m) => m.media.value!) .toList();
+                                        final initialIndex = imageMessages.indexWhere((media) => media.isarId == message.media.value?.isarId);
                                         print(message);
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute( builder: (_) => Scaffold( appBar: AppBar(), body: Center(child: Image.file( File( message .media .value! .path!, ), )), ), ),
+                                          MaterialPageRoute(
+                                            builder: (_) => GalleryViewWrapper(
+                                              chatTitle: chatTitle,
+                                              galleryItems: imageMessages,
+                                              initialIndex: initialIndex,
+                                            ),
+                                          )
                                         );
                                       } else {
                                         message.isSender = !message.isSender;

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:path_provider/path_provider.dart';
@@ -85,17 +87,19 @@ class MediaHandler {
 
   /// Cropping logic
   static Future<File?> _cropImage(File imageFile) async {
+    final context = navigatorKey.currentContext!;
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: 'Crop Image',
-          toolbarColor: ThemeConstants.iconLight,
-          toolbarWidgetColor: ThemeConstants.toolbarLight,
-          activeControlsWidgetColor: ThemeConstants.iconLight,
+          toolbarTitle: 'Crop Chat Photo',
+          toolbarColor: context.isLight ? const Color(0xFFF4F8F8) : ThemeConstants.darkAppbar,
+          toolbarWidgetColor: context.isLight ? ThemeConstants.textLight : ThemeConstants.toolbarLight,
+          activeControlsWidgetColor: ThemeConstants.sinisterSeed,
           initAspectRatio: CropAspectRatioPreset.square,
           aspectRatioPresets: [CropAspectRatioPreset.square],
           lockAspectRatio: true,
+          
         ),
         IOSUiSettings(title: 'Crop Image'),
       ],
