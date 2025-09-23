@@ -9,8 +9,9 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
-import 'package:notesapp/core/extensions/message_list_layout.dart';
+import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -134,8 +135,8 @@ class ChatScreen extends ConsumerWidget {
                                   },
                                   onTap: () {
                                       if (message.isImage) {
-                                        final imageMessages =  messages.where((m) => m.isImage && m.media.value?.path != null) .map((m) => m.media.value!) .toList();
-                                        final initialIndex = imageMessages.indexWhere((media) => media.isarId == message.media.value?.isarId);
+                                        final imageMessages =  messages.imageMedias;
+                                        final initialIndex = imageMessages.indexOfMediaIsarID(message);
                                         print(message);
                                         Navigator.push(
                                           context,

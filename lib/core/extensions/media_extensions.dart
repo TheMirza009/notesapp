@@ -1,4 +1,6 @@
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
 
 extension MediaX on Media {
   DateTime? get messageTime {
@@ -6,3 +8,17 @@ extension MediaX on Media {
     return messagesBacklink.isNotEmpty ? messagesBacklink.first.time : null;
   }
 }
+
+extension MediaHelpers on List<Media> {
+  /// Returns a list of Media items that have valid image paths
+  List<Media> get validImages =>
+      where((m) => m.type == Mediatype.image && m.path != null).toList();
+
+  /// Returns the index of the Media that corresponds to the given Message
+  int indexOfMediaIsarID(Message message) {
+    final mediaId = message.media.value?.isarId;
+    if (mediaId == null) return -1;
+    return indexWhere((media) => media.isarId == mediaId);
+  }
+}
+

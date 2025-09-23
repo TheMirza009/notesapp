@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
-import 'package:notesapp/core/extensions/message_list_layout.dart';
+import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';

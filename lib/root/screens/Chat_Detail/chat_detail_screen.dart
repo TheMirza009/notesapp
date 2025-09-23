@@ -176,10 +176,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder:
-                                      // (_) => PhotoViewWrapper(
-                                      //   imagePath: photoMessages[index].path!,
-                                      //   minScale: 0.4,
-                                      // ),
                                       (_) => GalleryViewWrapper(
                                         chatTitle: chat!.title,
                                         galleryItems: photoMessages,

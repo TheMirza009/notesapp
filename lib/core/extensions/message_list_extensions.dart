@@ -1,4 +1,6 @@
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 /// Dart-3 style recorded extension
@@ -75,6 +77,11 @@ extension MessageGalleryExtensions on List<Message> {
         .map((media) => media!.path!) // safe after filtering nulls
         .toList();
   }
+
+  List<Media> get imageMedias =>
+      where((m) => m.isImage && m.media.value?.path != null)
+          .map((m) => m.media.value!)
+          .toList();
 }
 
 
