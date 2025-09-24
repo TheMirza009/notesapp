@@ -36,9 +36,6 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
   void initState() {
     super.initState();
     _messageController = TextEditingController();
-    _messageController.addListener(() {
-      detectPaste();
-    });
   }
 
   @override
@@ -47,18 +44,6 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
     super.dispose();
   }
 
-  detectPaste() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final imageBytes = await Pasteboard.image;
-    if (imageBytes != null) {
-      debugPrint("Got image bytes, length: ${imageBytes.length}");
-    }
-    // Check if the clipboard data is exactly 4 characters long.
-    final text = data?.text;
-    if (text == null || text.length < 2) return;
-
-    print("PASTED: $text");
-  }
 
   @override
   Widget build(BuildContext context) {

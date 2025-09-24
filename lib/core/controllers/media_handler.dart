@@ -59,12 +59,54 @@ class MediaHandler {
     final media = Media();
     media.name = fileName;
     media.path = file.path;
-    media.extension = "png";
+    media.extension = "gif";
     media.type = Mediatype.image;
     media.aspectRatio = aspectRatio;
 
     return media;
   }
+
+  /// Function to pick Media files instead of images
+  static Future<Media?> pickMedia({bool isProfilePicture = false}) async {
+    // Pick GIFs or images
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
+    );
+
+    if (result == null || result.files.isEmpty) return null;
+
+    File file = File(result.files.single.path!);
+
+    // Optional crop (only for still images, not GIFs)
+    if (isProfilePicture &&
+        !kisWindows &&
+        !file.path.toLowerCase().endsWith('.gif')) {
+      final croppedFile = await _cropImage(file);
+      if (croppedFile != null) file = croppedFile;
+    }
+
+    // Save to storage folder
+    final savedFile = await _saveToStorage(
+      file,
+      isProfilePicture ? 'Profile Pictures' : 'Photos',
+    );
+
+    double? aspectRatio;
+    if (!savedFile.path.toLowerCase().endsWith('.gif')) {
+      // Decode aspect ratio only for still images
+      final bytes = await savedFile.readAsBytes();
+      final decodedImage = await decodeImageFromList(bytes);
+      aspectRatio = decodedImage.width / decodedImage.height;
+    }
+
+    // Create Media object
+    final media = Media.fromFilePath(savedFile.path);
+    media.aspectRatio = aspectRatio;
+
+    return media;
+  }
+
 
 
 

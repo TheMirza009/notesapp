@@ -66,62 +66,105 @@ class MessageContentBuilder extends StatelessWidget {
   }
 
   /// IMAGE MESSAGE + gradient overlay + timestamp
-Widget _buildImageWithOverlay() {
-  final media = message.media.value;
+  Widget _buildImageWithOverlay() {
+    final media = message.media.value;
 
-  if (media == null || media.path == null) {
-    return const SizedBox(
-      width: 100,
-      height: 100,
-      child: Center(child: Icon(Icons.broken_image)),
+    if (media == null || media.path == null) {
+      return const SizedBox(
+        width: 100,
+        height: 100,
+        child: Center(child: Icon(Icons.broken_image)),
+      );
+    }
+
+    final file = File(media.path!);
+
+    // 🔑 Detect GIF by extension
+    final ext = (media.extension ?? "").toLowerCase();
+    if (ext == "gif") {
+      return _buildGifMessage();
+    }
+
+    final maxHeight = ThemeConstants.screenHeight * 0.5;
+
+    // Use stored aspect ratio, fallback to 1 if null
+    final aspectRatio = media.aspectRatio ?? 1.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: AspectRatio(
+          aspectRatio: aspectRatio,
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Image.file(file, fit: BoxFit.cover),
+              Container(
+                height: 50,
+                alignment: Alignment.bottomRight,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withAlpha(0),
+                      Colors.black.withAlpha(255),
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  DateFormat.jm().format(message.time),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ThemeConstants.subtitleLight,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  final file = File(media.path!);
-  final maxHeight = ThemeConstants.screenHeight * 0.5;
+  Widget _buildGifMessage() {
+    final media = message.media.value;
+    if (media == null || media.path == null) return const SizedBox();
 
-  // Use stored aspect ratio, fallback to 1 if null
-  final aspectRatio = media.aspectRatio ?? 1.0;
-
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(6),
-    child: ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            Image.file(file, fit: BoxFit.cover),
-            Container(
-              height: 50,
-              alignment: Alignment.bottomRight,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withAlpha(0),
-                    Colors.black.withAlpha(255),
-                  ],
-                ),
-              ),
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
+    return IntrinsicWidth(
+      child: Column(
+        spacing: 5,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Image.file(
+              File(media.path!),
+              fit: BoxFit.contain,
+              gaplessPlayback: true, // keeps playing
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("GIF", style: const TextStyle(
+                  fontSize: 12,
+                  color: ThemeConstants.subtitleLight,
+                ),),
+              Text(
                 DateFormat.jm().format(message.time),
                 style: const TextStyle(
                   fontSize: 12,
                   color: ThemeConstants.subtitleLight,
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        ],
       ),
-    ),
-  );
-}
-
+    );
+  }
 
 
   Future<double> _getImageAspectRatio(File file) async {
