@@ -1,0 +1,118 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
+
+class AnchorWrapper extends StatelessWidget {
+  final String? text;
+  final Media? media;
+  final VoidCallback? onClear;
+  final double maxHeight;
+  final Duration animationDuration;
+  final Curve animationCurve;
+
+  const AnchorWrapper({
+    super.key,
+    required this.text,
+    this.media,
+    this.onClear,
+    this.maxHeight = 80,
+    this.animationDuration = const Duration(milliseconds: 300),
+    this.animationCurve = Curves.easeInOutQuint,
+  });
+
+  bool get _isVisible => text != null && text!.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor =
+        _isVisible
+            ? (context.isLight
+                ? ThemeConstants.senderBlue
+                : ThemeConstants.senderBlueDark)
+            : Colors.transparent;
+
+    final padding = _isVisible ? const EdgeInsets.all(5) : EdgeInsets.zero;
+
+    return ClipRect(
+      child: AnimatedSlide(
+        offset: _isVisible ? Offset.zero : const Offset(0, 1.5),
+        duration: animationDuration,
+        curve: animationCurve,
+        child: AnimatedContainer(
+          duration: animationDuration,
+          curve: animationCurve,
+          margin: EdgeInsets.only(bottom: _isVisible ? 8 : 0, left: 8, right: 8),
+          padding: padding,
+          constraints: BoxConstraints(
+            maxHeight: _isVisible ? maxHeight : 0,
+            maxWidth: double.infinity,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: backgroundColor,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: context.isLight ? const Color(0x13002D6C) : Colors.black12,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(width: 5, color: ThemeConstants.sinisterSeed),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 5),
+                        Text("replying to", style: TextStyle(color: Colors.blueGrey, fontSize: 12)),
+                        SizedBox(height: 2),
+                        Text(
+                          text ?? '',
+                          softWrap: true,
+                          maxLines: 2,
+                          overflow: TextOverflow.fade,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        SizedBox(height: 5),
+                      ],
+                    ),
+                  ),
+                  if (_isVisible && onClear != null)
+                    Stack(
+                      alignment: Alignment.centerRight,
+                      children: [
+                        if (media != null) IntrinsicHeight(
+                          child: Container(
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(5)),
+                            height: 60,
+                            width: 60,
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.file(File(media!.path!), fit: BoxFit.cover,)),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(right: 5),
+                          child: IconButton.filled(
+                            color: Colors.white,
+                            style: IconButton.styleFrom(backgroundColor: Colors.black12),
+                            onPressed: onClear,
+                            icon: const Icon(Icons.clear),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

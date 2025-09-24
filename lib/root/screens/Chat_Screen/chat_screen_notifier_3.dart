@@ -353,7 +353,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
         break;
       case 'reply':
         print("Reply to `${message.text}`");
-        unSelectAllMessages();
+        setAnchorMessage(message);
         break;
       case 'copy':
         Utils.copyToClipboard(message.text);

@@ -24,6 +24,7 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_2.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
@@ -56,6 +57,8 @@ class ChatScreen extends ConsumerWidget {
       onPopInvokedWithResult: (didPop, context) {
         notifier.isSearching = false;
         notifier.searchFocusNode.unfocus();
+        notifier.unSelectAllMessages();
+        notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
       },
       child: GestureDetector(
@@ -212,49 +215,11 @@ class ChatScreen extends ConsumerWidget {
                     ),
                 ),
 
-                // if (notifier.anchorMessage != null) 
-                ClipRect(
-  child: AnimatedSlide(
-    offset: notifier.anchorMessage != null ? Offset.zero : const Offset(0, 1),
-    duration: const Duration(milliseconds: 300),
-    curve: Curves.easeInOutQuint,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutQuint,
-      margin: const EdgeInsets.all(8),
-      padding: notifier.anchorMessage != null ? const EdgeInsets.all(18) : EdgeInsets.zero,
-      constraints: BoxConstraints(
-        maxHeight: notifier.anchorMessage != null ? 100 : 0,
-        maxWidth: double.infinity,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: notifier.anchorMessage != null
-            ? (context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark)
-            : Colors.transparent,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Text(
-              notifier.anchorMessage?.text ?? '',
-              softWrap: true,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
-          if (notifier.anchorMessage != null)
-            IconButton(
-              onPressed: notifier.clearAnchorMessage,
-              icon: const Icon(Icons.clear),
-            ),
-        ],
-      ),
-    ),
-  ),
-),
-
-
+                AnchorWrapper(
+                  text: notifier.anchorMessage?.text,
+                  media: notifier.anchorMessage?.media.value,
+                  onClear: notifier.clearAnchorMessage,
+                ),
 
                 BottomMessageBar(
                   onEmojiTap: () => debugPrint("Emoji tapped"),
