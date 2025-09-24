@@ -33,6 +33,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   bool isLoading = false;
   bool isSelecting = false;
   bool isSearching = false;
+  Message? anchorMessage;
 
   @override
   List<Message> build() {
@@ -257,6 +258,17 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       await _isar.chats.put(_chat!);
     });
     state = [];
+  }
+
+  void setAnchorMessage(Message message) {
+    anchorMessage = message;
+    print(anchorMessage!.text);
+    state = [...state];
+  }
+
+  void clearAnchorMessage() {
+    anchorMessage = null;
+    state = [...state];
   }
 
   void toggleSearch() async {

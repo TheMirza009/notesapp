@@ -169,6 +169,7 @@ class ChatScreen extends ConsumerWidget {
                                   isSelecting: notifier.isSelecting,
                                   topPadding: info.topPadding,
                                   bottomPadding: info.bottomPadding,
+                                  onSwipe: () => notifier.setAnchorMessage(message),
                                   onTapWhileSelecting: () {
                                     message.isSelected
                                         ? notifier.unselectMessage(message)
@@ -210,6 +211,50 @@ class ChatScreen extends ConsumerWidget {
                       },
                     ),
                 ),
+
+                // if (notifier.anchorMessage != null) 
+                ClipRect(
+  child: AnimatedSlide(
+    offset: notifier.anchorMessage != null ? Offset.zero : const Offset(0, 1),
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOutQuint,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutQuint,
+      margin: const EdgeInsets.all(8),
+      padding: notifier.anchorMessage != null ? const EdgeInsets.all(18) : EdgeInsets.zero,
+      constraints: BoxConstraints(
+        maxHeight: notifier.anchorMessage != null ? 100 : 0,
+        maxWidth: double.infinity,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: notifier.anchorMessage != null
+            ? (context.isLight ? ThemeConstants.senderBlue : ThemeConstants.senderBlueDark)
+            : Colors.transparent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: Text(
+              notifier.anchorMessage?.text ?? '',
+              softWrap: true,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          if (notifier.anchorMessage != null)
+            IconButton(
+              onPressed: notifier.clearAnchorMessage,
+              icon: const Icon(Icons.clear),
+            ),
+        ],
+      ),
+    ),
+  ),
+),
+
+
 
                 BottomMessageBar(
                   onEmojiTap: () => debugPrint("Emoji tapped"),

@@ -7,6 +7,7 @@ import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/swipable.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:svg_flutter/svg.dart';
 
@@ -19,7 +20,7 @@ class MessageBubble extends StatelessWidget {
 
   /// Dismissible
   final Widget? dismissBackground;
-  final void Function(DismissDirection)? onDismissed;
+  final void Function()? onSwipe;
 
   /// RippleWell props
   final void Function()? onTap;
@@ -50,7 +51,7 @@ class MessageBubble extends StatelessWidget {
     this.isSelecting = false,
     this.onTapWhileSelecting,
     this.dismissBackground,
-    this.onDismissed,
+    this.onSwipe,
     this.onTap,
     this.onLongPress,
     this.rippleBorderRadius,
@@ -87,18 +88,10 @@ class MessageBubble extends StatelessWidget {
       };
     }
 
-    return Dismissible(
-      key: ValueKey(message.id),
-      direction: message.isSender ? DismissDirection.endToStart : DismissDirection.startToEnd,
-      dismissThresholds: const {
-        DismissDirection.startToEnd: 1.0,
-        DismissDirection.endToStart: 1.0,
-      },
-      confirmDismiss: (direction) async => false,
-      movementDuration: Duration.zero,
-      resizeDuration: null,
-      background: dismissBackground ?? replyIconBackground(context, alignLeft: !message.isSender),
-      onDismissed: onDismissed,
+    return Swipeable(
+      isSender: message.isSender,
+      isSelecting: isSelecting,
+      onSwiped: onSwipe,
       child: Stack(
         children: [
           AnimatedAlign(
