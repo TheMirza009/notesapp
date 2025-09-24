@@ -22,6 +22,7 @@ class ChatAppBar extends StatelessWidget {
   final void Function()? onSearchTap;
   final List<Widget>? actions;
   final String? chatPhotoPath;
+  final bool? showActionsIcon;
 
   const ChatAppBar({
     super.key, 
@@ -34,6 +35,7 @@ class ChatAppBar extends StatelessWidget {
     this.isSelecting = false,
     this.actions,
     this.chatPhotoPath,
+    this.showActionsIcon = true,
   });
 
   @override
@@ -114,7 +116,7 @@ class ChatAppBar extends StatelessWidget {
           onPressed: onSearchTap,
           icon: Icon(Icons.search), // color: ThemeConstants.iconLight),
         ),
-        CustomContextMenu(
+        if (showActionsIcon!) CustomContextMenu(
           icon: Icon(Icons.more_vert), 
           menuItems: chatScreenOptions, 
           onSelected: (value) => onOptionsPressed!(value) ,

@@ -47,13 +47,15 @@ class ChatScreen extends ConsumerWidget {
     final selectedChat = ref.watch(chatListProvider).selectedChat;
     String chatTitle = selectedChat!.title ?? "New Note";
     String? chatPhoto = selectedChat.chatPhotoPath; // Chat Photo reception
-
+    Color headerColor =  context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
     String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
 
     return PopScope(
       onPopInvokedWithResult: (didPop, context) {
+        notifier.isSearching = false;
+        notifier.searchFocusNode.unfocus();
         notifier.removeChatIfEmpty();
       },
       child: GestureDetector(
@@ -94,7 +96,8 @@ class ChatScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  onSearchTap: () => print("notifier.loadFromDatabase()"),
+                  onSearchTap: () => notifier.toggleSearch(),
+                  showActionsIcon: !notifier.isSearching,
                   onOptionsPressed: (value) {
                     notifier.handleChatScreenOptions(value, chat);
                   },
@@ -102,6 +105,36 @@ class ChatScreen extends ConsumerWidget {
                     ? [ IconButton(onPressed: () => notifier.deleteSelected(), icon: Icon(Icons.delete_outline_rounded))]
                     : null,
                 ),
+
+                
+                /// Chat Searchbar
+                if (notifier.isSearching) Padding(
+                  padding: const EdgeInsets.only(left: 12.0, bottom: 0, right: 12, top: 12),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: 40,
+                    ),
+                    child: SearchBar(
+                      focusNode: notifier.searchFocusNode,
+                      controller: notifier.searchController,
+                      autoFocus: false,
+                      shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+                      padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                      shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                      backgroundColor: WidgetStatePropertyAll(headerColor),
+                      leading: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                        child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                      ),
+                      trailing: [notifier.searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: notifier.clearSearch,) : SizedBox.shrink()] ,
+                      hintText: "Search in notes...",
+                      hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                      onChanged: (value) => notifier.searchChats(value),
+                    ),
+                  ),
+                ),
+
+
                 Expanded(
                   child: messages.isEmpty 
                   ? NothingToSee() 

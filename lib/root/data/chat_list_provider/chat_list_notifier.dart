@@ -110,10 +110,8 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
     }
     final lowercaseQuery = query.toLowerCase();
     state = state.copyWith(
-      chats: _allChats
-          .where((chat) =>
-              (chat.title ?? "").toLowerCase().contains(lowercaseQuery))
-          .toList(),
+      chats: _allChats.where(
+        (chat) => (chat.title ?? "").toLowerCase().contains(lowercaseQuery)).toList(),
     );
   }
 

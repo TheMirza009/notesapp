@@ -25,10 +25,14 @@ final chatMessagesController =
 );
 
 class ChatMessagesNotifier extends Notifier<List<Message>> {
+  List<Message> _allMessages = []; // Master copy
+  final TextEditingController searchController = TextEditingController();
+  final FocusNode searchFocusNode = FocusNode();
   final _isar = IsarDatabase.isar;
   Chat? _chat; // read-only reference
   bool isLoading = false;
   bool isSelecting = false;
+  bool isSearching = false;
 
   @override
   List<Message> build() {
@@ -51,7 +55,8 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       await freshChat.messages.load();
       await Future.wait(freshChat.messages.map((m) => m.media.load()));
 
-      state = freshChat.messages.toList();
+      _allMessages = freshChat.messages.toList();
+      state = _allMessages;
     }
 
     isLoading = false;
@@ -252,6 +257,48 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       await _isar.chats.put(_chat!);
     });
     state = [];
+  }
+
+  void toggleSearch() async {
+    isSearching = !isSearching;
+
+    if (!isSearching) {
+      // Closing search → reset and unfocus
+      await clearSearch();
+      searchFocusNode.unfocus();
+    } else {
+      // Opening search → clear text
+      searchController.clear();
+
+      // Delay focus until SearchBar is mounted
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (searchFocusNode.canRequestFocus) {
+          searchFocusNode.requestFocus();
+        }
+      });
+    }
+
+    state = [...state]; // refresh UI
+  }
+
+
+
+  void searchChats(String query) async {
+    if (query.isEmpty) {
+      await clearSearch();
+      return;
+    }
+    final lowercaseQuery = query.toLowerCase();
+    state = _allMessages.where((message) {
+      final text = (message.text ?? "").toLowerCase();
+      return text.contains(lowercaseQuery);
+    }).toList();
+  }
+
+  Future<void> clearSearch() async {
+    searchController.clear();
+    // searchFocusNode.unfocus();
+    state = _allMessages;
   }
 
   /// Method to automatically remove chat if empty

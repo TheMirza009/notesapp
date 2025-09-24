@@ -249,7 +249,6 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                               hintText: "Search in notes...",
                               hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
                               onChanged: (value) => chatNotifier.searchChats(value),
-        
                             ),
                           ),
                         ),
