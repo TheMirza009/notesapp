@@ -59,7 +59,10 @@ class ChatScreen extends ConsumerWidget {
         notifier.removeChatIfEmpty();
       },
       child: GestureDetector(
-        onTap: () => notifier.unSelectAllMessages(),
+        onTap: () {
+          notifier.searchFocusNode.unfocus();
+          notifier.unSelectAllMessages();
+        },
         child: Scaffold(
           body: Container(
             height: ThemeConstants.screenHeight,
@@ -108,30 +111,35 @@ class ChatScreen extends ConsumerWidget {
 
                 
                 /// Chat Searchbar
-                if (notifier.isSearching) Padding(
-                  padding: const EdgeInsets.only(left: 12.0, bottom: 0, right: 12, top: 12),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: 40,
-                    ),
-                    child: SearchBar(
-                      focusNode: notifier.searchFocusNode,
-                      controller: notifier.searchController,
-                      autoFocus: false,
-                      shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
-                      padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                      shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                      backgroundColor: WidgetStatePropertyAll(headerColor),
-                      leading: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                 AnimatedSize(
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeInOutQuint,
+                  child: notifier.isSearching ? Padding(
+                    padding: const EdgeInsets.only(left: 12.0, bottom: 0, right: 12, top: 12),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight:notifier.isSearching ? 40 : 0,
+                        // maxWidth: notifier.isSearching ? double.maxFinite : 0
                       ),
-                      trailing: [notifier.searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: notifier.clearSearch,) : SizedBox.shrink()] ,
-                      hintText: "Search in notes...",
-                      hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
-                      onChanged: (value) => notifier.searchChats(value),
+                      child: SearchBar(
+                        focusNode: notifier.searchFocusNode,
+                        controller: notifier.searchController,
+                        autoFocus: false,
+                        shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+                        padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                        shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                        backgroundColor: WidgetStatePropertyAll(headerColor),
+                        leading: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                        ),
+                        trailing: [notifier.searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: notifier.clearSearch,) : SizedBox.shrink()] ,
+                        hintText: "Search in notes...",
+                        hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                        onChanged: (value) => notifier.searchChats(value),
+                      ),
                     ),
-                  ),
+                  ) : SizedBox.shrink(),
                 ),
 
 

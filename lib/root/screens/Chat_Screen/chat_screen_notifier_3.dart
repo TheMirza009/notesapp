@@ -360,6 +360,8 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       case "chatInfo":
         Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)));
         break;
+      case "search":
+        toggleSearch();
       case "clearChat":
         showCupertinoDialog(
             context: navigatorKey.currentContext!,
