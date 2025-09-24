@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/ph.dart';
 import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
@@ -25,6 +27,7 @@ import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_2.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/anchor_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/auto_hide_scroll_to_bottom.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
@@ -54,6 +57,7 @@ class ChatScreen extends ConsumerWidget {
     String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
 
     return PopScope(
+      canPop: !notifier.isSearching,
       onPopInvokedWithResult: (didPop, context) {
         notifier.isSearching = false;
         notifier.searchFocusNode.unfocus();
@@ -67,6 +71,12 @@ class ChatScreen extends ConsumerWidget {
           notifier.unSelectAllMessages();
         },
         child: Scaffold(
+          floatingActionButton: AutoHideScrollToBottom(
+            scrollController: notifier.scrollController,
+            onPressed: notifier.scrollToBottom,
+            bottomPadding: 80,
+            buffer: 50,
+          ),
           body: Container(
             height: ThemeConstants.screenHeight,
             width: ThemeConstants.screenWidth,
@@ -150,6 +160,7 @@ class ChatScreen extends ConsumerWidget {
                   child: messages.isEmpty 
                   ? NothingToSee() 
                   : ListView.builder(
+                      controller: notifier.scrollController,
                       padding: EdgeInsets.symmetric( horizontal: 0), // ThemeConstants.screenWidth * 0.03, ),
                       itemCount: messages.length + 1,
                       itemBuilder: (context, index) {

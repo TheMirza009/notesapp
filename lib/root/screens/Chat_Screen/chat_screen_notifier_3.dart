@@ -28,6 +28,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   List<Message> _allMessages = []; // Master copy
   final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
+  final ScrollController scrollController = ScrollController();
   final _isar = IsarDatabase.isar;
   Chat? _chat; // read-only reference
   bool isLoading = false;
@@ -106,6 +107,8 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
         await _isar.chats.put(_chat!);
       }
     });
+
+    scrollToBottom();
 
     state = [...state, newMessage];
     deleteInitMessage();
@@ -293,6 +296,16 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     state = [...state]; // refresh UI
   }
 
+  void scrollToBottom() {
+    if (scrollController.hasClients) {
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
 
 
   void searchChats(String query) async {
@@ -352,7 +365,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
         isSelecting = false;
         break;
       case 'reply':
-        print("Reply to `${message.text}`");
+        unSelectAllMessages();
         setAnchorMessage(message);
         break;
       case 'copy':
