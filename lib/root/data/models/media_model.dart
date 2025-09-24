@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:isar/isar.dart';
 import 'message_model.dart';
 import '../enums/media_type.dart';
@@ -50,6 +52,16 @@ class Media {
     media.path = url;
     media.extension = media.name.contains('.') ? media.name.split('.').last.toLowerCase() : '';
     media.type = Mediatype.link;
+    return media;
+  }
+
+  factory Media.fromImageBytes(Uint8List bytes) {
+    final media = Media();
+    media.name = "pasted_${DateTime.now().millisecondsSinceEpoch}.png";
+    media.extension = "png";
+    media.type = Mediatype.image;
+    media.path = null;
+
     return media;
   }
 

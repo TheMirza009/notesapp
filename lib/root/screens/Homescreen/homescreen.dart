@@ -142,7 +142,10 @@ class _HomescreenState extends ConsumerState<Homescreen> {
         ),
       ),
       onPressed: () {
-        ref.read(themeNotifierProvider.notifier).toggleTheme();
+        // ref.read(themeNotifierProvider.notifier).toggleTheme();
+        setState(() {
+            isSliding = true;
+          });
       },
     );
 

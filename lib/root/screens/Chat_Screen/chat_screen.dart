@@ -175,6 +175,7 @@ class ChatScreen extends ConsumerWidget {
                   onAttachmentTap: () => notifier.pickImage(),
                   onMicTap: () => debugPrint("notifier.state"),
                   onSend: (txt) => notifier.sendMessage(txt),
+                  onImagePasted: (imageBytes) => notifier.pickImage(imageBytes: imageBytes) ,
                 ),
               ],
             ),

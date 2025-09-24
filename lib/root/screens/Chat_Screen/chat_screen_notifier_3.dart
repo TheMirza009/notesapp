@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
@@ -105,8 +106,10 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   }
 
   /// Pick image and send as message
-  Future<void> pickImage() async {
-    final pickedMedia = await MediaHandler.pickImage(); // Media Picker Call
+  Future<void> pickImage({Uint8List? imageBytes}) async {
+    final Media? pickedMedia = imageBytes != null
+      ? await MediaHandler.fromImageBytes(imageBytes)
+      : await MediaHandler.pickImage(); // Media Picker Call
     if (pickedMedia == null || _chat == null) return;   // Early return on cancel
 
     // remove init placeholder if present

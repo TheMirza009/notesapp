@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -6,6 +7,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -44,6 +46,27 @@ class MediaHandler {
 
     return media;
   }
+
+  static Future<Media> fromImageBytes(Uint8List bytes) async {
+    final tempDir = await getTemporaryDirectory();
+    final fileName = "pasted_${DateTime.now().millisecondsSinceEpoch}.png";
+    final file = File("${tempDir.path}/$fileName");
+    await file.writeAsBytes(bytes);
+
+    final decodedImage = await decodeImageFromList(bytes);
+    final aspectRatio = decodedImage.width / decodedImage.height;
+
+    final media = Media();
+    media.name = fileName;
+    media.path = file.path;
+    media.extension = "png";
+    media.type = Mediatype.image;
+    media.aspectRatio = aspectRatio;
+
+    return media;
+  }
+
+
 
   /// Pick a video → saved in Media/Videos
   static Future<Media?> pickVideo() async {

@@ -1,6 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/pasteboard_kit.dart';
+import 'package:pasteboard/pasteboard.dart';
 
 class BottomMessageBar extends StatefulWidget {
   final VoidCallback onEmojiTap;
@@ -8,6 +13,7 @@ class BottomMessageBar extends StatefulWidget {
   final VoidCallback onMicTap;
   final Function(String) onSend;
   final Function(String)? onSubmitted;
+  final void Function(Uint8List)? onImagePasted;
 
   const BottomMessageBar({
     super.key,
@@ -16,6 +22,7 @@ class BottomMessageBar extends StatefulWidget {
     required this.onMicTap,
     required this.onSend,
     this.onSubmitted,
+    this.onImagePasted,
   });
 
   @override
@@ -29,6 +36,9 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
   void initState() {
     super.initState();
     _messageController = TextEditingController();
+    _messageController.addListener(() {
+      detectPaste();
+    });
   }
 
   @override
@@ -37,10 +47,24 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
     super.dispose();
   }
 
+  detectPaste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final imageBytes = await Pasteboard.image;
+    if (imageBytes != null) {
+      debugPrint("Got image bytes, length: ${imageBytes.length}");
+    }
+    // Check if the clipboard data is exactly 4 characters long.
+    final text = data?.text;
+    if (text == null || text.length < 2) return;
+
+    print("PASTED: $text");
+  }
+
   @override
   Widget build(BuildContext context) {
     const iconLight = Color(0xFF54666F);
     const iconPadding = EdgeInsets.only(left: 5.0, right: 5.0, top: 0, bottom: 5);
+    final BuildContext rootContext = context;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -85,6 +109,81 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                   border: InputBorder.none,
                 ),
                 onSubmitted: widget.onSubmitted,
+                contextMenuBuilder: (context, editableTextState) {
+                  return AdaptiveTextSelectionToolbar.buttonItems(
+                    anchors: editableTextState.contextMenuAnchors,
+                    buttonItems: [
+                      ContextMenuButtonItem(
+                        label: 'Paste',
+                        onPressed: () async {
+                          ContextMenuController.removeAny();
+
+                          // 1) Try image bytes
+                          final imageBytes = await Pasteboard.image;
+                          if (imageBytes != null) {
+                            debugPrint(
+                              "Got image bytes, length: ${imageBytes.length}",
+                            );
+
+                            widget.onImagePasted?.call(imageBytes);
+
+                            // if (mounted) {
+                            //   Navigator.of(rootContext).push(
+                            //     MaterialPageRoute(
+                            //       builder:
+                            //           (_) => Scaffold(
+                            //             appBar: AppBar(),
+                            //             body: Center(
+                            //               child: Image.memory(imageBytes),
+                            //             ),
+                            //           ),
+                            //     ),
+                            //   );
+                            // }
+
+                            // You could turn it into content if you want:
+                            // editableTextState.insertContent(
+                            //   KeyboardInsertedContent(mimeType: 'image/png', uri: Uri.dataFromBytes(imageBytes), data: imageBytes),
+                            // );
+                            return;
+                          }
+
+                          // 2) Try files (URIs or paths)
+                          final files = await Pasteboard.files();
+                          if (files.isNotEmpty) {
+                            debugPrint("Got files from clipboard: $files");
+
+                            // Example: feed the first URI to TextField
+                            final uri = Uri.file(files.first);
+                            editableTextState.insertContent(
+                              KeyboardInsertedContent(
+                                mimeType: 'image/*', // or infer from extension
+                                uri: uri.toString(),
+                                data: null, // we only have a URI here
+                              ),
+                            );
+                            return;
+                          }
+
+                          // 3) Fallback to text
+                          // final text = await Pasteboard.text;
+                          // if (text != null && text.isNotEmpty) {
+                          //   editableTextState.insertContent(
+                          //     KeyboardInsertedContent(
+                          //       uri: ,
+                          //       mimeType: 'text/plain',
+                          //       data: Uint8List.fromList(text.codeUnits),
+                          //     ),
+                          //   );
+                          //   debugPrint("Pasted text: $text");
+                          // } else {
+                          //   debugPrint("Clipboard empty or unsupported");
+                          // }
+                        },
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
