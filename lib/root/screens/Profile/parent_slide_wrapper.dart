@@ -4,12 +4,14 @@ class ParentSlideWrapper extends StatelessWidget {
   final bool trigger;
   final Widget overlay;
   final Widget child;
+  final onBackPressed;
 
   const ParentSlideWrapper({
     super.key,
     required this.trigger,
     required this.overlay,
     required this.child,
+    this.onBackPressed
   });
 
   @override
@@ -34,7 +36,7 @@ class ParentSlideWrapper extends StatelessWidget {
           },
           child: child,
         ),
-
+    
         // Scrim
         // IgnorePointer(
         //   ignoring: true,
@@ -52,7 +54,7 @@ class ParentSlideWrapper extends StatelessWidget {
         //     },
         //   ),
         // ),
-
+    
         // Overlay sliding from left
         TweenAnimationBuilder<Offset>(
           tween: Tween<Offset>(
