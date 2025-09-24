@@ -109,81 +109,21 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                   border: InputBorder.none,
                 ),
                 onSubmitted: widget.onSubmitted,
-                contextMenuBuilder: (context, editableTextState) {
-                  return AdaptiveTextSelectionToolbar.buttonItems(
-                    anchors: editableTextState.contextMenuAnchors,
-                    buttonItems: [
-                      ContextMenuButtonItem(
-                        label: 'Paste',
-                        onPressed: () async {
-                          ContextMenuController.removeAny();
+                contentInsertionConfiguration: ContentInsertionConfiguration(
+                  onContentInserted: (KeyboardInsertedContent content) {
+                    debugPrint(
+                      "Keyboard inserted content: ${content.mimeType}",
+                    );
 
-                          // 1) Try image bytes
-                          final imageBytes = await Pasteboard.image;
-                          if (imageBytes != null) {
-                            debugPrint(
-                              "Got image bytes, length: ${imageBytes.length}",
-                            );
-
-                            widget.onImagePasted?.call(imageBytes);
-
-                            // if (mounted) {
-                            //   Navigator.of(rootContext).push(
-                            //     MaterialPageRoute(
-                            //       builder:
-                            //           (_) => Scaffold(
-                            //             appBar: AppBar(),
-                            //             body: Center(
-                            //               child: Image.memory(imageBytes),
-                            //             ),
-                            //           ),
-                            //     ),
-                            //   );
-                            // }
-
-                            // You could turn it into content if you want:
-                            // editableTextState.insertContent(
-                            //   KeyboardInsertedContent(mimeType: 'image/png', uri: Uri.dataFromBytes(imageBytes), data: imageBytes),
-                            // );
-                            return;
-                          }
-
-                          // 2) Try files (URIs or paths)
-                          final files = await Pasteboard.files();
-                          if (files.isNotEmpty) {
-                            debugPrint("Got files from clipboard: $files");
-
-                            // Example: feed the first URI to TextField
-                            final uri = Uri.file(files.first);
-                            editableTextState.insertContent(
-                              KeyboardInsertedContent(
-                                mimeType: 'image/*', // or infer from extension
-                                uri: uri.toString(),
-                                data: null, // we only have a URI here
-                              ),
-                            );
-                            return;
-                          }
-
-                          // 3) Fallback to text
-                          // final text = await Pasteboard.text;
-                          // if (text != null && text.isNotEmpty) {
-                          //   editableTextState.insertContent(
-                          //     KeyboardInsertedContent(
-                          //       uri: ,
-                          //       mimeType: 'text/plain',
-                          //       data: Uint8List.fromList(text.codeUnits),
-                          //     ),
-                          //   );
-                          //   debugPrint("Pasted text: $text");
-                          // } else {
-                          //   debugPrint("Clipboard empty or unsupported");
-                          // }
-                        },
-                      ),
-                    ],
-                  );
-                },
+                    if (content.mimeType.startsWith('image/')) {
+                      // Image or GIF
+                      widget.onImagePasted?.call(content.data!);
+                    } else if (content.mimeType == 'text/plain') {
+                      // Text fallback
+                      _messageController.text += String.fromCharCodes(content.data!);
+                    }
+                  },
+                ),
               ),
             ),
           ),

@@ -49,7 +49,7 @@ class MediaHandler {
 
   static Future<Media> fromImageBytes(Uint8List bytes) async {
     final tempDir = await getTemporaryDirectory();
-    final fileName = "pasted_${DateTime.now().millisecondsSinceEpoch}.png";
+    final fileName = "pasted_${DateTime.now().millisecondsSinceEpoch}";
     final file = File("${tempDir.path}/$fileName");
     await file.writeAsBytes(bytes);
 
