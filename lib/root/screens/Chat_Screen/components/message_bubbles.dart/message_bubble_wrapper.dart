@@ -29,6 +29,7 @@ class MessageBubble extends StatelessWidget {
 
   /// RippleWell props
   final void Function()? onTap;
+  final void Function()? onReplyTap;
   final void Function(Offset)? onLongPress;
   final BorderRadius? rippleBorderRadius;
   final Color? rippleColor;
@@ -72,6 +73,7 @@ class MessageBubble extends StatelessWidget {
     this.height,
     this.topPadding = 5,
     this.bottomPadding = 5,
+    this.onReplyTap,
   });
 
   @override
@@ -120,7 +122,7 @@ class MessageBubble extends StatelessWidget {
                       replyMessage: message.replyingTo.value!,
                       backgroundColor: Colors.blueGrey.withOpacity(context.isLight ? 0.1 : 0.07),
                       iconColor: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark,
-                      onTap: () {
+                      onTap: onReplyTap ?? () {
                         print("Reply tapped");
                         final media = message.replyingTo.value!.media.value;
                         if (media != null) {

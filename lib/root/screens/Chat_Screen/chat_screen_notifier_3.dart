@@ -17,18 +17,20 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:isar/isar.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 /// Provider for the notifier
 final chatMessagesController =
     NotifierProvider<ChatMessagesNotifier, List<Message>>(
-  () => ChatMessagesNotifier(),
-);
+      () => ChatMessagesNotifier(),
+    );
 
 class ChatMessagesNotifier extends Notifier<List<Message>> {
   List<Message> _allMessages = []; // Master copy
   final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
-  final ScrollController scrollController = ScrollController();
+  final itemScrollController = ItemScrollController();
+  final itemPositionsListener = ItemPositionsListener.create();
   final _isar = IsarDatabase.isar;
   Chat? _chat; // read-only reference
   bool isLoading = false;
@@ -95,14 +97,13 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   Future<void> sendMessage(String text) async {
     if (_chat == null) return;
 
-
-    final newMessage = Message()
-      ..text = text
-      ..time = DateTime.now()
-      ..isSender = true;
+    final newMessage =
+        Message()
+          ..text = text
+          ..time = DateTime.now()
+          ..isSender = true;
 
     await _isar.writeTxn(() async {
-
       if (anchorMessage != null) {
         newMessage.replyingTo.value = anchorMessage;
       }
@@ -128,23 +129,25 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
   /// Pick image and send as message
   Future<void> pickImage({Uint8List? imageBytes}) async {
-    final Media? pickedMedia = imageBytes != null
-      ? await MediaHandler.fromImageBytes(imageBytes)
-      : await MediaHandler.pickImage(); // Media Picker Call
-    if (pickedMedia == null || _chat == null) return;   // Early return on cancel
+    final Media? pickedMedia =
+        imageBytes != null
+            ? await MediaHandler.fromImageBytes(imageBytes)
+            : await MediaHandler.pickImage(); // Media Picker Call
+    if (pickedMedia == null || _chat == null) return; // Early return on cancel
 
     // remove init placeholder if present
-    await deleteInitMessage();                          // Delete initMessage
+    await deleteInitMessage(); // Delete initMessage
 
     // Save Media first
-    await _isar.writeTxn(() async {                     // Start first Database write
-      await _isar.medias.put(pickedMedia);              // Upsert to Media repo
-    });                                                 // Get fresh copy from Database
+    await _isar.writeTxn(() async {
+      // Start first Database write
+      await _isar.medias.put(pickedMedia); // Upsert to Media repo
+    }); // Get fresh copy from Database
 
-    final persistedMedia = await _isar.medias.get(pickedMedia.isarId); 
-    if (persistedMedia == null) return;                           
+    final persistedMedia = await _isar.medias.get(pickedMedia.isarId);
+    if (persistedMedia == null) return;
 
-    final newMessage =                                            // 0 - Message Creation
+    final newMessage = // 0 - Message Creation
         Message()
           ..text = "📷 Photo"
           ..isSender = true
@@ -153,39 +156,50 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
     // Save message and its media relation in one transaction
     await _isar.writeTxn(() async {
-      await _isar.messages.put(newMessage);                       // 1 - persist message (assigns isarId)
-      await newMessage.media.save();                              // 2 - persist the media-to-message relation (this is the crucial step)
-      final managedChat = await _isar.chats.get(_chat!.isarID);   // 3 - attach to a managed chat (re-fetch to ensure it's managed)
-      if (managedChat != null) {                                  // 4 - Make sure _chat is not null
-        await managedChat.messages.load();                        // 5 - Reload assigned messages
-        managedChat.messages.add(newMessage);                     // 6 - add new message to loaded chat
-        await managedChat.messages.save();                        // 7 - Persist the message-to-Chat relationship               
-        await _isar.chats.put(managedChat);                       // 8 - Upsert the reloaded chat back to isar
-        _chat = managedChat;                                      // 9 - refresh reference
+      await _isar.messages.put(
+        newMessage,
+      ); // 1 - persist message (assigns isarId)
+      await newMessage.media
+          .save(); // 2 - persist the media-to-message relation (this is the crucial step)
+      final managedChat = await _isar.chats.get(
+        _chat!.isarID,
+      ); // 3 - attach to a managed chat (re-fetch to ensure it's managed)
+      if (managedChat != null) {
+        // 4 - Make sure _chat is not null
+        await managedChat.messages.load(); // 5 - Reload assigned messages
+        managedChat.messages.add(
+          newMessage,
+        ); // 6 - add new message to loaded chat
+        await managedChat.messages
+            .save(); // 7 - Persist the message-to-Chat relationship
+        await _isar.chats.put(
+          managedChat,
+        ); // 8 - Upsert the reloaded chat back to isar
+        _chat = managedChat; // 9 - refresh reference
       }
-  });
+    });
 
-  // Update UI state with the *managed* message instance if possible.
-  // The `newMessage` now has isar id and media relation stored.
-  state = [...state, newMessage];                                 // 10 - State update
+    // Update UI state with the *managed* message instance if possible.
+    // The `newMessage` now has isar id and media relation stored.
+    state = [...state, newMessage]; // 10 - State update
 
-  // Optionally hydrate to ensure freshest managed instances (uncomment if needed)
-  // await _hydrateMessages();
-}
+    // Optionally hydrate to ensure freshest managed instances (uncomment if needed)
+    // await _hydrateMessages();
+  }
 
   /// Message to delete initial Message ("This is a new chat...")
   Future<void> deleteInitMessage() async {
     if (_chat == null || state == null || state.isEmpty) return;
 
     const String initID = "0000";
-    const String initText = "This is a new chat. Start typing to create your first note.";
+    const String initText =
+        "This is a new chat. Start typing to create your first note.";
 
     final firstMessage = state!.first;
     if (firstMessage.id == initID && firstMessage.text == initText) {
-       deleteMessage(firstMessage);
+      deleteMessage(firstMessage);
     }
   }
-
 
   /// Delete a single message
   Future<void> deleteMessage(Message message) async {
@@ -198,14 +212,21 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       }
     });
 
-    final photoList = state.where((message) => message.media.value?.type == Mediatype.image).toList();
+    final photoList =
+        state
+            .where((message) => message.media.value?.type == Mediatype.image)
+            .toList();
     final allMessages = await _isar.messages.where().findAll();
     for (final m in allMessages) {
       await m.media.load(); // 👈 ensure media is available
     }
-    bool isMedia = message.media.value != null && message.media.value!.type != Mediatype.text;
-    bool isUsedByMultiple = allMessages.hasDuplicateMediaPath(message); 
-    print("Deleting media? ${message.media.value?.path} → used by multiple: $isUsedByMultiple");
+    bool isMedia =
+        message.media.value != null &&
+        message.media.value!.type != Mediatype.text;
+    bool isUsedByMultiple = allMessages.hasDuplicateMediaPath(message);
+    print(
+      "Deleting media? ${message.media.value?.path} → used by multiple: $isUsedByMultiple",
+    );
     if (isMedia == true && isUsedByMultiple == false) {
       await MediaHandler.deleteMedia(message.media.value!);
     }
@@ -309,27 +330,73 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   }
 
   void scrollToBottom() {
-    if (scrollController.hasClients) {
-      scrollController.animateTo(
-        scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+    if (!itemScrollController.isAttached) return;
+
+    itemScrollController.scrollTo(
+      index: state.length -1,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      alignment: 0.0, // ensures the last item is aligned to the bottom
+    );
   }
 
 
 
+  final Map<int, GlobalKey> messageKeys = {};
+
+  void scrollToIndex(BuildContext context, {bool animated = true}) {
+
+    if (animated) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 1000),
+        curve: Curves.easeOut,
+      );
+    } else {
+      Scrollable.ensureVisible(context);
+    }
+  }
+
+  void scrollToMessage(Id isarID, {bool animated = true}) {
+    if (!itemScrollController.isAttached) return;
+
+    final index = state.indexWhere((m) => m.isarId == isarID);
+    if (index == -1) return;
+
+    itemScrollController.scrollTo(
+      index: index,
+      duration: animated ? const Duration(milliseconds: 300) : Duration.zero,
+      curve: Curves.easeIn,
+      alignment: 0.1,
+    );
+  }
+
+  // void scrollToIndex(int index, {bool animated = true}) {
+  //   if (index < 0 || index >= state.length) return;
+
+  //   final scrollOffset = index * 50.0; // estimate or measure row height
+
+  //   if (animated) {
+  //     scrollController.animateTo(
+  //       scrollOffset,
+  //       duration: const Duration(milliseconds: 300),
+  //       curve: Curves.easeInOut,
+  //     );
+  //   } else {
+  //     scrollController.jumpTo(scrollOffset);
+  //   }
+  // }
   void searchChats(String query) async {
     if (query.isEmpty) {
       await clearSearch();
       return;
     }
     final lowercaseQuery = query.toLowerCase();
-    state = _allMessages.where((message) {
-      final text = (message.text ?? "").toLowerCase();
-      return text.contains(lowercaseQuery);
-    }).toList();
+    state =
+        _allMessages.where((message) {
+          final text = (message.text ?? "").toLowerCase();
+          return text.contains(lowercaseQuery);
+        }).toList();
   }
 
   Future<void> clearSearch() async {
@@ -354,10 +421,11 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     }
 
     // Handle init placeholder
-    const String initText = "This is a new chat. Start typing to create your first note.";
+    const String initText =
+        "This is a new chat. Start typing to create your first note.";
     const String initID = "0000";
 
-    bool initMessageCheck = 
+    bool initMessageCheck =
         managedChat.messages.length == 1 &&
         managedChat.messages.first.text == initText &&
         managedChat.messages.first.id == initID;
@@ -367,9 +435,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     }
   }
 
-
-
-    /// Context menu actions
+  /// Context menu actions
   void handleMessageMenuAction(String action, Message message) {
     switch (action) {
       case 'deleteMessage':
@@ -395,33 +461,38 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   void handleChatScreenOptions(String action, Chat chat) {
     switch (action) {
       case "chatInfo":
-        Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)));
+        Navigator.push(
+          navigatorKey.currentContext!,
+          CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)),
+        );
         break;
       case "search":
         toggleSearch();
       case "clearChat":
         showCupertinoDialog(
-            context: navigatorKey.currentContext!,
-            builder: (_) => CustomAlertDialog(
-              title: "Delete all notes",
-              content: "Are you sure you want to delete all notes?",
-              iconColor: Colors.redAccent,
-              iconData: (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
-              iconSize: 25,
-              option: TextButton(
-                onPressed: () {
-                  Navigator.pop(navigatorKey.currentContext!);
-                  clearChat();
-                },
-                child: Text(
-                  "Delete",
-                  style: TextStyle(color: Colors.redAccent),
+          context: navigatorKey.currentContext!,
+          builder:
+              (_) => CustomAlertDialog(
+                title: "Delete all notes",
+                content: "Are you sure you want to delete all notes?",
+                iconColor: Colors.redAccent,
+                iconData:
+                    (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
+                iconSize: 25,
+                option: TextButton(
+                  onPressed: () {
+                    Navigator.pop(navigatorKey.currentContext!);
+                    clearChat();
+                  },
+                  child: Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
               ),
-            ),
-          );
+        );
     }
-  } 
+  }
 }
 
 // final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;

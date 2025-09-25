@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/ph.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class AutoHideScrollToBottom extends StatefulWidget {
-  final ScrollController scrollController;
-  final VoidCallback onPressed;
-  final double buffer;
+  final ItemScrollController itemScrollController;
+  final ItemPositionsListener itemPositionsListener;
+  final int lastIndex; // total messages - 1
   final double bottomPadding;
   final Duration animationDuration;
   final Curve animationCurve;
@@ -14,9 +15,9 @@ class AutoHideScrollToBottom extends StatefulWidget {
 
   const AutoHideScrollToBottom({
     super.key,
-    required this.scrollController,
-    required this.onPressed,
-    this.buffer = 50.0,
+    required this.itemScrollController,
+    required this.itemPositionsListener,
+    required this.lastIndex,
     this.bottomPadding = 135.0,
     this.animationDuration = const Duration(milliseconds: 300),
     this.animationCurve = Curves.easeInOut,
@@ -25,23 +26,29 @@ class AutoHideScrollToBottom extends StatefulWidget {
   });
 
   @override
-  State<AutoHideScrollToBottom> createState() =>  _AutoHideScrollToBottomState();
+  State<AutoHideScrollToBottom> createState() =>
+      _AutoHideScrollToBottomState();
 }
 
-class _AutoHideScrollToBottomState extends State<AutoHideScrollToBottom> with SingleTickerProviderStateMixin {
+class _AutoHideScrollToBottomState extends State<AutoHideScrollToBottom>
+    with SingleTickerProviderStateMixin {
   bool _isVisible = false;
 
   @override
   void initState() {
     super.initState();
-    widget.scrollController.addListener(_onScroll);
+    widget.itemPositionsListener.itemPositions.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
   }
 
   void _onScroll() {
-    if (!widget.scrollController.hasClients) return;
-    final distanceFromBottom =  widget.scrollController.position.maxScrollExtent -  widget.scrollController.offset;
-    final shouldShow = distanceFromBottom > widget.buffer;
+    final positions = widget.itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+
+    // Find the max visible index (lowest item on screen)
+    final maxVisible = positions.map((pos) => pos.index).reduce((a, b) => a > b ? a : b);
+
+    final shouldShow = maxVisible < widget.lastIndex - 1; // not at bottom
     if (shouldShow != _isVisible) {
       setState(() => _isVisible = shouldShow);
     }
@@ -49,7 +56,7 @@ class _AutoHideScrollToBottomState extends State<AutoHideScrollToBottom> with Si
 
   @override
   void dispose() {
-    widget.scrollController.removeListener(_onScroll);
+    widget.itemPositionsListener.itemPositions.removeListener(_onScroll);
     super.dispose();
   }
 
@@ -62,9 +69,17 @@ class _AutoHideScrollToBottomState extends State<AutoHideScrollToBottom> with Si
           ? Padding(
               padding: EdgeInsets.only(bottom: widget.bottomPadding),
               child: IconButton.filled(
-                style: IconButton.styleFrom(backgroundColor: widget.backgroundColor),
-                onPressed: widget.onPressed,
-                icon: widget.icon ?? Iconify(Ph.caret_double_down),
+                style: IconButton.styleFrom(
+                  backgroundColor: widget.backgroundColor,
+                ),
+                onPressed: () {
+                  widget.itemScrollController.scrollTo(
+                    index: widget.lastIndex,
+                    duration: widget.animationDuration,
+                    curve: widget.animationCurve,
+                  );
+                },
+                icon: widget.icon ?? const Iconify(Ph.caret_double_down),
               ),
             )
           : const SizedBox.shrink(),

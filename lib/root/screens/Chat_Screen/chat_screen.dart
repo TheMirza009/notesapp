@@ -39,6 +39,8 @@ import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
 
 class ChatScreen extends ConsumerWidget {
   final Chat chat;
@@ -73,10 +75,10 @@ class ChatScreen extends ConsumerWidget {
         child: Scaffold(
           floatingActionButton: notifier.isSearching ? null : 
           AutoHideScrollToBottom(
-            scrollController: notifier.scrollController,
-            onPressed: notifier.scrollToBottom,
+            itemScrollController: notifier.itemScrollController,
+            itemPositionsListener: notifier.itemPositionsListener,
+            lastIndex: messages.length - 1,
             bottomPadding: notifier.isReplying ? 135 : 80,
-            buffer: 50,
             backgroundColor: context.isLight ? const Color(0xFFD5F0FF) : const Color(0xFF94C1DB),
           ),
           body: Container(
@@ -161,8 +163,9 @@ class ChatScreen extends ConsumerWidget {
                 Expanded(
                   child: messages.isEmpty 
                   ? NothingToSee() 
-                  : ListView.builder(
-                      controller: notifier.scrollController,
+                  : ScrollablePositionedList.builder(
+                      itemScrollController: notifier.itemScrollController,
+                      itemPositionsListener: notifier.itemPositionsListener,
                       padding: EdgeInsets.symmetric( horizontal: 0), // ThemeConstants.screenWidth * 0.03, ),
                       itemCount: messages.length + 1,
                       itemBuilder: (context, index) {
@@ -177,8 +180,8 @@ class ChatScreen extends ConsumerWidget {
                         final info = messages.layoutInfo(index);
                     
                         return Column(
-                          children: [
-                              if (info.showDateChip) DateChip(message.time),
+                              children: [
+                                if (info.showDateChip) DateChip(message.time),
                                 MessageBubble(
                                   style: BubbleStyle.opaque,
                                   message: message,
@@ -188,44 +191,47 @@ class ChatScreen extends ConsumerWidget {
                                   onSwipe: () => notifier.setAnchorMessage(message),
                                   onTapWhileSelecting: () {
                                     message.isSelected
-                                        ? notifier.unselectMessage(message)
-                                        : notifier.selectMessage(message);
+                                    ? notifier.unselectMessage(message)
+                                    : notifier.selectMessage(message);
                                   },
                                   onTap: () {
-                                      if (message.isImage) {
-                                        final imageMessages =  messages.imageMedias;
-                                        final initialIndex = imageMessages.indexOfMediaIsarID(message);
-                                        print(message);
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => GalleryViewWrapper(
-                                              chatTitle: chatTitle,
-                                              galleryItems: imageMessages,
-                                              initialIndex: initialIndex,
-                                            ),
-                                          )
-                                        );
-                                      } else {
-                                        message.isSender = !message.isSender;
-                                        notifier.updateMessage(message);
-                                      }
-                                    },
+                                    if (message.isImage) {
+                                      final imageMessages = messages.imageMedias;
+                                      final initialIndex = imageMessages.indexOfMediaIsarID(message);
+                                      print(message);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => GalleryViewWrapper(
+                                            chatTitle: chatTitle,
+                                            galleryItems: imageMessages,
+                                            initialIndex: initialIndex,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      message.isSender = !message.isSender;
+                                      notifier.updateMessage(message);
+                                    }
+                                  },
                                   onLongPress: (pos) {
                                     notifier.selectMessage(message);
                                     CustomContextMenu.showMenuAt(
                                       context,
                                       position: pos,
-                                      menuItems: messageHoldOptions(isImage: message.isImage),
+                                      menuItems: messageHoldOptions(
+                                        isImage: message.isImage,
+                                      ),
                                       triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                      onSelected: (val) => notifier.handleMessageMenuAction(val, message),
+                                      onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
                                     );
                                   },
-                                ),
-                          ],
-                        );
-                      },
-                    ),
+                                  onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                 ),
 
                 AnchorWrapper(
