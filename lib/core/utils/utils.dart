@@ -40,7 +40,8 @@ class Utils {
   }
 
   /// SHARE TEXT
-static Future<void> shareToApps(String text) async {
-    await Share.share(text);
+  static Future<void> shareToApps(XFile file) async {
+    // await Share.share(text);
+    await Share.shareXFiles([file]);
   }
 }

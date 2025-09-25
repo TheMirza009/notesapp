@@ -218,7 +218,7 @@ class MessageBubble extends StatelessWidget {
           color: isHighlighted ? _getHighlightedBubbleColor(context) : Colors.transparent,
           boxShadow: [
             BoxShadow(
-              color: Colors.white.withOpacity(isHighlighted ? 0.4 : 0.0),
+              color: Colors.white.withOpacity(isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0),
               blurRadius: 16,
               spreadRadius: 2,
             ),

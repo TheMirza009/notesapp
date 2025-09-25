@@ -142,6 +142,13 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
       text: "Copy",
     ),
   ),
+  if (isImage) PopupMenuItem(
+    value: 'share',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.shareIcon2),
+      text: "Share",
+    ),
+  ),
   PopupMenuItem(
     value: 'deleteMessage',
     child: buildOptionTile(

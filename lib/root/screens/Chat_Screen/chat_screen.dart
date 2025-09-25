@@ -241,6 +241,8 @@ class ChatScreen extends ConsumerWidget {
                 ),
 
                 BottomMessageBar(
+                  focusNode: notifier.keyboardFocusNode,
+                  keyboardController: notifier.keyboardController,
                   onEmojiTap: () => debugPrint("Emoji tapped"),
                   onAttachmentTap: () => notifier.pickImage(),
                   onMicTap: () => debugPrint("notifier.state"),

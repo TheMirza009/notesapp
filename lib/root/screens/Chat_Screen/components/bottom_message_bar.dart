@@ -14,6 +14,8 @@ class BottomMessageBar extends StatefulWidget {
   final Function(String) onSend;
   final Function(String)? onSubmitted;
   final void Function(Uint8List)? onImagePasted;
+  final TextEditingController? keyboardController;
+  final FocusNode? focusNode;
 
   const BottomMessageBar({
     super.key,
@@ -23,6 +25,8 @@ class BottomMessageBar extends StatefulWidget {
     required this.onSend,
     this.onSubmitted,
     this.onImagePasted,
+    this.keyboardController,
+    this.focusNode,
   });
 
   @override
@@ -31,6 +35,7 @@ class BottomMessageBar extends StatefulWidget {
 
 class _BottomMessageBarState extends State<BottomMessageBar> {
   late final TextEditingController _messageController;
+  late final messageController = widget.keyboardController ?? _messageController;
 
   @override
   void initState() {
@@ -84,7 +89,8 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
               padding: EdgeInsets.only(left: 5),
               child: TextField(
                 // autofocus: true,
-                controller: _messageController,
+                focusNode: widget.focusNode,
+                controller: _messageController, // widget.keyboardController ?? 
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,
                 minLines: 1,

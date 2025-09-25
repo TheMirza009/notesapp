@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/message_list_extensions.dart';
@@ -28,7 +30,9 @@ final chatMessagesController =
 class ChatMessagesNotifier extends Notifier<List<Message>> {
   List<Message> _allMessages = []; // Master copy
   final TextEditingController searchController = TextEditingController();
+  final TextEditingController keyboardController= TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
+  final FocusNode keyboardFocusNode = FocusNode();
   final itemScrollController = ItemScrollController();
   final itemPositionsListener = ItemPositionsListener.create();
   final _isar = IsarDatabase.isar;
@@ -299,11 +303,13 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   void setAnchorMessage(Message message) {
     anchorMessage = message;
     print(anchorMessage!.text);
+    if (!keyboardFocusNode.hasFocus) {keyboardFocusNode.requestFocus();}
     state = [...state];
   }
 
   void clearAnchorMessage() {
     anchorMessage = null;
+    keyboardFocusNode.unfocus();
     state = [...state];
   }
 
@@ -336,7 +342,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     _highlighted.add(id);
     state = [...state]; // rebuild
 
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(milliseconds: 700), () {
       _highlighted.remove(id);
       state = [...state]; // rebuild again
     });
@@ -451,7 +457,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   }
 
   /// Context menu actions
-  void handleMessageMenuAction(String action, Message message) {
+  void handleMessageMenuAction(String action, Message message) async {
     switch (action) {
       case 'deleteMessage':
         deleteMessage(message);
@@ -468,6 +474,10 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       case 'toggleSender':
         message.isSender = !message.isSender;
         updateMessage(message);
+        unSelectAllMessages();
+        break;
+      case "share":
+        await Utils.shareToApps(XFile(message.media.value!.path!));
         unSelectAllMessages();
         break;
     }
