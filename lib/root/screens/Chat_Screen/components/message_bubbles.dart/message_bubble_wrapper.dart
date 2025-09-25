@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/ph.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
@@ -9,6 +10,7 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/reply_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
@@ -174,6 +176,16 @@ class MessageBubble extends StatelessWidget {
             : ThemeConstants.darkIconBorder);
   }
 
+  Color _getHighlightedBubbleColor(BuildContext context) {
+    return message.isSender
+        ? (context.isLight
+            ? const Color(0xFFF5FBFF)
+            : const Color(0xFF5A9CC0))
+        : (context.isLight
+            ? const Color(0xFFFFFFFF)
+            : const Color(0xFF677F8D));
+  }
+
   Color _getGlassColor() {
     return message.isSender
         ? Colors.blue.withValues(alpha: 0.15)
@@ -183,18 +195,48 @@ class MessageBubble extends StatelessWidget {
   // ------------------------
   // Bubble Variants
   // ------------------------
-  Widget opaqueBubble({required Color messageBubbleColor, required EdgeInsets bubblePadding}) {
+  Widget opaqueBubble({
+    required Color messageBubbleColor,
+    required EdgeInsets bubblePadding,
+  }) {
+    return Consumer(
+  builder: (context, ref, child) {
+    final isHighlighted = ref
+        .watch(chatMessagesController.notifier)
+        .isHighlighted(message.isarId);
+
     return RippleWell(
       borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
       materialColor: messageBubbleColor,
       onTap: isSelecting ? onTapWhileSelecting : onTap,
       onLongPress: onLongPress,
-      child: Padding(
-        padding: bubblePadding,
-        child: MessageContentBuilder(message: message),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          color: isHighlighted ? _getHighlightedBubbleColor(context) : Colors.transparent,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withOpacity(isHighlighted ? 0.4 : 0.0),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+          ],
+          // border: Border.all( // width: isHighlighted ? 1.5 : 0, // color: isHighlighted ? Colors.white : Colors.transparent, // ),
+        ),
+        child: child, // <— use cached child
       ),
     );
+  },
+  child: Padding(
+    padding: bubblePadding,
+    child: MessageContentBuilder(message: message),
+  ),
+);
+
   }
+
 
   Widget glassBubble({required Color glassColor, required EdgeInsets glassPadding}) {
     return RippleWell(

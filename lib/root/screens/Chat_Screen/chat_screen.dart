@@ -180,58 +180,58 @@ class ChatScreen extends ConsumerWidget {
                         final info = messages.layoutInfo(index);
                     
                         return Column(
-                              children: [
-                                if (info.showDateChip) DateChip(message.time),
-                                MessageBubble(
-                                  style: BubbleStyle.opaque,
-                                  message: message,
-                                  isSelecting: notifier.isSelecting,
-                                  topPadding: info.topPadding,
-                                  bottomPadding: info.bottomPadding,
-                                  onSwipe: () => notifier.setAnchorMessage(message),
-                                  onTapWhileSelecting: () {
-                                    message.isSelected
-                                    ? notifier.unselectMessage(message)
-                                    : notifier.selectMessage(message);
-                                  },
-                                  onTap: () {
-                                    if (message.isImage) {
-                                      final imageMessages = messages.imageMedias;
-                                      final initialIndex = imageMessages.indexOfMediaIsarID(message);
-                                      print(message);
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => GalleryViewWrapper(
-                                            chatTitle: chatTitle,
-                                            galleryItems: imageMessages,
-                                            initialIndex: initialIndex,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      message.isSender = !message.isSender;
-                                      notifier.updateMessage(message);
-                                    }
-                                  },
-                                  onLongPress: (pos) {
-                                    notifier.selectMessage(message);
-                                    CustomContextMenu.showMenuAt(
-                                      context,
-                                      position: pos,
-                                      menuItems: messageHoldOptions(
-                                        isImage: message.isImage,
+                          children: [
+                            if (info.showDateChip) DateChip(message.time),
+                            MessageBubble(
+                              style: BubbleStyle.opaque,
+                              message: message,
+                              isSelecting: notifier.isSelecting,
+                              topPadding: info.topPadding,
+                              bottomPadding: info.bottomPadding,
+                              onSwipe: () => notifier.setAnchorMessage(message),
+                              onTapWhileSelecting: () {
+                                message.isSelected
+                                ? notifier.unselectMessage(message)
+                                : notifier.selectMessage(message);
+                              },
+                              onTap: () {
+                                if (message.isImage) {
+                                  final imageMessages = messages.imageMedias;
+                                  final initialIndex = imageMessages.indexOfMediaIsarID(message);
+                                  print(message);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => GalleryViewWrapper(
+                                        chatTitle: chatTitle,
+                                        galleryItems: imageMessages,
+                                        initialIndex: initialIndex,
                                       ),
-                                      triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                      onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
-                                    );
-                                  },
-                                  onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
+                                    ),
+                                  );
+                                } else {
+                                  message.isSender = !message.isSender;
+                                  notifier.updateMessage(message);
+                                }
+                              },
+                              onLongPress: (pos) {
+                                notifier.selectMessage(message);
+                                CustomContextMenu.showMenuAt(
+                                  context,
+                                  position: pos,
+                                  menuItems: messageHoldOptions(
+                                    isImage: message.isImage,
                                   ),
-                                ],
-                              );
-                            },
-                          ),
+                                  triangleHorizontalOffset: message.isSender ? 120 : 40,
+                                  onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
+                                );
+                              },
+                              onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
+                              ),
+                            ],
+                          );
+                      },
+                    ),
                 ),
 
                 AnchorWrapper(

@@ -329,6 +329,19 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     state = [...state]; // refresh UI
   }
 
+  final Set<Id> _highlighted = {};
+  bool isHighlighted(Id id) => _highlighted.contains(id);
+
+  void highlightMessage(Id id) {
+    _highlighted.add(id);
+    state = [...state]; // rebuild
+
+    Future.delayed(const Duration(seconds: 1), () {
+      _highlighted.remove(id);
+      state = [...state]; // rebuild again
+    });
+  }
+
   void scrollToBottom() {
     if (!itemScrollController.isAttached) return;
 
@@ -369,6 +382,8 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       curve: Curves.easeIn,
       alignment: 0.1,
     );
+
+    highlightMessage(isarID);
   }
 
   // void scrollToIndex(int index, {bool animated = true}) {
