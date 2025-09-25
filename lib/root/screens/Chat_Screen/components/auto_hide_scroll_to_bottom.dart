@@ -10,16 +10,18 @@ class AutoHideScrollToBottom extends StatefulWidget {
   final Duration animationDuration;
   final Curve animationCurve;
   final Widget? icon;
+  final Color? backgroundColor;
 
   const AutoHideScrollToBottom({
     super.key,
     required this.scrollController,
     required this.onPressed,
     this.buffer = 50.0,
-    this.bottomPadding = 80.0,
+    this.bottomPadding = 135.0,
     this.animationDuration = const Duration(milliseconds: 300),
     this.animationCurve = Curves.easeInOut,
     this.icon,
+    this.backgroundColor,
   });
 
   @override
@@ -60,6 +62,7 @@ class _AutoHideScrollToBottomState extends State<AutoHideScrollToBottom> with Si
           ? Padding(
               padding: EdgeInsets.only(bottom: widget.bottomPadding),
               child: IconButton.filled(
+                style: IconButton.styleFrom(backgroundColor: widget.backgroundColor),
                 onPressed: widget.onPressed,
                 icon: widget.icon ?? Iconify(Ph.caret_double_down),
               ),

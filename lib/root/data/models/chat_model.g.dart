@@ -17,28 +17,39 @@ const ChatSchema = CollectionSchema(
   name: r'Chat',
   id: -4292359458225261721,
   properties: {
-    r'chatPhotoPath': PropertySchema(
+    r'bubbleStyle': PropertySchema(
       id: 0,
+      name: r'bubbleStyle',
+      type: IsarType.byte,
+      enumMap: _ChatbubbleStyleEnumValueMap,
+    ),
+    r'chatBackgroundPath': PropertySchema(
+      id: 1,
+      name: r'chatBackgroundPath',
+      type: IsarType.string,
+    ),
+    r'chatPhotoPath': PropertySchema(
+      id: 2,
       name: r'chatPhotoPath',
       type: IsarType.string,
     ),
     r'date': PropertySchema(
-      id: 1,
+      id: 3,
       name: r'date',
       type: IsarType.dateTime,
     ),
     r'preview': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'preview',
       type: IsarType.string,
     ),
     r'title': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'title',
       type: IsarType.string,
     ),
     r'uuid': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'uuid',
       type: IsarType.string,
     )
@@ -85,6 +96,12 @@ int _chatEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.chatBackgroundPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.chatPhotoPath;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -107,11 +124,13 @@ void _chatSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.chatPhotoPath);
-  writer.writeDateTime(offsets[1], object.date);
-  writer.writeString(offsets[2], object.preview);
-  writer.writeString(offsets[3], object.title);
-  writer.writeString(offsets[4], object.uuid);
+  writer.writeByte(offsets[0], object.bubbleStyle.index);
+  writer.writeString(offsets[1], object.chatBackgroundPath);
+  writer.writeString(offsets[2], object.chatPhotoPath);
+  writer.writeDateTime(offsets[3], object.date);
+  writer.writeString(offsets[4], object.preview);
+  writer.writeString(offsets[5], object.title);
+  writer.writeString(offsets[6], object.uuid);
 }
 
 Chat _chatDeserialize(
@@ -121,12 +140,16 @@ Chat _chatDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Chat();
-  object.chatPhotoPath = reader.readStringOrNull(offsets[0]);
-  object.date = reader.readDateTime(offsets[1]);
+  object.bubbleStyle =
+      _ChatbubbleStyleValueEnumMap[reader.readByteOrNull(offsets[0])] ??
+          BubbleStyle.opaque;
+  object.chatBackgroundPath = reader.readStringOrNull(offsets[1]);
+  object.chatPhotoPath = reader.readStringOrNull(offsets[2]);
+  object.date = reader.readDateTime(offsets[3]);
   object.isarID = id;
-  object.preview = reader.readString(offsets[2]);
-  object.title = reader.readStringOrNull(offsets[3]);
-  object.uuid = reader.readString(offsets[4]);
+  object.preview = reader.readString(offsets[4]);
+  object.title = reader.readStringOrNull(offsets[5]);
+  object.uuid = reader.readString(offsets[6]);
   return object;
 }
 
@@ -138,19 +161,33 @@ P _chatDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset)) as P;
+      return (_ChatbubbleStyleValueEnumMap[reader.readByteOrNull(offset)] ??
+          BubbleStyle.opaque) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
-    case 2:
-      return (reader.readString(offset)) as P;
-    case 3:
       return (reader.readStringOrNull(offset)) as P;
+    case 2:
+      return (reader.readStringOrNull(offset)) as P;
+    case 3:
+      return (reader.readDateTime(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _ChatbubbleStyleEnumValueMap = {
+  'opaque': 0,
+  'glass': 1,
+};
+const _ChatbubbleStyleValueEnumMap = {
+  0: BubbleStyle.opaque,
+  1: BubbleStyle.glass,
+};
 
 Id _chatGetId(Chat object) {
   return object.isarID;
@@ -338,6 +375,207 @@ extension ChatQueryWhere on QueryBuilder<Chat, Chat, QWhereClause> {
 }
 
 extension ChatQueryFilter on QueryBuilder<Chat, Chat, QFilterCondition> {
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> bubbleStyleEqualTo(
+      BubbleStyle value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bubbleStyle',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> bubbleStyleGreaterThan(
+    BubbleStyle value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bubbleStyle',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> bubbleStyleLessThan(
+    BubbleStyle value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bubbleStyle',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> bubbleStyleBetween(
+    BubbleStyle lower,
+    BubbleStyle upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bubbleStyle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'chatBackgroundPath',
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition>
+      chatBackgroundPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'chatBackgroundPath',
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'chatBackgroundPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'chatBackgroundPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'chatBackgroundPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'chatBackgroundPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'chatBackgroundPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'chatBackgroundPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'chatBackgroundPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'chatBackgroundPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> chatBackgroundPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'chatBackgroundPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterFilterCondition>
+      chatBackgroundPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'chatBackgroundPath',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Chat, Chat, QAfterFilterCondition> chatPhotoPathIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1050,6 +1288,30 @@ extension ChatQueryLinks on QueryBuilder<Chat, Chat, QFilterCondition> {
 }
 
 extension ChatQuerySortBy on QueryBuilder<Chat, Chat, QSortBy> {
+  QueryBuilder<Chat, Chat, QAfterSortBy> sortByBubbleStyle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bubbleStyle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> sortByBubbleStyleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bubbleStyle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> sortByChatBackgroundPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatBackgroundPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> sortByChatBackgroundPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatBackgroundPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Chat, Chat, QAfterSortBy> sortByChatPhotoPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'chatPhotoPath', Sort.asc);
@@ -1112,6 +1374,30 @@ extension ChatQuerySortBy on QueryBuilder<Chat, Chat, QSortBy> {
 }
 
 extension ChatQuerySortThenBy on QueryBuilder<Chat, Chat, QSortThenBy> {
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByBubbleStyle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bubbleStyle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByBubbleStyleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bubbleStyle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByChatBackgroundPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatBackgroundPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByChatBackgroundPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatBackgroundPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Chat, Chat, QAfterSortBy> thenByChatPhotoPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'chatPhotoPath', Sort.asc);
@@ -1186,6 +1472,20 @@ extension ChatQuerySortThenBy on QueryBuilder<Chat, Chat, QSortThenBy> {
 }
 
 extension ChatQueryWhereDistinct on QueryBuilder<Chat, Chat, QDistinct> {
+  QueryBuilder<Chat, Chat, QDistinct> distinctByBubbleStyle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'bubbleStyle');
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QDistinct> distinctByChatBackgroundPath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'chatBackgroundPath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Chat, Chat, QDistinct> distinctByChatPhotoPath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1226,6 +1526,18 @@ extension ChatQueryProperty on QueryBuilder<Chat, Chat, QQueryProperty> {
   QueryBuilder<Chat, int, QQueryOperations> isarIDProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarID');
+    });
+  }
+
+  QueryBuilder<Chat, BubbleStyle, QQueryOperations> bubbleStyleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'bubbleStyle');
+    });
+  }
+
+  QueryBuilder<Chat, String?, QQueryOperations> chatBackgroundPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'chatBackgroundPath');
     });
   }
 

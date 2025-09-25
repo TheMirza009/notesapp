@@ -71,11 +71,13 @@ class ChatScreen extends ConsumerWidget {
           notifier.unSelectAllMessages();
         },
         child: Scaffold(
-          floatingActionButton: AutoHideScrollToBottom(
+          floatingActionButton: notifier.isSearching ? null : 
+          AutoHideScrollToBottom(
             scrollController: notifier.scrollController,
             onPressed: notifier.scrollToBottom,
-            bottomPadding: 80,
+            bottomPadding: notifier.isReplying ? 135 : 80,
             buffer: 50,
+            backgroundColor: context.isLight ? const Color(0xFFD5F0FF) : const Color(0xFF94C1DB),
           ),
           body: Container(
             height: ThemeConstants.screenHeight,

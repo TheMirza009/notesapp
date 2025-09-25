@@ -16,6 +16,7 @@ class Message {
   late bool isSelected;
 
   IsarLink<Media> media = IsarLink<Media>();
+  IsarLink<Message> replyingTo = IsarLink<Message>();
 
   @Backlink(to: 'messages')
   final IsarLink<Chat> chat = IsarLink<Chat>();
@@ -54,5 +55,5 @@ class Message {
 
   @override
   String toString() =>
-      'Message(id: $id, text: "$text", isSender: $isSender, time: $time, media: ${media.value})';
+      'Message(id: $id, text: "$text", isSender: $isSender, time: $time, media: ${media.value}, replyingTo: ${replyingTo.value?.id})';
 }

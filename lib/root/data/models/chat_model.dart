@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:uuid/uuid.dart';
 import 'message_model.dart';
 import 'media_model.dart';
@@ -17,6 +18,11 @@ class Chat {
   late String preview;
   DateTime date = DateTime.now();
   String? chatPhotoPath;
+  String? chatBackgroundPath;
+
+  // Enum field for bubble style, default to opaque
+  @enumerated
+  BubbleStyle bubbleStyle = BubbleStyle.opaque;
 
   IsarLinks<Message> messages = IsarLinks<Message>();
 
@@ -32,6 +38,7 @@ class Chat {
     String? chatPhotoPath,
     IsarLinks<Message>? messages,
     List<Media>? media,
+    BubbleStyle? bubbleStyle, // Add here
   }) {
     final newChat = Chat()
       ..isarID = isarID
@@ -39,7 +46,8 @@ class Chat {
       ..title = title ?? this.title
       ..preview = preview ?? this.preview
       ..date = date ?? this.date
-      ..chatPhotoPath = chatPhotoPath ?? this.chatPhotoPath;
+      ..chatPhotoPath = chatPhotoPath ?? this.chatPhotoPath
+      ..bubbleStyle = bubbleStyle ?? this.bubbleStyle;
 
     if (messages != null) {
       newChat.messages.addAll(messages);
@@ -54,16 +62,17 @@ class Chat {
     final chat = Chat();
 
     final firstMessage =
-      Message()
-        ..text = "This is a new chat. Start typing to create your first note."
-        ..isSender = false
-        ..isSelected = false
-        ..time = DateTime.now();
+        Message()
+          ..text = "This is a new chat. Start typing to create your first note."
+          ..isSender = false
+          ..isSelected = false
+          ..time = DateTime.now();
 
     chat.messages.add(firstMessage);
     chat.preview = firstMessage.text;
     chat.date = firstMessage.time;
 
-    return chat; // ✅ no DB side-effect here
+    // Bubble style is already defaulted to opaque
+    return chat;
   }
 }

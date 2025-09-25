@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/ph.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
@@ -6,6 +10,7 @@ import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/reply_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/swipable.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
@@ -107,7 +112,25 @@ class MessageBubble extends StatelessWidget {
                 top: topPadding ?? 5,
                 bottom: bottomPadding ?? 5,
               ),
-              child: styleBuilder(style),
+              child: Column(
+                crossAxisAlignment: message.isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  if (message.replyingTo.value != null)
+                    ReplyWrapper(
+                      replyMessage: message.replyingTo.value!,
+                      backgroundColor: Colors.blueGrey.withOpacity(context.isLight ? 0.1 : 0.07),
+                      iconColor: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark,
+                      onTap: () {
+                        print("Reply tapped");
+                        final media = message.replyingTo.value!.media.value;
+                        if (media != null) {
+                          print("Media path: ${media.path}");
+                        }
+                      },
+                    ),
+                  styleBuilder(style),
+                ],
+              ),
             ),
           ),
 

@@ -56,6 +56,12 @@ const MessageSchema = CollectionSchema(
       target: r'Media',
       single: true,
     ),
+    r'replyingTo': LinkSchema(
+      id: -8995176130860208234,
+      name: r'replyingTo',
+      target: r'Message',
+      single: true,
+    ),
     r'chat': LinkSchema(
       id: -1412029827583531416,
       name: r'chat',
@@ -138,12 +144,14 @@ Id _messageGetId(Message object) {
 }
 
 List<IsarLinkBase<dynamic>> _messageGetLinks(Message object) {
-  return [object.media, object.chat];
+  return [object.media, object.replyingTo, object.chat];
 }
 
 void _messageAttach(IsarCollection<dynamic> col, Id id, Message object) {
   object.isarId = id;
   object.media.attach(col, col.isar.collection<Media>(), r'media', id);
+  object.replyingTo
+      .attach(col, col.isar.collection<Message>(), r'replyingTo', id);
   object.chat.attach(col, col.isar.collection<Chat>(), r'chat', id);
 }
 
@@ -626,6 +634,19 @@ extension MessageQueryLinks
   QueryBuilder<Message, Message, QAfterFilterCondition> mediaIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.linkLength(r'media', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> replyingTo(
+      FilterQuery<Message> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'replyingTo');
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> replyingToIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'replyingTo', 0, true, 0, true);
     });
   }
 

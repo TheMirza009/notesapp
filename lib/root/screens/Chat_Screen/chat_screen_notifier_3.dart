@@ -36,6 +36,8 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   bool isSearching = false;
   Message? anchorMessage;
 
+  bool get isReplying => anchorMessage != null;
+
   @override
   List<Message> build() {
     final selectedChat = ref.watch(chatListProvider).selectedChat;
@@ -100,18 +102,28 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       ..isSender = true;
 
     await _isar.writeTxn(() async {
+
+      if (anchorMessage != null) {
+        newMessage.replyingTo.value = anchorMessage;
+      }
+
       await _isar.messages.put(newMessage);
       if (_chat != null) {
         _chat!.messages.add(newMessage);
         await _chat!.messages.save();
         await _isar.chats.put(_chat!);
       }
+
+      if (anchorMessage != null) {
+        await newMessage.replyingTo.save();
+      }
     });
 
-    scrollToBottom();
-
-    state = [...state, newMessage];
+    anchorMessage = null;
+    _allMessages.add(newMessage);
+    state = [..._allMessages];
     deleteInitMessage();
+    scrollToBottom();
   }
 
   /// Pick image and send as message
