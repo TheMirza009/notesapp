@@ -18,12 +18,16 @@ class AnchorWrapper extends StatelessWidget {
     required this.text,
     this.media,
     this.onClear,
-    this.maxHeight = 80,
+    this.maxHeight = 100,
     this.animationDuration = const Duration(milliseconds: 300),
     this.animationCurve = Curves.easeInOutQuint,
   });
 
   bool get _isVisible => text != null && text!.isNotEmpty;
+
+  /// Rebuilds: 15-20 single TEXT
+  /// Rebuilds: 150 multiple texts
+  /// Rebuilds: >200 texts with images
 
   @override
   Widget build(BuildContext context) {
@@ -54,60 +58,66 @@ class AnchorWrapper extends StatelessWidget {
             borderRadius: BorderRadius.circular(15),
             color: backgroundColor,
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: context.isLight ? const Color(0x13002D6C) : Colors.black12,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(width: 5, color: ThemeConstants.sinisterSeed),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 5),
-                        Text("replying to", style: TextStyle(color: Colors.blueGrey, fontSize: 12)),
-                        SizedBox(height: 2),
-                        Text(
-                          text ?? '',
-                          softWrap: true,
-                          maxLines: 2,
-                          overflow: TextOverflow.fade,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        SizedBox(height: 5),
-                      ],
-                    ),
-                  ),
-                  if (_isVisible && onClear != null)
-                    Stack(
-                      alignment: Alignment.centerRight,
-                      children: [
-                        if (media != null) IntrinsicHeight(
-                          child: Container(
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(5)),
-                            height: 60,
-                            width: 60,
-                            clipBehavior: Clip.antiAlias,
-                            child: Image.file(File(media!.path!), fit: BoxFit.cover,)),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(right: 5),
-                          child: IconButton.filled(
-                            color: Colors.white,
-                            style: IconButton.styleFrom(backgroundColor: Colors.black12),
-                            onPressed: onClear,
-                            icon: const Icon(Icons.clear),
+          child: RepaintBoundary(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: context.isLight ? const Color(0x13002D6C) : Colors.black12,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(width: 5, color: ThemeConstants.sinisterSeed),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 5),
+                          Text("replying to", style: TextStyle(color: Colors.blueGrey, fontSize: 12)),
+                          // SizedBox(height: 2),
+                          Flexible(
+                            child: Text(
+                              text ?? '',
+                              softWrap: true,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           ),
-                        ),
-                      ],
+                          SizedBox(height: 5),
+                        ],
+                      ),
                     ),
-                ],
+                    if (_isVisible && onClear != null)
+                      Stack(
+                        alignment: Alignment.centerRight,
+                        children: [
+                          if (media != null) IntrinsicHeight(
+                            child: Container(
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(5)),
+                              height: 60,
+                              width: 60,
+                              clipBehavior: Clip.antiAlias,
+                              child: RepaintBoundary(child: Image.file(File(media!.path!), fit: BoxFit.cover,))),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(right: 5),
+                            child: IconButton.filled(
+                              color: Colors.white,
+                              style: IconButton.styleFrom(backgroundColor: Colors.black12),
+                              onPressed: onClear,
+                              icon: const Icon(Icons.clear),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

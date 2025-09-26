@@ -100,13 +100,13 @@ class ChatScreen extends ConsumerWidget {
                   leading: notifier.isSelecting
                     ? IconButton(
                       onPressed: () => notifier.unSelectAllMessages(),
-                      icon: Icon(Icons.clear, color: ThemeConstants.iconColorNeutral,),
+                      icon: Icon(Icons.clear, color: ThemeConstants.iconColorNeutral),
                     )
                     : IconButton(
                       onPressed: () {
                         Navigator.pop(context);
                         },
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral,),
+                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
                     ),
                   lastEdited: messages.isNotEmpty ? messages.last.time : DateTime.now(),
                   isSelecting: notifier.isSelecting,
@@ -128,7 +128,7 @@ class ChatScreen extends ConsumerWidget {
                     ? [ IconButton(onPressed: () => notifier.deleteSelected(), icon: Icon(Icons.delete_outline_rounded))]
                     : null,
                 ),
-        
+                  
                 
                 /// Chat Searchbar
                  AnimatedSize(
@@ -161,8 +161,8 @@ class ChatScreen extends ConsumerWidget {
                     ),
                   ) : SizedBox.shrink(),
                 ),
-        
-        
+                  
+                  
                 Expanded(
                   child: messages.isEmpty 
                   ? NothingToSee() 
@@ -185,69 +185,67 @@ class ChatScreen extends ConsumerWidget {
                         return Column(
                           children: [
                             if (info.showDateChip) DateChip(message.time),
-                            RepaintBoundary(
-                              child: MessageBubble(
-                                key: ValueKey(message.id),
-                                style: BubbleStyle.opaque,
-                                message: message,
-                                isSelecting: notifier.isSelecting,
-                                isHighlighted: ref.watch( chatMessagesController.notifier.select( (c) => c.isHighlighted(message.isarId), ), ),
-                                topPadding: info.topPadding,
-                                bottomPadding: info.bottomPadding,
-                                onSwipe: () => notifier.setAnchorMessage(message),
-                                onTapWhileSelecting: () {
-                                  message.isSelected
-                                  ? notifier.unselectMessage(message)
-                                  : notifier.selectMessage(message);
-                                },
-                                onTap: () {
-                                  if (message.isImage) {
-                                    final imageMessages = messages.imageMedias;
-                                    final initialIndex = imageMessages.indexOfMediaIsarID(message);
-                                    print(message);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => GalleryViewWrapper(
-                                          chatTitle: chatTitle,
-                                          galleryItems: imageMessages,
-                                          initialIndex: initialIndex,
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    message.isSender = !message.isSender;
-                                    notifier.updateMessage(message);
-                                  }
-                                },
-                                onLongPress: (pos) {
-                                  notifier.selectMessage(message);
-                                  notifier.searchFocusNode.unfocus();
-                                  CustomContextMenu.showMenuAt(
+                            MessageBubble(
+                              key: ValueKey(message.id),
+                              style: BubbleStyle.opaque,
+                              message: message,
+                              isSelecting: notifier.isSelecting,
+                              isHighlighted: ref.watch( chatMessagesController.notifier.select( (c) => c.isHighlighted(message.isarId), ), ),
+                              topPadding: info.topPadding,
+                              bottomPadding: info.bottomPadding,
+                              onSwipe: () => notifier.setAnchorMessage(message),
+                              onTapWhileSelecting: () {
+                                message.isSelected
+                                ? notifier.unselectMessage(message)
+                                : notifier.selectMessage(message);
+                              },
+                              onTap: () {
+                                if (message.isImage) {
+                                  final imageMessages = messages.imageMedias;
+                                  final initialIndex = imageMessages.indexOfMediaIsarID(message);
+                                  print(message);
+                                  Navigator.push(
                                     context,
-                                    position: pos,
-                                    menuItems: messageHoldOptions(
-                                      isImage: message.isImage,
+                                    MaterialPageRoute(
+                                      builder: (_) => GalleryViewWrapper(
+                                        chatTitle: chatTitle,
+                                        galleryItems: imageMessages,
+                                        initialIndex: initialIndex,
+                                      ),
                                     ),
-                                    triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                    onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
                                   );
-                                },
-                                onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
-                                ),
-                            ),
+                                } else {
+                                  message.isSender = !message.isSender;
+                                  notifier.updateMessage(message);
+                                }
+                              },
+                              onLongPress: (pos) {
+                                notifier.selectMessage(message);
+                                notifier.searchFocusNode.unfocus();
+                                CustomContextMenu.showMenuAt(
+                                  context,
+                                  position: pos,
+                                  menuItems: messageHoldOptions(
+                                    isImage: message.isImage,
+                                  ),
+                                  triangleHorizontalOffset: message.isSender ? 120 : 40,
+                                  onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
+                                );
+                              },
+                              onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
+                              ),
                             ],
                           );
                       },
                     ),
                 ),
-        
+                  
                 AnchorWrapper(
                   text: notifier.anchorMessage?.text,
                   media: notifier.anchorMessage?.media.value,
                   onClear: notifier.clearAnchorMessage,
                 ),
-        
+                  
                 BottomMessageBar(
                   focusNode: notifier.keyboardFocusNode,
                   keyboardController: notifier.keyboardController,

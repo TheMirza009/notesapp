@@ -20,7 +20,7 @@ class MessageContentBuilder extends StatelessWidget {
       case Mediatype.text:
         return _buildTextWithTimestamp();
       case Mediatype.image:
-        return _buildImageWithOverlay();
+        return RepaintBoundary(child: _buildImageWithOverlay());
       case Mediatype.video:
         return _buildVideoMessage();
       case Mediatype.audio:
