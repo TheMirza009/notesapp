@@ -32,6 +32,7 @@ import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/auto_hide_scroll_to_bottom.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/emoji_board.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
@@ -58,14 +59,17 @@ class ChatScreen extends ConsumerWidget {
     String? chatPhoto = selectedChat.chatPhotoPath; // Chat Photo reception
     Color headerColor =  context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
+    bool isMessageHighlighted(Message message) => ref.watch(chatMessagesController.notifier.select((c) => c.isHighlighted(message.isarId)));
     String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
     String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
 
     return PopScope(
-      canPop: !notifier.isSearching,
+      canPop: !notifier.isSearching && !notifier.showEmojis,
       onPopInvokedWithResult: (didPop, context) {
         notifier.isSearching = false;
         notifier.searchFocusNode.unfocus();
+        notifier.keyboardFocusNode.unfocus();
+        notifier.hideEmojiPicker();
         notifier.unSelectAllMessages();
         notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
@@ -73,10 +77,12 @@ class ChatScreen extends ConsumerWidget {
       child: GestureDetector(
         onTap: () {
           notifier.searchFocusNode.unfocus();
+          notifier.keyboardFocusNode.unfocus();
+          notifier.hideEmojiPicker();
           notifier.unSelectAllMessages();
         },
         child: Scaffold(
-          floatingActionButton: notifier.isSearching ? null : 
+          floatingActionButton: (notifier.isSearching == true && notifier.showEmojis == true) ? null : 
           AutoHideScrollToBottom(
             itemScrollController: notifier.itemScrollController,
             itemPositionsListener: notifier.itemPositionsListener,
@@ -95,6 +101,8 @@ class ChatScreen extends ConsumerWidget {
             ),
             child: Column(
               children: [
+
+                /// Chat App Bar
                 ChatAppBar(
                   chatPhotoPath: chatPhoto,
                   leading: notifier.isSelecting
@@ -190,7 +198,7 @@ class ChatScreen extends ConsumerWidget {
                               style: BubbleStyle.opaque,
                               message: message,
                               isSelecting: notifier.isSelecting,
-                              isHighlighted: ref.watch( chatMessagesController.notifier.select( (c) => c.isHighlighted(message.isarId), ), ),
+                              isHighlighted: isMessageHighlighted(message),
                               topPadding: info.topPadding,
                               bottomPadding: info.bottomPadding,
                               onSwipe: () => notifier.setAnchorMessage(message),
@@ -249,11 +257,29 @@ class ChatScreen extends ConsumerWidget {
                 BottomMessageBar(
                   focusNode: notifier.keyboardFocusNode,
                   keyboardController: notifier.keyboardController,
-                  onEmojiTap: () => debugPrint("Emoji tapped"),
+                  onFieldTap: notifier.hideEmojiPicker,
+                  onEmojiTap: notifier.toggleEmojiPicker,
                   onAttachmentTap: () => notifier.pickImage(),
                   onMicTap: () => debugPrint("notifier.state"),
                   onSend: (txt) => notifier.sendMessage(txt),
                   onImagePasted: (imageBytes) => notifier.pickImage(imageBytes: imageBytes) ,
+                ),
+
+                // if (notifier.showEmojis) 
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SizedBox(
+                      height: notifier.showEmojis ? 280 : 0,
+                      child: EmojiBoard(
+                        showEmojis: notifier.showEmojis,
+                        textController: notifier.keyboardController,
+                        keyboardHeight: 280,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

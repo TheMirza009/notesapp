@@ -11,131 +11,79 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/emoji_board.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile_og.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/note_item.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/test_chat_screen.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:path_provider/path_provider.dart';
 
-class LoadChatListScreen extends ConsumerStatefulWidget {
+class LoadChatListScreen extends ConsumerWidget {
   const LoadChatListScreen({super.key});
 
   @override
-  ConsumerState<LoadChatListScreen> createState() => _LoadTestScreenState();
-}
-
-class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
-  bool showEmojis = false;
-  TextEditingController controller = TextEditingController();
-  FocusNode textFieldFocusNode = FocusNode();
-  double keyboardHeight = 250; // fallback height if keyboard size not known
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Listen to focus changes
-    textFieldFocusNode.addListener(() {
-      if (textFieldFocusNode.hasFocus && showEmojis) {
-        setState(() {
-          showEmojis = false; // hide emoji picker if keyboard opens
-        });
-      }
-    });
-
-    // Listen to keyboard appearance
-    WidgetsBinding.instance.addObserver(
-      LifecycleEventHandler(onMetricsChanged: _onMetricsChanged),
-    );
-  }
-
-  void _onMetricsChanged() {
-    final newBottomInset = MediaQuery.of(context).viewInsets.bottom;
-    if (newBottomInset > 0) {
-      keyboardHeight = newBottomInset;
-      if (showEmojis) {
-        setState(() => showEmojis = false);
-      }
-    }
-  }
-
-  void toggleEmojiPicker() {
-    if (showEmojis) {
-      // Hide emoji picker → open keyboard
-      setState(() => showEmojis = false);
-      Future.delayed(
-        const Duration(milliseconds: 100),
-        () => textFieldFocusNode.requestFocus(),
-      );
-    } else {
-      // Hide keyboard → show emoji picker
-      textFieldFocusNode.unfocus();
-      Future.delayed(
-        const Duration(milliseconds: 100),
-        () => setState(() => showEmojis = true),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    textFieldFocusNode.dispose();
-    controller.dispose();
-    WidgetsBinding.instance.removeObserver(
-      LifecycleEventHandler(onMetricsChanged: _onMetricsChanged),
-    );
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(chatMessagesController.notifier);
+    final messages = ref.watch(chatMessagesController);
     return Scaffold(
       appBar: AppBar(
         title: Text("Emoji Test"),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Text input bar
-          TextField(
-            controller: controller,
-            focusNode: textFieldFocusNode,
-            onTap: () {
-              if (showEmojis) setState(() => showEmojis = false);
-            },
-          ),
-      
-          // Emoji picker
-          AnimatedSlide(
-            duration: const Duration(milliseconds: 400),
-            offset: Offset(0, showEmojis ? 0 : 1),
-            child: EmojiPicker(
-              textEditingController: controller,
-              config: Config(
-                emojiViewConfig: EmojiViewConfig(
-                  backgroundColor: Colors.blueGrey,
-                ),
-                skinToneConfig: SkinToneConfig(
-                  dialogBackgroundColor: Colors.blueGrey,
-                ),
-                searchViewConfig: SearchViewConfig(
-                  backgroundColor: Colors.blueGrey,
-                ),
-                categoryViewConfig: CategoryViewConfig(
-                  backgroundColor: Colors.blueGrey,
-                ),
-                bottomActionBarConfig: BottomActionBarConfig(
-                  backgroundColor: Colors.blueGrey,
-                ),
-              ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              context.isLight
+                  ? Icons.dark_mode_outlined
+                  : Icons.light_mode_outlined,
             ),
+            onPressed:
+                () => ref.read(themeNotifierProvider.notifier).toggleTheme(),
           ),
         ],
       ),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: toggleEmojiPicker,
-        child: const Icon(Icons.emoji_emotions_outlined),
+      body: GestureDetector(
+        onTap: () {
+          notifier.hideEmojiPicker();
+          notifier.keyboardFocusNode.unfocus();
+        },
+        child: Container(
+          color: const Color.fromARGB(255, 18, 23, 27),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Emoji picker
+              BottomMessageBar(
+                focusNode: notifier.keyboardFocusNode,
+                keyboardController: notifier.keyboardController,
+                onFieldTap: notifier.hideEmojiPicker,
+                onEmojiTap: notifier.toggleEmojiPicker,
+                onAttachmentTap: () => notifier.pickImage(),
+                onMicTap: () => debugPrint("notifier.state"),
+                onSend: (txt) => notifier.sendMessage(txt),
+                onImagePasted:
+                    (imageBytes) => notifier.pickImage(imageBytes: imageBytes),
+              ),
+          
+              // if (notifier.showEmojis)
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SizedBox(
+                    height: notifier.showEmojis ? 280 : 0,
+                    child: EmojiBoard(
+                      showEmojis: notifier.showEmojis,
+                      textController: notifier.keyboardController,
+                      keyboardHeight: 280,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

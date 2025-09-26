@@ -14,6 +14,7 @@ class BottomMessageBar extends StatefulWidget {
   final Function(String) onSend;
   final Function(String)? onSubmitted;
   final void Function(Uint8List)? onImagePasted;
+  final void Function()? onFieldTap;
   final TextEditingController? keyboardController;
   final FocusNode? focusNode;
 
@@ -27,6 +28,7 @@ class BottomMessageBar extends StatefulWidget {
     this.onImagePasted,
     this.keyboardController,
     this.focusNode,
+    this.onFieldTap,
   });
 
   @override
@@ -90,7 +92,7 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
               child: TextField(
                 autofocus: false,
                 focusNode: widget.focusNode,
-                controller: _messageController, // widget.keyboardController ?? 
+                controller: messageController, // widget.keyboardController ?? 
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,
                 minLines: 1,
@@ -99,6 +101,7 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                   hintText: "Type a message",
                   border: InputBorder.none,
                 ),
+                onTap: widget.onFieldTap,
                 onSubmitted: widget.onSubmitted,
                 contentInsertionConfiguration: ContentInsertionConfiguration(
                   onContentInserted: (KeyboardInsertedContent content) {
@@ -128,7 +131,7 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
           Padding(
             padding: iconPadding,
             child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _messageController,
+              valueListenable: messageController,
               builder: (context, value, child) {
                 final text = value.text.trim();
                 if (text.isEmpty) {
@@ -140,7 +143,7 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                   return IconButton(
                     onPressed: () {
                       widget.onSend(text);
-                      _messageController.clear();
+                      messageController.clear();
                     },
                     icon: Icon(
                       Icons.send,

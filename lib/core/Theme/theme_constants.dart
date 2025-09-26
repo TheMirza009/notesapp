@@ -36,6 +36,7 @@ class ThemeConstants {
   // ============ DARK COLORS ================//
 
   static const Color sinisterSeed = Color(0xFF0c96a4);
+  static const Color sinisterSeedHighlight =  Color(0xFF0DD6EC);
   static const Color darkAppbar = Color(0xFF1d2b36);
   static const Color textDark = Color(0xFFc4cacd);
   static const Color textDark2 = Color.fromARGB(255, 234, 248, 255);

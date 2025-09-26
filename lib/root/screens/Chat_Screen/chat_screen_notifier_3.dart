@@ -40,12 +40,19 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   bool isLoading = false;
   bool isSelecting = false;
   bool isSearching = false;
+  bool showEmojis = false;
+
   Message? anchorMessage;
 
   bool get isReplying => anchorMessage != null;
 
   @override
   List<Message> build() {
+    keyboardFocusNode.addListener(() {
+      if (keyboardFocusNode.hasFocus) {
+        hideEmojiPicker();
+      }
+    });
     final selectedChat = ref.watch(chatListProvider).selectedChat;
     if (selectedChat == null) {
       return []; // gracefully return empty, no crash
@@ -235,12 +242,15 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
       await MediaHandler.deleteMedia(message.media.value!);
     }
 
-    state = state.where((m) => m.isarId != message.isarId).toList();
+    _allMessages.remove(message);
+    state = [..._allMessages];
+
+    // state = state.where((m) => m.isarId != message.isarId).toList();
   }
 
   /// Delete selected messages
   Future<void> deleteSelected() async {
-    final selected = state.where((m) => m.isSelected).toList();
+    final selected = _allMessages.where((m) => m.isSelected).toList();
     if (selected.isEmpty) return;
 
     await _isar.writeTxn(() async {
@@ -250,17 +260,31 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
           _chat!.messages.remove(m);
         }
 
+        // Handle media deletion (only if not reused elsewhere)
         if (m.media.value != null && m.media.value!.type != Mediatype.text) {
-          await MediaHandler.deleteMedia(m.media.value!);
+          final allMessages = await _isar.messages.where().findAll();
+          for (final msg in allMessages) {
+            await msg.media.load(); // ensure relation is loaded
+          }
+          final isUsedByMultiple = allMessages.hasDuplicateMediaPath(m);
+          if (!isUsedByMultiple) {
+            await MediaHandler.deleteMedia(m.media.value!);
+          }
         }
       }
-      if (_chat != null) await _chat!.messages.save();
-      if (_chat != null) await _isar.chats.put(_chat!);
+
+      if (_chat != null) {
+        await _chat!.messages.save();
+        await _isar.chats.put(_chat!);
+      }
     });
 
+    // Update local collections
     unSelectAllMessages();
-    state = state.where((m) => !selected.contains(m)).toList();
+    _allMessages.removeWhere((m) => selected.contains(m));
+    state = [..._allMessages]; // refresh UI
   }
+
 
   /// Select / unselect messages
   void selectMessage(Message message) {
@@ -304,6 +328,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     anchorMessage = message;
     print(anchorMessage!.text);
     if (!keyboardFocusNode.hasFocus) {keyboardFocusNode.requestFocus();}
+    showEmojis = false;
     state = [...state];
   }
 
@@ -312,6 +337,33 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     keyboardFocusNode.unfocus();
     state = [...state];
   }
+
+
+    void toggleEmojiPicker() {
+  if (showEmojis) {
+    // Emojis open → switch to keyboard
+    showEmojis = false;
+    state = [...state];
+    keyboardFocusNode.requestFocus(); // open keyboard immediately
+  } else {
+    // Keyboard open → close it first, then animate emojis up
+    if (keyboardFocusNode.hasFocus) {
+      keyboardFocusNode.unfocus(); // keyboard will close
+    }
+    Future.delayed(const Duration(milliseconds: 100), () {
+      showEmojis = true;
+      state = [...state];
+    });
+  }
+}
+
+  void hideEmojiPicker() {
+    if (showEmojis) {
+      showEmojis = false;
+      state = [...state];
+    }
+  }
+
 
   void toggleSearch() async {
     isSearching = !isSearching;
