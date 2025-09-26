@@ -29,6 +29,7 @@ class ChatDetailState {
 
 class ChatDetailNotifier extends Notifier<ChatDetailState> {
   final Isar isar = IsarDatabase.isar;
+  bool imageOpened = false;
   @override
   ChatDetailState build() {
     final selectedChat = ref.watch(chatListProvider).selectedChat;
@@ -105,5 +106,10 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
     // update provider state with the same managed object (not a copy)
     ref.read(chatListProvider.notifier).refreshChat(chat.isarID);
     state = state.copyWith(chat: chat);
+  }
+
+  void openImage() {
+    imageOpened = !imageOpened;
+    state = state.copyWith();
   }
 }

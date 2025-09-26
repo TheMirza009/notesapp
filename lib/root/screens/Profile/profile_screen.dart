@@ -9,6 +9,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/root/screens/Profile/hero_wrapper.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final Widget? leading;
@@ -99,18 +100,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Column(
           children: [
             SizedBox(height: 75),
-            Center(
-              child: InkWell(
-                splashColor: const Color.fromARGB(87, 220, 247, 255),
-                onTap: () async {},
-                customBorder: const CircleBorder(),
-                child: Image.asset(
-                  context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-                  height: context.screenHeight / 4,
-                  fit: BoxFit.cover,
-                ),
+            HeroWrapper(
+              tag: "profile-avatar",
+              defaultChild: Image.asset(
+                height: context.screenHeight / 4,
+                context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+                fit: BoxFit.contain,
+              ),
+              expandedChild: Image.asset(
+                context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+                fit: BoxFit.contain,
+              ),
+              // topWidget: const Text( "Profile", style: TextStyle(color: Colors.white), ),
+              bottomWidget: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Back"),
               ),
             ),
+
             Container(
               margin: const EdgeInsets.all(30),
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
