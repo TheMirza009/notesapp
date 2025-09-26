@@ -66,6 +66,7 @@ dependencies:
   uuid: ^4.5.1
   pasteboard: ^0.4.0
   scrollable_positioned_list: ^0.3.8
+  emoji_picker_flutter: ^4.3.0
 
 dev_dependencies:
   flutter_test:

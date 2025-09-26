@@ -24,7 +24,8 @@ final chatDetailProvider =
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final Chat chat;
-  const ChatDetailScreen({super.key, required this.chat});
+  final bool? scrollToMedia;
+  const ChatDetailScreen({super.key, required this.chat, this.scrollToMedia = false});
 
   @override
   ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
@@ -32,18 +33,36 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
 
 class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   late TextEditingController titleController;
+  final ScrollController _scrollController = ScrollController();
   bool isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    titleController = TextEditingController(text: widget.chat.title ?? "New Chat");
+    titleController = TextEditingController(
+      text: widget.chat.title ?? "New Chat",
+    );
+    if (widget.scrollToMedia == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollHeaderToTop();
+      });
+    }
   }
 
   @override
   void dispose() {
     titleController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void scrollHeaderToTop() {
+    // Animate until the header is pinned
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent, // default fallback
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOutQuad,
+    );
   }
 
   void _startEditing() {
@@ -86,10 +105,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 )
               : Text(chat?.title ?? "New Chat"),
           actions: [
-            IconButton(
-              icon: Icon(isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
-              onPressed: () => ref.read(themeNotifierProvider.notifier).toggleTheme(),
-            ),
+            // IconButton(
+            //   icon: Icon(isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
+            //   onPressed: () => ref.read(themeNotifierProvider.notifier).toggleTheme(),
+            // ),
             IconButton(
               icon: Icon(isEditing ? Icons.check : Icons.edit),
               onPressed: isEditing ? () => _finishEditing(notifier) : _startEditing,
@@ -97,6 +116,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ],
         ),
         body: NestedScrollView(
+          controller: _scrollController,
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverToBoxAdapter(
               child: Material(

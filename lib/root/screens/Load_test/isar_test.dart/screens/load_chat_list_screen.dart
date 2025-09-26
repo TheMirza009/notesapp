@@ -1,3 +1,4 @@
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,271 +25,129 @@ class LoadChatListScreen extends ConsumerStatefulWidget {
 }
 
 class _LoadTestScreenState extends ConsumerState<LoadChatListScreen> {
-  late Isar _isar;
-  List<Chat> chats = [];
-  bool _loading = true;
+  bool showEmojis = false;
+  TextEditingController controller = TextEditingController();
+  FocusNode textFieldFocusNode = FocusNode();
+  double keyboardHeight = 250; // fallback height if keyboard size not known
 
   @override
   void initState() {
     super.initState();
-    _initIsar();
+
+    // Listen to focus changes
+    textFieldFocusNode.addListener(() {
+      if (textFieldFocusNode.hasFocus && showEmojis) {
+        setState(() {
+          showEmojis = false; // hide emoji picker if keyboard opens
+        });
+      }
+    });
+
+    // Listen to keyboard appearance
+    WidgetsBinding.instance.addObserver(
+      LifecycleEventHandler(onMetricsChanged: _onMetricsChanged),
+    );
   }
 
-  // =======================================================================
+  void _onMetricsChanged() {
+    final newBottomInset = MediaQuery.of(context).viewInsets.bottom;
+    if (newBottomInset > 0) {
+      keyboardHeight = newBottomInset;
+      if (showEmojis) {
+        setState(() => showEmojis = false);
+      }
+    }
+  }
 
-  //                       I S A R    F UN C T I O N S
-
-  // =======================================================================
-
-
-  /// Init Method for Isar
-  Future<void> _initIsar() async {
-    final dir = await getApplicationDocumentsDirectory();
-
-    // Check if an Isar instance is already open
-    if (Isar.instanceNames.contains('isar')) {
-      _isar = Isar.getInstance('isar')!;
+  void toggleEmojiPicker() {
+    if (showEmojis) {
+      // Hide emoji picker → open keyboard
+      setState(() => showEmojis = false);
+      Future.delayed(
+        const Duration(milliseconds: 100),
+        () => textFieldFocusNode.requestFocus(),
+      );
     } else {
-      _isar = await Isar.open(
-        [
-          ChatSchema,
-          MessageSchema,
-          MediaSchema,
-        ],
-        directory: dir.path,
-        name: 'isar',
+      // Hide keyboard → show emoji picker
+      textFieldFocusNode.unfocus();
+      Future.delayed(
+        const Duration(milliseconds: 100),
+        () => setState(() => showEmojis = true),
       );
     }
-
-    final loadedChats = await _isar.chats.where().findAll();
-    for (final chat in loadedChats) {
-      await chat.messages.load();
-    }
-
-    setState(() {
-      chats = loadedChats;
-      _loading = false;
-    });
   }
 
-  Future<void> _addChat(String text) async {
-    final newChat = Chat();
-    newChat.title = text;
-
-    // Create the first message
-    final firstMessage =
-        Message()
-          ..id = "0000"
-          ..text = "This is a new chat. Start typing to create your first note."
-          ..isSender = false
-          ..isSelected = false
-          ..time = DateTime.now();
-
-    late Chat savedChat;
-
-    await _isar.writeTxn(() async {
-      // 1. Save message first
-      await _isar.messages.put(firstMessage);
-
-      // 2. Save chat first
-      await _isar.chats.put(newChat);
-
-      // 3. Add message to chat link
-      newChat.messages.add(firstMessage);
-
-      // 4. Persist the link
-      await newChat.messages.save();
-
-      // 5. Update chat preview and date
-      newChat.preview = firstMessage.text;
-      newChat.date = firstMessage.time;
-      await _isar.chats.put(newChat); // save updated preview/date
-
-      savedChat = await _isar.chats.get(newChat.isarID) ?? newChat;
-    });
-
-    setState(() {
-      chats.add(savedChat);
-    });
+  @override
+  void dispose() {
+    textFieldFocusNode.dispose();
+    controller.dispose();
+    WidgetsBinding.instance.removeObserver(
+      LifecycleEventHandler(onMetricsChanged: _onMetricsChanged),
+    );
+    super.dispose();
   }
-
-
-
-
-
-  Future<void> deleteChat(Chat chat) async {
-    await _isar.writeTxn(() async {
-      if (!chat.messages.isLoaded) {
-        await chat.messages.load();
-      }
-
-      final messageIds = chat.messages.map((m) => m.isarId).toList();
-      if (messageIds.isNotEmpty) {
-        await _isar.messages.deleteAll(messageIds);
-      }
-      await _isar.chats.delete(chat.isarID);
-    });
-
-    setState(() {
-      chats.remove(chat);
-    });
-  }
-
-  Future<void> deleteAllChats() async {
-    await _isar.writeTxn(() async {
-      await _isar.chats.clear();
-    });
-
-    setState(() {
-      chats.clear();
-    });
-  }
-
-  // =======================================================================
-
-  //                       U S E R   I N T E R F A C E
-
-  // =======================================================================
-
-
-  void _showAddDialog() {
-  String? text;
-  IconData selectedIcon = Icons.star_border_outlined;
-
-  final iconOptions = {
-    Icons.star_border_outlined: "Star",
-    Icons.circle_outlined: "Circle",
-    CupertinoIcons.bolt: "Square",
-    Icons.change_history: "Triangle",
-  };
-
-  showCupertinoDialog(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setStateSB) => CupertinoAlertDialog(
-        title: const Text("Add Note"),
-        content: Column(
-          children: [
-            const SizedBox(height: 10),
-            CupertinoTextField(
-              placeholder: "Enter note",
-              onChanged: (val) => text = val,
-              style: TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            CupertinoSlidingSegmentedControl<IconData>(
-                groupValue: selectedIcon,
-                children: {
-                  for (var entry in iconOptions.entries)
-                    entry.key: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(entry.key),
-                    ),
-                },
-                onValueChanged: (value) {
-                  if (value != null) setState(() => selectedIcon = value);
-                },
-              ),
-
-          ],
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text("Cancel"),
-            onPressed: () => Navigator.pop(context),
-          ),
-          CupertinoDialogAction(
-            child: const Text("Add"),
-            onPressed: () {
-              if (text != null && text!.isNotEmpty) _addChat(text!);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '', // <-- disable tooltip
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: const Text("Chat Load Test"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text("Emoji Test"),
       ),
-      floatingActionButton: FloatingActionButton(
-        tooltip: '',
-        onPressed: _showAddDialog,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body:
-          _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Container(
-              decoration: BoxDecoration(gradient: Gradients.darkBackground),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 10),
-                    child: Text("Chats", style: TextStyle(fontSize: 25),),
-                  ),
-                  Expanded(
-                    child: chats.isEmpty 
-                    ? Center(child: Text("No Chats to show"),) 
-                    : ListView.separated(
-                        separatorBuilder: (context, index) => Divider(),
-                        itemCount: chats.length,
-                        itemBuilder: (context, index) {
-                          final chat = chats[index];
-                          return Dismissible(
-                            key: ValueKey(chat.isarID),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              color: Colors.red,
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            onDismissed: (_) => deleteChat(chat),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: ListTile(
-                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TestChatScreen(chat: chat))),
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.blueGrey.withAlpha(50),
-                                  child: Icon(Icons.messenger, color: ThemeConstants.homeSubtitleLight,)),
-                                title: Text(
-                                  chat.title ?? "N/A", 
-                                  style: TextStyle(fontSize: 20),
-                                  ),
-                                subtitle: Text(
-                                            chat.messages.isNotEmpty 
-                                            ? ( chat.preview /* chat.messages.last.text */ ?? "No messages yet.") 
-                                            : "No messages yet.",
-                                  style: TextStyle(color: ThemeConstants.iconColorNeutral),
-                                  ),
-                                trailing: Text(
-                                  TimeFormat.formatChatSubtitle(chat.date).replaceFirst("today at", "") ?? "00:00", 
-                                  style: TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                            ),
-                          );
-                        },
-                      ),
-                  ),
-                ],
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Text input bar
+          TextField(
+            controller: controller,
+            focusNode: textFieldFocusNode,
+            onTap: () {
+              if (showEmojis) setState(() => showEmojis = false);
+            },
+          ),
+      
+          // Emoji picker
+          AnimatedSlide(
+            duration: const Duration(milliseconds: 400),
+            offset: Offset(0, showEmojis ? 0 : 1),
+            child: EmojiPicker(
+              textEditingController: controller,
+              config: Config(
+                emojiViewConfig: EmojiViewConfig(
+                  backgroundColor: Colors.blueGrey,
+                ),
+                skinToneConfig: SkinToneConfig(
+                  dialogBackgroundColor: Colors.blueGrey,
+                ),
+                searchViewConfig: SearchViewConfig(
+                  backgroundColor: Colors.blueGrey,
+                ),
+                categoryViewConfig: CategoryViewConfig(
+                  backgroundColor: Colors.blueGrey,
+                ),
+                bottomActionBarConfig: BottomActionBarConfig(
+                  backgroundColor: Colors.blueGrey,
+                ),
               ),
             ),
+          ),
+        ],
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: toggleEmojiPicker,
+        child: const Icon(Icons.emoji_emotions_outlined),
+      ),
     );
+  }
+}
+
+/// Utility to listen to keyboard metrics changes
+class LifecycleEventHandler extends WidgetsBindingObserver {
+  final VoidCallback onMetricsChanged;
+  LifecycleEventHandler({required this.onMetricsChanged});
+
+  @override
+  void didChangeMetrics() {
+    onMetricsChanged();
   }
 }

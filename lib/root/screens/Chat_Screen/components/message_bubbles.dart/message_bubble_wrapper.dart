@@ -7,6 +7,7 @@ import 'package:iconify_flutter/icons/ph.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/rebuild_counter.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -18,7 +19,7 @@ import 'package:notesapp/root/screens/Chat_Screen/components/swipable.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:svg_flutter/svg.dart';
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatefulWidget {
   final Message message;
 
   /// Selection state
@@ -51,6 +52,7 @@ class MessageBubble extends StatelessWidget {
 
   /// Style
   final BubbleStyle style;
+  final bool isHighlighted;
 
   const MessageBubble({
     super.key,
@@ -76,10 +78,19 @@ class MessageBubble extends StatelessWidget {
     this.topPadding = 5,
     this.bottomPadding = 5,
     this.onReplyTap,
+    this.isHighlighted = false,
   });
 
   @override
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive  => true;
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final bubblePadding = _getDefaultPadding();
     final bubbleColor = _getBubbleColor(context);
     final glassColor = _getGlassColor();
@@ -93,59 +104,60 @@ class MessageBubble extends StatelessWidget {
         BubbleStyle.opaque => opaqueBubble(
           messageBubbleColor: bubbleColor,
           bubblePadding: bubblePadding,
+          isHighlighted: widget.isHighlighted,
         ),
       };
     }
 
     return Swipeable(
-      isSender: message.isSender,
-      isSelecting: isSelecting,
-      onSwiped: onSwipe,
+      isSender: widget.message.isSender,
+      isSelecting: widget.isSelecting,
+      onSwiped: widget.onSwipe,
       child: Stack(
         children: [
           AnimatedAlign(
             duration: Duration(milliseconds: 300),
             curve: Curves.easeInOutQuint,
-            alignment:  message.isSender ? Alignment.centerRight : Alignment.centerLeft,
+            alignment:  widget.message.isSender ? Alignment.centerRight : Alignment.centerLeft,
             child: AnimatedPadding(
               duration: Duration(milliseconds: 300),
             curve: Curves.easeInOutQuint,
               padding: EdgeInsets.only(
-                left: message.isSender ? 45.0 : 8,
-                right: message.isSender ? 8 : 45,
-                top: topPadding ?? 5,
-                bottom: bottomPadding ?? 5,
+                left: widget.message.isSender ? 45.0 : 8,
+                right: widget.message.isSender ? 8 : 45,
+                top: widget.topPadding ?? 5,
+                bottom: widget.bottomPadding ?? 5,
               ),
               child: Column(
-                crossAxisAlignment: message.isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: widget.message.isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
-                  if (message.replyingTo.value != null)
+                  if (widget.message.replyingTo.value != null)
                     ReplyWrapper(
-                      replyMessage: message.replyingTo.value!,
+                      replyMessage: widget.message.replyingTo.value!,
                       backgroundColor: Colors.blueGrey.withOpacity(context.isLight ? 0.1 : 0.07),
                       iconColor: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark,
-                      onTap: onReplyTap ?? () {
+                      onTap: widget.onReplyTap ?? () {
                         print("Reply tapped");
-                        final media = message.replyingTo.value!.media.value;
+                        final media = widget.message.replyingTo.value!.media.value;
                         if (media != null) {
                           print("Media path: ${media.path}");
                         }
                       },
                     ),
-                  styleBuilder(style),
+                  styleBuilder(widget.style),
                 ],
               ),
             ),
           ),
 
           // Full-width selection overlay
-          if (isSelecting)
+          if (widget.isSelecting)
             Positioned.fill(
               child: GestureDetector(
-                onTap: onTapWhileSelecting,
+                onTap: widget.onTapWhileSelecting,
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 5),
-                  color: message.isSelected
+                  color: widget.message.isSelected
                       ? Colors.blue.withValues(alpha: 0.2)
                       : Colors.transparent,
                 ),
@@ -157,17 +169,14 @@ class MessageBubble extends StatelessWidget {
   }
 
   // ------------------------
-  // Helpers
-  // ------------------------
-
   EdgeInsets _getDefaultPadding() {
-    return message.media.value?.type == Mediatype.image
+    return widget.message.media.value?.type == Mediatype.image
         ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10)
         : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
   }
 
   Color _getBubbleColor(BuildContext context) {
-    return message.isSender
+    return widget.message.isSender
         ? (context.isLight
             ? ThemeConstants.senderBlue
             : ThemeConstants.senderBlueDark)
@@ -177,7 +186,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   Color _getHighlightedBubbleColor(BuildContext context) {
-    return message.isSender
+    return widget.message.isSender
         ? (context.isLight
             ? const Color(0xFFF5FBFF)
             : const Color(0xFF5A9CC0))
@@ -187,74 +196,66 @@ class MessageBubble extends StatelessWidget {
   }
 
   Color _getGlassColor() {
-    return message.isSender
+    return widget.message.isSender
         ? Colors.blue.withValues(alpha: 0.15)
         : Colors.white.withValues(alpha: 0.15);
   }
 
   // ------------------------
-  // Bubble Variants
-  // ------------------------
   Widget opaqueBubble({
     required Color messageBubbleColor,
     required EdgeInsets bubblePadding,
+    required bool isHighlighted,
   }) {
-    return Consumer(
-  builder: (context, ref, child) {
-    final isHighlighted = ref
-        .watch(chatMessagesController.notifier)
-        .isHighlighted(message.isarId);
-
     return RippleWell(
-      borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
-      materialColor: messageBubbleColor,
-      onTap: isSelecting ? onTapWhileSelecting : onTap,
-      onLongPress: onLongPress,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(borderRadius),
-          color: isHighlighted ? _getHighlightedBubbleColor(context) : Colors.transparent,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.white.withOpacity(isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0),
-              blurRadius: 16,
-              spreadRadius: 2,
+          borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
+          materialColor: messageBubbleColor,
+          onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              color: isHighlighted ? _getHighlightedBubbleColor(context) : Colors.transparent,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withOpacity(
+                    isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0,
+                  ),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ],
+              // border: Border.all( // width: isHighlighted ? 1.5 : 0, // color: isHighlighted ? Colors.white : Colors.transparent, // ),
             ),
-          ],
-          // border: Border.all( // width: isHighlighted ? 1.5 : 0, // color: isHighlighted ? Colors.white : Colors.transparent, // ),
-        ),
-        child: child, // <— use cached child
-      ),
+            child: Padding(
+        padding: bubblePadding,
+        child: RebuildCounter(
+          name: "Content Builder",
+          child: MessageContentBuilder(message: widget.message)), // <— use cached child
+          ),
+        )
     );
-  },
-  child: Padding(
-    padding: bubblePadding,
-    child: MessageContentBuilder(message: message),
-  ),
-);
-
   }
-
 
   Widget glassBubble({required Color glassColor, required EdgeInsets glassPadding}) {
     return RippleWell(
-      borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
-      materialColor: rippleColor,
-      onTap: isSelecting ? onTapWhileSelecting : onTap,
-      onLongPress: onLongPress,
+      borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
+      materialColor: widget.rippleColor,
+      onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
+      onLongPress: widget.onLongPress,
       child: GlassContainer(
-        blurX: blurX,
-        blurY: blurY,
-        borderRadius: borderRadius,
-        borderWidth: borderWidth,
-        borderColor: borderColor,
-        backgroundColor: backgroundColor ?? glassColor,
+        blurX: widget.blurX,
+        blurY: widget.blurY,
+        borderRadius: widget.borderRadius,
+        borderWidth: widget.borderWidth,
+        borderColor: widget.borderColor,
+        backgroundColor: widget.backgroundColor ?? glassColor,
         padding: glassPadding,
-        width: width,
-        height: height,
-        child: MessageContentBuilder(message: message),
+        width: widget.width,
+        height: widget.height,
+        child: MessageContentBuilder(message: widget.message),
       ),
     );
   }

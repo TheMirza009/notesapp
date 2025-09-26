@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
@@ -15,6 +17,7 @@ import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/core/utils/rebuild_counter.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
@@ -125,7 +128,7 @@ class ChatScreen extends ConsumerWidget {
                     ? [ IconButton(onPressed: () => notifier.deleteSelected(), icon: Icon(Icons.delete_outline_rounded))]
                     : null,
                 ),
-
+        
                 
                 /// Chat Searchbar
                  AnimatedSize(
@@ -158,8 +161,8 @@ class ChatScreen extends ConsumerWidget {
                     ),
                   ) : SizedBox.shrink(),
                 ),
-
-
+        
+        
                 Expanded(
                   child: messages.isEmpty 
                   ? NothingToSee() 
@@ -182,64 +185,69 @@ class ChatScreen extends ConsumerWidget {
                         return Column(
                           children: [
                             if (info.showDateChip) DateChip(message.time),
-                            MessageBubble(
-                              style: BubbleStyle.opaque,
-                              message: message,
-                              isSelecting: notifier.isSelecting,
-                              topPadding: info.topPadding,
-                              bottomPadding: info.bottomPadding,
-                              onSwipe: () => notifier.setAnchorMessage(message),
-                              onTapWhileSelecting: () {
-                                message.isSelected
-                                ? notifier.unselectMessage(message)
-                                : notifier.selectMessage(message);
-                              },
-                              onTap: () {
-                                if (message.isImage) {
-                                  final imageMessages = messages.imageMedias;
-                                  final initialIndex = imageMessages.indexOfMediaIsarID(message);
-                                  print(message);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => GalleryViewWrapper(
-                                        chatTitle: chatTitle,
-                                        galleryItems: imageMessages,
-                                        initialIndex: initialIndex,
+                            RepaintBoundary(
+                              child: MessageBubble(
+                                key: ValueKey(message.id),
+                                style: BubbleStyle.opaque,
+                                message: message,
+                                isSelecting: notifier.isSelecting,
+                                isHighlighted: ref.watch( chatMessagesController.notifier.select( (c) => c.isHighlighted(message.isarId), ), ),
+                                topPadding: info.topPadding,
+                                bottomPadding: info.bottomPadding,
+                                onSwipe: () => notifier.setAnchorMessage(message),
+                                onTapWhileSelecting: () {
+                                  message.isSelected
+                                  ? notifier.unselectMessage(message)
+                                  : notifier.selectMessage(message);
+                                },
+                                onTap: () {
+                                  if (message.isImage) {
+                                    final imageMessages = messages.imageMedias;
+                                    final initialIndex = imageMessages.indexOfMediaIsarID(message);
+                                    print(message);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => GalleryViewWrapper(
+                                          chatTitle: chatTitle,
+                                          galleryItems: imageMessages,
+                                          initialIndex: initialIndex,
+                                        ),
                                       ),
+                                    );
+                                  } else {
+                                    message.isSender = !message.isSender;
+                                    notifier.updateMessage(message);
+                                  }
+                                },
+                                onLongPress: (pos) {
+                                  notifier.selectMessage(message);
+                                  notifier.searchFocusNode.unfocus();
+                                  CustomContextMenu.showMenuAt(
+                                    context,
+                                    position: pos,
+                                    menuItems: messageHoldOptions(
+                                      isImage: message.isImage,
                                     ),
+                                    triangleHorizontalOffset: message.isSender ? 120 : 40,
+                                    onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
                                   );
-                                } else {
-                                  message.isSender = !message.isSender;
-                                  notifier.updateMessage(message);
-                                }
-                              },
-                              onLongPress: (pos) {
-                                notifier.selectMessage(message);
-                                CustomContextMenu.showMenuAt(
-                                  context,
-                                  position: pos,
-                                  menuItems: messageHoldOptions(
-                                    isImage: message.isImage,
-                                  ),
-                                  triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                  onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
-                                );
-                              },
-                              onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
-                              ),
+                                },
+                                onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
+                                ),
+                            ),
                             ],
                           );
                       },
                     ),
                 ),
-
+        
                 AnchorWrapper(
                   text: notifier.anchorMessage?.text,
                   media: notifier.anchorMessage?.media.value,
                   onClear: notifier.clearAnchorMessage,
                 ),
-
+        
                 BottomMessageBar(
                   focusNode: notifier.keyboardFocusNode,
                   keyboardController: notifier.keyboardController,

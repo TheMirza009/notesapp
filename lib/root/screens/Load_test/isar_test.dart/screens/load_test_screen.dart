@@ -1,3 +1,4 @@
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -276,20 +277,28 @@ class _LoadTestScreenState extends ConsumerState<LoadTestScreen> {
                     padding: const EdgeInsets.only(top: 16.0, bottom: 10),
                     child: Text("Chats", style: TextStyle(fontSize: 25),),
                   ),
-                  SizedBox(height: context.screenHeight / 3,
-                  child: chats.isEmpty 
-                  ? Center(child: Text("No Chats to show"),) 
-                  : ListView.builder(
-                      itemCount: chats.length,
-                      itemBuilder: (context, index) {
-                        final chat = chats[index];
-                        return ListTile(
-                          title: Text(chat.title ?? "N/A"),
-                          subtitle: Text(chat.preview),
-                          trailing: Text(TimeFormat.formatChatSubtitle( chat.date, ) ?? "00:00",) );
-                      },
-                    ),
-                  ),
+                  // SizedBox(height: context.screenHeight / 3,
+                  // child: chats.isEmpty 
+                  // ? Center(child: Text("No Chats to show"),) 
+                  // : ListView.builder(
+                  //     itemCount: chats.length,
+                  //     itemBuilder: (context, index) {
+                  //       final chat = chats[index];
+                  //       return ListTile(
+                  //         title: Text(chat.title ?? "N/A"),
+                  //         subtitle: Text(chat.preview),
+                  //         trailing: Text(TimeFormat.formatChatSubtitle( chat.date, ) ?? "00:00",) );
+                  //     },
+                  //   ),
+                  // ),
+                  // AnimatedSlide(
+                  //   duration: Duration(milliseconds: 300),
+                  //   curve: Curves.bounceIn,
+                  //   offset: Offset(0, showEmojis ? 0 : 1),
+                  //   child: EmojiPicker(
+                    
+                  //   ),
+                  // )
                 ],
               ),
             ),

@@ -491,6 +491,12 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
           CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)),
         );
         break;
+      case "chatMedia":
+        Navigator.push(
+          navigatorKey.currentContext!,
+          CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat, scrollToMedia: true,)),
+        );
+        break;
       case "search":
         toggleSearch();
       case "clearChat":

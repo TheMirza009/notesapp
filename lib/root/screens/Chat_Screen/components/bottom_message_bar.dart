@@ -88,7 +88,7 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
             child: Padding(
               padding: EdgeInsets.only(left: 5),
               child: TextField(
-                // autofocus: true,
+                autofocus: false,
                 focusNode: widget.focusNode,
                 controller: _messageController, // widget.keyboardController ?? 
                 keyboardType: TextInputType.multiline,
