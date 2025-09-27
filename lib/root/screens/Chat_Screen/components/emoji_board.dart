@@ -23,7 +23,6 @@ class EmojiBoard extends StatelessWidget {
     Color paletteColor = context.isLight ? ThemeConstants.hometoolbarLight : ThemeConstants.messageBarDark;
     Color highlightColor = context.isLight ? ThemeConstants.sacredSeed : const Color(0xFF0DD6EC);
     Color iconColor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark;
-
     return EmojiPicker(
       textEditingController: textController,
       config: Config(

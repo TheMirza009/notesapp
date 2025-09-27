@@ -1,3 +1,4 @@
+import 'package:chat_bubbles/bubbles/bubble_special_one.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class LoadChatListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatMessagesController.notifier);
     final messages = ref.watch(chatMessagesController);
+    print(" 🔃times Rebuilt widget");
     return Scaffold(
       appBar: AppBar(
         title: Text("Emoji Test"),
@@ -52,6 +54,18 @@ class LoadChatListScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+
+              Expanded(
+                child: ListView(
+                  children: List.generate(30, (index) {
+                    return BubbleSpecialOne(
+                      text: "Special Message Bubble one",
+                      isSender: index.isEven ? true : false,
+                    );
+                  })
+                ),
+              ),
+
               // Emoji picker
               BottomMessageBar(
                 focusNode: notifier.keyboardFocusNode,

@@ -43,7 +43,6 @@ class ChatAppBar extends StatelessWidget {
     var backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
     var textcolor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2;
     var timeString = "Last edited ${TimeFormat.formatChatSubtitle(lastEdited)}";
-    
     return AppBar(
       backgroundColor: backgroundColor,
       elevation: 1.0,

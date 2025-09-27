@@ -13,9 +13,9 @@ import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_content_builder.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/reply_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/swipable.dart';
+import 'package:notesapp/root/screens/Chat_Screen/components/wrappers/reply_wrapper.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:svg_flutter/svg.dart';
 
@@ -231,9 +231,7 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
             ),
             child: Padding(
         padding: bubblePadding,
-        child: RebuildCounter(
-          name: "Content Builder",
-          child: MessageContentBuilder(message: widget.message)), // <— use cached child
+        child: MessageContentBuilder(message: widget.message), // <— use cached child
           ),
         )
     );

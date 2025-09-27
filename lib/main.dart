@@ -54,6 +54,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     final themeProvider = ref.watch(themeNotifierProvider);
 
     return MaterialApp(
+      showPerformanceOverlay: true,
       debugShowCheckedModeBanner: false,
       title: 'NotesApp',
       theme: themeProvider,

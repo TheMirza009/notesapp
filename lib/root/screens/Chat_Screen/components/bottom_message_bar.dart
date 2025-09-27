@@ -56,7 +56,6 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
   Widget build(BuildContext context) {
     const iconLight = Color(0xFF54666F);
     const iconPadding = EdgeInsets.only(left: 5.0, right: 5.0, top: 0, bottom: 5);
-    final BuildContext rootContext = context;
 
     return Container(
       padding: EdgeInsets.symmetric(

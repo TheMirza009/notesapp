@@ -107,7 +107,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
           // schedule push after frame to let animation start
 
       break;
-        case "settings": print("Settings");
+        case "settings": Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadChatListScreen()));
         case "deleteAll":
           showCupertinoDialog(
             context: context,
@@ -255,7 +255,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                         Align(
                           alignment: Alignment.topCenter,
                           child: IconButton(onPressed: () {
-                            Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadChatListScreen()));
+                            Navigator.push(context, CupertinoPageRoute(builder: (_) => ProfileScreen()));
                           }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
                       ],
                     ),
