@@ -15,7 +15,13 @@ import 'package:notesapp/root/screens/Chat_screen_optimized/components/message_l
 import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
-
+//TODO: 1. GalleryWrapper cannot see Chat Title.
+//TODO: 2. Notifier needs robustness and double checks
+//TODO: 3. Chat Screen still rebuilds every time.
+//TODO: 4. Scroll-To-Bottom button still appears above Emojiboard 
+//TODO: 5. Sending a message rebuilds the appbar.
+//TODO: 5. Full-sized images being shown as thumbnails
+//TODO: 6. Everything rebuilds when the long press is called
 
 class ChatScreenOptimized extends ConsumerWidget {
   final Chat chat;
@@ -25,20 +31,15 @@ class ChatScreenOptimized extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // final notifier = ref.read(chatMessagesController.notifier);
     final notifier = ref.read(chatStateController.notifier);
-    final chatState = ref.watch(chatStateController);
-
     final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis));
-
-    final backgroundGradient = context.isLight
-        ? Gradients.lightBackground
-        : Gradients.darkChatBackground;
+    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
     debugPrint("🔃 ChatScreen rebuilt");
 
     return PopScope(
       canPop: canPop,
       onPopInvokedWithResult: (didPop, context) {
-        chatState.copyWith(isSearching: false);
+        notifier.stopSearching();
         notifier.searchFocusNode.unfocus();
         notifier.keyboardFocusNode.unfocus();
         notifier.hideEmojiPicker();
@@ -48,6 +49,7 @@ class ChatScreenOptimized extends ConsumerWidget {
       },
       child: GestureDetector(
         onTap: () {
+          notifier.stopSearching();
           notifier.searchFocusNode.unfocus();
           notifier.keyboardFocusNode.unfocus();
           notifier.hideEmojiPicker();
@@ -70,7 +72,7 @@ class ChatScreenOptimized extends ConsumerWidget {
           ),
           floatingActionButton: Consumer(
             builder: (context, ref, _) {
-              final messages = ref.watch(chatMessagesController);
+              final messages = ref.watch(chatStateController.select((s) => s.messages));
               return AutoHideScrollToBottom(
                 itemScrollController: notifier.itemScrollController,
                 itemPositionsListener: notifier.itemPositionsListener,

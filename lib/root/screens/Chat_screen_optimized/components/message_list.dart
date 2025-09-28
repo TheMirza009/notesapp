@@ -56,26 +56,13 @@ class _MessageItemBuilder extends ConsumerWidget {
     final index = ref.read(indexProvider);
 
     // 👇 Watch only this message
-    final message = ref.watch(
-      chatStateController.select((s) => s.messages[index]),
-    );
+    final message = ref.watch( chatStateController.select((s) => s.messages[index]), );
 
     // 👇 Watch only derived info for this index
-    final info = ref.watch(
-      chatStateController.select((s) => s.messages.layoutInfo(index)),
-    );
-
-    final isHighlighted = ref.watch(
-      chatStateController.select((s) => s.highlightedMessage?.isarId == message.isarId),
-    );
-
-    final isSelected = ref.watch(
-      chatStateController.select((s) => s.isSelected(message)),
-    );
-
-    final isSelecting = ref.watch(
-      chatStateController.select((s) => s.isSelecting),
-    );
+    final info = ref.watch( chatStateController.select((s) => s.messages.layoutInfo(index)), );
+    final isHighlighted = ref.watch( chatStateController.select((s) => s.highlightedMessage?.isarId == message.isarId), );
+    final isSelected = ref.watch( chatStateController.select((s) => s.isSelected(message)), );
+    final isSelecting = ref.watch( chatStateController.select((s) => s.isSelecting), );
 
     print("🔃 Built message: ${message.text}");
 

@@ -58,7 +58,7 @@ class ChatAppBarWrapper extends ConsumerWidget {
         }
       },
       onSearchTap: chatController.toggleSearch,
-      showActionsIcon: isSearching,
+      showActionsIcon: !isSearching,
       onOptionsPressed: (value) => chatController.handleChatScreenOptions(value, chat!),
       actions: isSelecting
           ? [

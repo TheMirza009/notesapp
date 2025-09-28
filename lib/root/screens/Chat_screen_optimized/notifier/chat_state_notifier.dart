@@ -159,7 +159,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     });
 
     _allMessages.add(newMessage);
-    state = state.copyWith(messages: _allMessages);
+    state = state.copyWith(messages: [..._allMessages]);
     // state = state.copyWith(messages: [...state.messages, newMessage]);
   }
 
@@ -334,6 +334,10 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (state.isSearching) toggleSearch();
     keyboardFocusNode.unfocus();
     hideEmojiPicker();
+  }
+
+  void stopSearching() {
+    state = state.copyWith(isSearching: false);
   }
 
   // =====================================================
