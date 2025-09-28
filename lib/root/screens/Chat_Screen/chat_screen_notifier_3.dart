@@ -41,7 +41,6 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   bool isSelecting = false;
   bool isSearching = false;
   bool showEmojis = false;
-
   Message? anchorMessage;
 
   bool get isReplying => anchorMessage != null;
@@ -167,25 +166,14 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
     // Save message and its media relation in one transaction
     await _isar.writeTxn(() async {
-      await _isar.messages.put(
-        newMessage,
-      ); // 1 - persist message (assigns isarId)
-      await newMessage.media
-          .save(); // 2 - persist the media-to-message relation (this is the crucial step)
-      final managedChat = await _isar.chats.get(
-        _chat!.isarID,
-      ); // 3 - attach to a managed chat (re-fetch to ensure it's managed)
-      if (managedChat != null) {
-        // 4 - Make sure _chat is not null
+      await _isar.messages.put( newMessage, ); // 1 - persist message (assigns isarId)
+      await newMessage.media .save(); // 2 - persist the media-to-message relation (this is the crucial step)
+      final managedChat = await _isar.chats.get( _chat!.isarID, ); // 3 - attach to a managed chat (re-fetch to ensure it's managed)
+      if (managedChat != null) { // 4 - Make sure _chat is not null
         await managedChat.messages.load(); // 5 - Reload assigned messages
-        managedChat.messages.add(
-          newMessage,
-        ); // 6 - add new message to loaded chat
-        await managedChat.messages
-            .save(); // 7 - Persist the message-to-Chat relationship
-        await _isar.chats.put(
-          managedChat,
-        ); // 8 - Upsert the reloaded chat back to isar
+        managedChat.messages.add( newMessage, ); // 6 - add new message to loaded chat
+        await managedChat.messages .save(); // 7 - Persist the message-to-Chat relationship
+        await _isar.chats.put( managedChat, ); // 8 - Upsert the reloaded chat back to isar
         _chat = managedChat; // 9 - refresh reference
       }
     });
@@ -203,8 +191,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     if (_chat == null || state == null || state.isEmpty) return;
 
     const String initID = "0000";
-    const String initText =
-        "This is a new chat. Start typing to create your first note.";
+    const String initText = "This is a new chat. Start typing to create your first note.";
 
     final firstMessage = state!.first;
     if (firstMessage.id == initID && firstMessage.text == initText) {
@@ -494,8 +481,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     }
 
     // Handle init placeholder
-    const String initText =
-        "This is a new chat. Start typing to create your first note.";
+    const String initText = "This is a new chat. Start typing to create your first note.";
     const String initID = "0000";
 
     bool initMessageCheck =

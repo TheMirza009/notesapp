@@ -35,6 +35,7 @@ import 'package:notesapp/root/screens/Chat_Screen/components/emoji_board.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/ripple_menu.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/wrappers/anchor_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/chat_screen/components/bottom_message_bar.dart' show BottomMessageBar;
 import 'package:notesapp/root/screens/chat_screen/components/chat_appbar.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
@@ -45,85 +46,82 @@ import 'package:svg_flutter/svg.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-
 class ChatScreen extends ConsumerWidget {
   final Chat chat;
   const ChatScreen({super.key, required this.chat});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(chatMessagesController.notifier);
-    final messages = ref.watch(chatMessagesController);
+    // Using the new ChatStateNotifier
+    final chatController = ref.read(chatStateController.notifier);
+    final chatState = ref.watch(chatStateController);
+
     final selectedChat = ref.watch(chatListProvider).selectedChat;
-    String chatTitle = selectedChat!.title ?? "New Note";
-    String? chatPhoto = selectedChat.chatPhotoPath; // Chat Photo reception
-    Color headerColor =  context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
-    final backgroundGradient =  context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
-    bool isMessageHighlighted(Message message) => ref.watch(chatMessagesController.notifier.select((c) => c.isHighlighted(message.isarId)));
-    String imageURL1 = "https://downloadscdn6.freepik.com/23/2149338/2149337920.jpg?filename=close-up-colored-plant-leaf.jpg&token=exp=1757671394~hmac=ae1b322f07f0d05b06685f2df9830845&filename=2149337920.jpg";
-    String imageURL2 = 'https://4kwallpapers.com/images/wallpapers/dark-blue-pink-3840x2160-12661.jpg';
+    final chatTitle = selectedChat?.title ?? "New Note";
+    final chatPhoto = selectedChat?.chatPhotoPath;
+
+    final headerColor =
+        context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    final backgroundGradient =
+        context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
     print("🔃 ChatScreen rebuilt");
 
     return PopScope(
-      canPop: !notifier.isSearching && !notifier.showEmojis,
+      canPop: !chatState.isSearching && !chatState.showEmojis,
       onPopInvokedWithResult: (didPop, context) {
-        notifier.isSearching = false;
-        notifier.searchFocusNode.unfocus();
-        notifier.keyboardFocusNode.unfocus();
-        notifier.hideEmojiPicker();
-        notifier.unSelectAllMessages();
-        notifier.clearAnchorMessage();
-        notifier.removeChatIfEmpty();
+        chatController.closeSearchAndKeyboard();
+        chatController.unSelectAllMessages();
+        chatController.clearAnchorMessage();
+        chatController.removeChatIfEmpty();
       },
       child: GestureDetector(
         onTap: () {
-          notifier.searchFocusNode.unfocus();
-          notifier.keyboardFocusNode.unfocus();
-          notifier.hideEmojiPicker();
-          notifier.unSelectAllMessages();
+          chatController.closeSearchAndKeyboard();
+          chatController.unSelectAllMessages();
         },
         child: Container(
-            height: ThemeConstants.screenHeight,
-            width: ThemeConstants.screenWidth,
-            decoration: BoxDecoration(gradient: backgroundGradient, 
-            // image: DecorationImage(
-            //   image: NetworkImage(imageURL2),
-            //   fit: BoxFit.fitHeight,
-            //   ),
-            ),
+          height: ThemeConstants.screenHeight,
+          width: ThemeConstants.screenWidth,
+          decoration: BoxDecoration(gradient: backgroundGradient),
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            floatingActionButton: (notifier.isSearching == true && notifier.showEmojis == true) ? null : 
-            AutoHideScrollToBottom(
-              itemScrollController: notifier.itemScrollController,
-              itemPositionsListener: notifier.itemPositionsListener,
-              lastIndex: messages.length - 1,
-              bottomPadding: notifier.isReplying ? 135 : 80,
-              backgroundColor: context.isLight ? const Color(0xFFD5F0FF) : const Color(0xFF94C1DB),
-            ),
+            floatingActionButton: (chatState.isSearching && chatState.showEmojis)
+                ? null
+                : AutoHideScrollToBottom(
+                    itemScrollController: chatController.itemScrollController,
+                    itemPositionsListener: chatController.itemPositionsListener,
+                    lastIndex: chatState.messages.length - 1,
+                    bottomPadding: chatController.isReplying ? 135 : 80,
+                    backgroundColor: context.isLight
+                        ? const Color(0xFFD5F0FF)
+                        : const Color(0xFF94C1DB),
+                  ),
             body: Column(
               children: [
-            
                 /// Chat App Bar
                 RebuildCounter(
                   name: "Appbar",
                   child: ChatAppBar(
                     chatPhotoPath: chatPhoto,
-                    leading: notifier.isSelecting
-                      ? IconButton(
-                        onPressed: () => notifier.unSelectAllMessages(),
-                        icon: Icon(Icons.clear, color: ThemeConstants.iconColorNeutral),
-                      )
-                      : IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          },
-                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
-                      ),
-                    lastEdited: messages.isNotEmpty ? messages.last.time : DateTime.now(),
-                    isSelecting: notifier.isSelecting,
-                    title: notifier.isSelecting ? "${notifier.selectCount()} Notes selected" : chatTitle,
+                    leading: chatState.isSelecting
+                        ? IconButton(
+                            onPressed: chatController.unSelectAllMessages,
+                            icon: Icon(Icons.clear,
+                                color: ThemeConstants.iconColorNeutral),
+                          )
+                        : IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                                color: ThemeConstants.iconColorNeutral),
+                          ),
+                    lastEdited: chatState.messages.isNotEmpty
+                        ? chatState.messages.last.time
+                        : DateTime.now(),
+                    isSelecting: chatState.isSelecting,
+                    title: chatState.isSelecting
+                        ? "${chatState.selectedMessages.length} Notes selected"
+                        : chatTitle,
                     onTitleTap: () {
                       Navigator.push(
                         context,
@@ -132,176 +130,194 @@ class ChatScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    onSearchTap: () => notifier.toggleSearch(),
-                    showActionsIcon: !notifier.isSearching,
-                    onOptionsPressed: (value) {
-                      notifier.handleChatScreenOptions(value, chat);
-                    },
-                    actions: notifier.isSelecting
-                      ? [ IconButton(onPressed: () => notifier.deleteSelected(), icon: Icon(Icons.delete_outline_rounded))]
-                      : null,
+                    onSearchTap: chatController.toggleSearch,
+                    showActionsIcon: !chatState.isSearching,
+                    onOptionsPressed: (value) => chatController.handleChatScreenOptions(value, chat),
+                    actions: chatState.isSelecting
+                        ? [
+                            IconButton(
+                              onPressed: chatController.deleteSelected,
+                              icon: Icon(Icons.delete_outline_rounded),
+                            )
+                          ]
+                        : null,
                   ),
                 ),
-                  
-                
+
                 /// Chat Searchbar
-                 RebuildCounter(
+                RebuildCounter(
                   name: "Searchbar",
-                   child: AnimatedSize(
+                  child: AnimatedSize(
                     duration: Duration(milliseconds: 300),
                     curve: Curves.easeInOutQuint,
-                    child: notifier.isSearching ? Padding(
-                      padding: const EdgeInsets.only(left: 12.0, bottom: 0, right: 12, top: 12),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight:notifier.isSearching ? 40 : 0,
-                          // maxWidth: notifier.isSearching ? double.maxFinite : 0
-                        ),
-                        child: SearchBar(
-                          focusNode: notifier.searchFocusNode,
-                          controller: notifier.searchController,
-                          autoFocus: false,
-                          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
-                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                          shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                          backgroundColor: WidgetStatePropertyAll(headerColor),
-                          leading: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                            child: Icon(Icons.search, color: ThemeConstants.iconLight,),
-                          ),
-                          trailing: [notifier.searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: notifier.clearSearch,) : SizedBox.shrink()] ,
-                          hintText: "Search in notes...",
-                          hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
-                          onChanged: (value) => notifier.searchChats(value),
-                        ),
-                      ),
-                    ) : SizedBox.shrink(),
-                                   ),
-                 ),
-                  
-                  
-                Expanded(
-                  child: messages.isEmpty 
-                  ? NothingToSee() 
-                  : ScrollablePositionedList.builder(
-                      itemScrollController: notifier.itemScrollController,
-                      itemPositionsListener: notifier.itemPositionsListener,
-                      padding: EdgeInsets.symmetric( horizontal: 0), // ThemeConstants.screenWidth * 0.03, ),
-                      addAutomaticKeepAlives: true,
-                      itemCount: messages.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == messages.length) {
-                          return Container(
-                            height: 150,
-                            color: Colors.transparent,
-                          );
-                        }
-                        
-                        final id = messages[index].isarId;
-
-                        // 1. Watch the message itself
-                        final message = ref.watch(
-                          chatMessagesController.select(
-                            (list) => list.firstWhere((m) => m.isarId == id),
-                          ),
-                        );
-
-                        // 2. Watch only this message’s highlight state
-                        final isHighlighted = ref.watch(
-                          chatMessagesController.notifier.select(
-                            (n) => n.isHighlighted(id),
-                          ),
-                        );
-                        final info = messages.layoutInfo(index);
-                    
-                        print("🔃 Built message: ${message.text}");
-
-                        return Column(
-                          children: [
-                            if (info.showDateChip) DateChip(message.time),
-                            RepaintBoundary(
-                              child: MessageBubble(
-                                key: ValueKey(message.id),
-                                style: BubbleStyle.opaque,
-                                message: message,
-                                isSelecting: notifier.isSelecting,
-                                isHighlighted: isHighlighted, // isMessageHighlighted(message),
-                                topPadding: info.topPadding,
-                                bottomPadding: info.bottomPadding,
-                                onSwipe: () => notifier.setAnchorMessage(message),
-                                onTapWhileSelecting: () {
-                                  message.isSelected
-                                  ? notifier.unselectMessage(message)
-                                  : notifier.selectMessage(message);
-                                },
-                                onTap: () {
-                                  if (message.isImage) {
-                                    final imageMessages = messages.imageMedias;
-                                    final initialIndex = imageMessages.indexOfMediaIsarID(message);
-                                    print(message);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => GalleryViewWrapper(
-                                          chatTitle: chatTitle,
-                                          galleryItems: imageMessages,
-                                          initialIndex: initialIndex,
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    message.isSender = !message.isSender;
-                                    notifier.updateMessage(message);
-                                  }
-                                },
-                                onLongPress: (pos) {
-                                  notifier.selectMessage(message);
-                                  notifier.searchFocusNode.unfocus();
-                                  CustomContextMenu.showMenuAt(
-                                    context,
-                                    position: pos,
-                                    menuItems: messageHoldOptions(
-                                      isImage: message.isImage,
-                                    ),
-                                    triangleHorizontalOffset: message.isSender ? 120 : 40,
-                                    onSelected: (val) => notifier.handleMessageMenuAction( val, message, ),
-                                  );
-                                },
-                                onReplyTap: () => notifier.scrollToMessage(message.replyingTo.value!.isarId),
+                    child: chatState.isSearching
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0, vertical: 12),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxHeight: 40),
+                              child: SearchBar(
+                                focusNode: chatController.searchFocusNode,
+                                controller: chatController.searchController,
+                                autoFocus: false,
+                                shape: WidgetStatePropertyAll(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
                                 ),
+                                padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                                shadowColor:
+                                    WidgetStatePropertyAll(Colors.transparent),
+                                backgroundColor:
+                                    WidgetStatePropertyAll(headerColor),
+                                leading: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 10.0),
+                                  child: Icon(Icons.search,
+                                      color: ThemeConstants.iconLight),
+                                ),
+                                trailing: [
+                                  if (chatController.searchController.text.isNotEmpty)
+                                    IconButton(
+                                        onPressed: chatController.clearSearch,
+                                        icon: Icon(Icons.clear_rounded))
+                                ],
+                                hintText: "Search in notes...",
+                                hintStyle: WidgetStatePropertyAll(
+                                  TextStyle(
+                                      color: ThemeConstants.iconLight,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                onChanged: chatController.searchChats,
+                              ),
                             ),
-                            ],
-                          );
-                      },
-                    ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ),
-                  
+
+                /// Messages List
+                Expanded(
+                  child: chatState.messages.isEmpty
+                      ? const NothingToSee()
+                      : ScrollablePositionedList.builder(
+                          itemScrollController: chatController.itemScrollController,
+                          itemPositionsListener: chatController.itemPositionsListener,
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          addAutomaticKeepAlives: true,
+                          itemCount: chatState.messages.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == chatState.messages.length) {
+                              return Container(
+                                height: 150,
+                                color: Colors.transparent,
+                              );
+                            }
+
+                            final message = ref.watch(
+                              chatStateController.select(
+                                (s) => s.messages[index],
+                              ),
+                            );
+
+                            final isHighlighted = ref.watch(
+                              chatStateController.select(
+                                  (s) => s.highlightedMessage?.isarId == message.isarId),
+                            );
+
+                            final info = chatState.messages.layoutInfo(index);
+
+                            return Column(
+                              children: [
+                                if (info.showDateChip) DateChip(message.time),
+                                RepaintBoundary(
+                                  child: MessageBubble(
+                                    key: ValueKey(message.id),
+                                    style: BubbleStyle.opaque,
+                                    message: message,
+                                    isSelecting: chatState.isSelecting,
+                                    isHighlighted: isHighlighted,
+                                    topPadding: info.topPadding,
+                                    bottomPadding: info.bottomPadding,
+                                    onSwipe: () =>
+                                        chatController.setAnchorMessage(message),
+                                    onTapWhileSelecting: () {
+                                      chatState.isSelected(message)
+                                          ? chatController.unselectMessage(message)
+                                          : chatController.selectMessage(message);
+                                    },
+                                    onTap: () {
+                                      if (message.isImage) {
+                                        final imageMessages =
+                                            chatState.messages.imageMedias;
+                                        final initialIndex =
+                                            imageMessages.indexOfMediaIsarID(message);
+
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => GalleryViewWrapper(
+                                              chatTitle: chatTitle,
+                                              galleryItems: imageMessages,
+                                              initialIndex: initialIndex,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        chatController.toggleSender(message);
+                                      }
+                                    },
+                                    onLongPress: (pos) {
+                                      chatController.selectMessage(message);
+                                      chatController.searchFocusNode.unfocus();
+                                      CustomContextMenu.showMenuAt(
+                                        context,
+                                        position: pos,
+                                        menuItems:
+                                            messageHoldOptions(isImage: message.isImage),
+                                        triangleHorizontalOffset:
+                                            message.isSender ? 120 : 40,
+                                        onSelected: (val) => chatController
+                                            .handleMessageMenuAction(val, message),
+                                      );
+                                    },
+                                    onReplyTap: () => chatController
+                                        .scrollToMessage(message.replyingTo.value!.isarId),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                ),
+
+                /// Anchor Wrapper
                 RebuildCounter(
                   name: "Anchor Wrapper",
                   child: RepaintBoundary(
                     child: AnchorWrapper(
-                      text: notifier.anchorMessage?.text,
-                      media: notifier.anchorMessage?.media.value,
-                      onClear: notifier.clearAnchorMessage,
+                      text: chatState.anchorMessage?.text,
+                      media: chatState.anchorMessage?.media.value,
+                      onClear: chatController.clearAnchorMessage,
                     ),
                   ),
                 ),
-                  
+
+                /// Message Bar
                 RebuildCounter(
                   name: "Message bar",
                   child: BottomMessageBar(
-                    focusNode: notifier.keyboardFocusNode,
-                    keyboardController: notifier.keyboardController,
-                    onFieldTap: notifier.hideEmojiPicker,
-                    onEmojiTap: notifier.toggleEmojiPicker,
-                    onAttachmentTap: () => notifier.pickImage(),
-                    onMicTap: () => debugPrint("notifier.state"),
-                    onSend: (txt) => notifier.sendMessage(txt),
-                    onImagePasted: (imageBytes) => notifier.pickImage(imageBytes: imageBytes) ,
+                    focusNode: chatController.keyboardFocusNode,
+                    keyboardController: chatController.keyboardController,
+                    onFieldTap: chatController.hideEmojiPicker,
+                    onEmojiTap: chatController.toggleEmojiPicker,
+                    onAttachmentTap: chatController.pickImage,
+                    onMicTap: () => debugPrint("Mic tapped"),
+                    onSend: chatController.sendMessage,
+                    onImagePasted: (bytes) => chatController.pickImage(imageBytes: bytes),
                   ),
                 ),
-            
-                // if (notifier.showEmojis) 
+
+                /// Emoji Board
                 RebuildCounter(
                   name: "Emoji board",
                   child: AnimatedSize(
@@ -310,10 +326,10 @@ class ChatScreen extends ConsumerWidget {
                     child: Align(
                       alignment: Alignment.bottomCenter,
                       child: SizedBox(
-                        height: notifier.showEmojis ? 280 : 0,
+                        height: chatState.showEmojis ? 280 : 0,
                         child: EmojiBoard(
-                          showEmojis: notifier.showEmojis,
-                          textController: notifier.keyboardController,
+                          showEmojis: chatState.showEmojis,
+                          textController: chatController.keyboardController,
                           keyboardHeight: 280,
                         ),
                       ),
