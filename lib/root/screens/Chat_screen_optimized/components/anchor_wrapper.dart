@@ -14,11 +14,11 @@ class AnchorWrapperOptimized extends ConsumerWidget {
     final notifier = ref.read(chatStateController.notifier);
     final anchorMessage = ref.watch(chatStateController.select((s) => s.anchorMessage));
 
-    if (anchorMessage == null) return const SizedBox.shrink();
+    // if (anchorMessage == null) return const SizedBox.shrink();
 
     return AnchorWrapper(
-      text: anchorMessage.text,
-      media: anchorMessage.media.value,
+      text: anchorMessage?.text,
+      media: anchorMessage?.media.value,
       onClear: () => notifier.clearAnchorMessage(),
     );
   }

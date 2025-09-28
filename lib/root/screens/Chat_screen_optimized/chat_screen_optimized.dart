@@ -38,15 +38,26 @@ class ChatScreenOptimized extends ConsumerWidget {
 
     return PopScope(
       canPop: canPop,
-      onPopInvokedWithResult: (didPop, context) {
-        notifier.stopSearching();
-        notifier.searchFocusNode.unfocus();
-        notifier.keyboardFocusNode.unfocus();
-        notifier.hideEmojiPicker();
-        notifier.unSelectAllMessages();
-        notifier.clearAnchorMessage();
-        notifier.removeChatIfEmpty();
-      },
+      onPopInvokedWithResult: (didPop, result) {
+    final state = ref.read(chatStateController);
+    final notifier = ref.read(chatStateController.notifier);
+
+    // intercept back button
+    if (state.showEmojis) {
+      notifier.hideEmojiPicker();
+      return; // prevent popping
+    }
+
+    if (state.isSearching) {
+      notifier.stopSearching();
+      return; // prevent popping
+    }
+
+    // ✅ nothing to intercept → allow pop
+    notifier.unSelectAllMessages();
+    notifier.clearAnchorMessage();
+    notifier.removeChatIfEmpty();
+  },
       child: GestureDetector(
         onTap: () {
           notifier.stopSearching();
