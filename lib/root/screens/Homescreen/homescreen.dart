@@ -26,6 +26,7 @@ import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_test_screen.dart';
 import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
+import 'package:notesapp/root/screens/Profile/hero_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/parent_slide_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/screens/Profile/reverse_cupertino_page_route.dart';
@@ -108,7 +109,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
           // schedule push after frame to let animation start
 
       break;
-        case "settings": Navigator.push(context, CupertinoPageRoute(builder: (_) => LoadChatListScreen()));
+        case "settings": Navigator.push(context, CupertinoPageRoute(builder: (_) => SlideScreenTest()));
         case "deleteAll":
           showCupertinoDialog(
             context: context,
@@ -133,23 +134,76 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       }
     }
 
-    Widget circularAvatar() => CustomIconButton(
-      size: 40,
-      backgroundColor: Colors.transparent,
-      splashColor: const Color.fromARGB(144, 164, 182, 191),
-      icon: ClipRRect(
-        borderRadius: BorderRadiusGeometry.circular(100),
-        child: Transform.scale(
-          scale: 0.94,
-          child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
+    // Widget circularAvatar() => CustomIconButton(
+    //   size: 40,
+    //   backgroundColor: Colors.transparent,
+    //   splashColor: const Color.fromARGB(144, 164, 182, 191),
+    //   icon: ClipRRect(
+    //     borderRadius: BorderRadiusGeometry.circular(100),
+    //     child: Transform.scale(
+    //       scale: 0.94,
+    //       child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
+    //     ),
+    //   ),
+    //   onPressed: () {
+    //     // ref.read(themeNotifierProvider.notifier).toggleTheme();
+    //     setState(() {
+    //         isSliding = true;
+    //       });
+    //   },
+    // );
+    Widget circularAvatar() => SizedBox(
+      height: 40,
+      width: 40,
+      child: GestureDetector(
+        onTap: () => setState(() {
+          isSliding = !isSliding;
+          print("IsSliding: $isSliding");
+        }),
+        child: HeroWrapper(
+          tag: "profile_photo",
+          onHeroTapped: () => isSliding = true,
+          defaultChild: ClipRRect(
+            borderRadius: BorderRadiusGeometry.circular(100),
+            child: Transform.scale(
+              scale: 0.94,
+              child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
+            ),
+          ),
+          expandedChild: ClipRRect(
+            borderRadius: BorderRadiusGeometry.circular(100),
+            child: Image.asset(
+              isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+            ),
+          ),
+          bottomWidget: AnimatedOpacity(
+            duration: Duration(milliseconds: 300),
+            opacity: isSliding ? 0.0 : 1.0,
+            child: Container(
+              padding: EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141E20),
+                borderRadius: BorderRadius.circular(15)
+              ),
+              child: Column(
+                spacing: 10,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextButton(onPressed: () {}, child: Text("Notifications")),
+                  Container(color: Colors.black, width: 220, height: 1.5),
+                  TextButton(onPressed: () {}, child: Text("Theme Settings")),
+                  Container(color: Colors.black, width: 220, height: 1.5),
+                  TextButton(onPressed: () {}, child: Text("Two Factor Authentication")),
+                  Container(color: Colors.black, width: 220, height: 1.5),
+                  TextButton(onPressed: () {}, child: Text("Language Settings")),
+                  Container(color: Colors.black, width: 220, height: 1.5),
+                  TextButton(onPressed: () {}, child: Text("Logout")),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-      onPressed: () {
-        // ref.read(themeNotifierProvider.notifier).toggleTheme();
-        setState(() {
-            isSliding = true;
-          });
-      },
     );
 
     DateTime? lastBackPress;

@@ -63,14 +63,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     Size screensize = MediaQuery.sizeOf(context);
     bool isLight = Theme.brightnessOf(context) == Brightness.light;
-    LinearGradient backgroundGradient =
-        isLight ? Gradients.lightBackground : Gradients.darkBackground;
-    Color headerColor =
-        isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
-    Color dividerColor =
-        isLight
-            ? ThemeConstants.homeDividerLight
-            : ThemeConstants.darkIconBorder;
+    LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    Color headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    Color dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+    
     return PullDownWrapper(
       child: Scaffold(
         extendBodyBehindAppBar: true,

@@ -31,7 +31,7 @@ class ChatScreenOptimized extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // final notifier = ref.read(chatMessagesController.notifier);
     final notifier = ref.read(chatStateController.notifier);
-    final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis));
+    final canPop = ref.read(chatStateController.select((s) => !s.isSearching && !s.showEmojis));
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
     debugPrint("🔃 ChatScreen rebuilt");

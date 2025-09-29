@@ -41,6 +41,9 @@ class HeroWrapper extends StatelessWidget {
   final Curve popCurve;
   final Alignment alignment;
 
+  final void Function()? onHeroTapped;
+  final void Function()? onBackgroundTapped;
+
   const HeroWrapper({
     super.key,
     required this.tag,
@@ -53,12 +56,15 @@ class HeroWrapper extends StatelessWidget {
     this.pushCurve = Curves.easeOut,
     this.popCurve = Curves.easeInBack,
     this.alignment = Alignment.center,
+    this.onHeroTapped,
+    this.onBackgroundTapped,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        onHeroTapped?.call();
         HeroWrapper.push(
           context,
           tag: tag,
@@ -91,9 +97,10 @@ class HeroWrapper extends StatelessWidget {
     Curve pushCurve = Curves.easeOut,
     Curve popCurve = Curves.easeInBack,
     Alignment alignment = Alignment.center,
+    void Function()? onBackgroundTapped,
   }) {
     return GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
+      onTap: onBackgroundTapped ?? () => Navigator.of(context).pop(),
       child: Material(
         color: Colors.transparent,
         child: Center(
