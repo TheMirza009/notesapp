@@ -20,6 +20,55 @@ extension MessageListLayout on List<Message> {
     final prevMessage = index > 0 ? this[index - 1] : null;
     final nextMessage = index < length - 1 ? this[index + 1] : null;
 
+    return _computeLayoutInfo(message, prevMessage, nextMessage);
+  }
+
+  ({
+    Message message,
+    Message? prevMessage,
+    Message? nextMessage,
+    bool showDateChip,
+    bool nextStartsNewDay,
+    bool prevSameSender,
+    bool nextSameSender,
+    double topPadding,
+    double bottomPadding,
+  }) layoutInfoById(int isarId) {
+    final index = indexWhere((m) => m.isarId == isarId);
+    if (index == -1) {
+      // fallback: return empty paddings so UI won’t crash
+      return (
+        message: Message(), // 👈 you may need a safe `Message.empty()` factory
+        prevMessage: null,
+        nextMessage: null,
+        showDateChip: false,
+        nextStartsNewDay: false,
+        prevSameSender: false,
+        nextSameSender: false,
+        topPadding: 0,
+        bottomPadding: 0,
+      );
+    }
+
+    final message = this[index];
+    final prevMessage = index > 0 ? this[index - 1] : null;
+    final nextMessage = index < length - 1 ? this[index + 1] : null;
+
+    return _computeLayoutInfo(message, prevMessage, nextMessage);
+  }
+
+  // 🔒 Shared private helper
+  ({
+    Message message,
+    Message? prevMessage,
+    Message? nextMessage,
+    bool showDateChip,
+    bool nextStartsNewDay,
+    bool prevSameSender,
+    bool nextSameSender,
+    double topPadding,
+    double bottomPadding,
+  }) _computeLayoutInfo(Message message, Message? prevMessage, Message? nextMessage) {
     // Show chip if this message starts a new day
     final bool showDateChip =
         prevMessage == null ||
@@ -33,15 +82,14 @@ extension MessageListLayout on List<Message> {
         message.time.month != nextMessage.time.month ||
         message.time.year != nextMessage.time.year;
 
-    // bool flags
     final bool prevSameSender = prevMessage?.isSender == message.isSender;
     final bool nextSameSender = nextMessage?.isSender == message.isSender;
 
-    // padding definitions
-    final double topPadding = prevMessage == null || !prevSameSender ? 8 : (showDateChip ? 8 : 1);
-    final double bottomPadding = nextMessage == null || !nextSameSender ? 8 : (nextStartsNewDay ? 8 : 1);
+    final double topPadding =
+        prevMessage == null || !prevSameSender ? 8 : (showDateChip ? 8 : 1);
+    final double bottomPadding =
+        nextMessage == null || !nextSameSender ? 8 : (nextStartsNewDay ? 8 : 1);
 
-    // final returned class (the return method acts like a class | constructor skipped)
     return (
       message: message,
       prevMessage: prevMessage,
@@ -55,6 +103,7 @@ extension MessageListLayout on List<Message> {
     );
   }
 }
+
 
 extension BoolChecks on List<Message> {
   bool hasDuplicateMediaPath(Message target) {

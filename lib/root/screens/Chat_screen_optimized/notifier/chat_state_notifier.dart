@@ -189,14 +189,17 @@ class ChatStateNotifier extends Notifier<ChatState> {
     final isMedia = message.media.value != null && message.media.value!.type != Mediatype.text;
     if (isMedia) {
       final allMessages = await _isar.messages.where().findAll();
-      for (final msg in allMessages) await msg.media.load();
+      for (final msg in allMessages) {
+        await msg.media.load();
+      }
       final isUsedByMultiple = allMessages.hasDuplicateMediaPath(message);
       if (!isUsedByMultiple) await MediaHandler.deleteMedia(message.media.value!);
     }
 
     final updatedMessages = state.messages.where((m) => m.isarId != message.isarId).toList();
+    unSelectAllMessages();
     _allMessages.remove(message);
-    state = state.copyWith(messages: _allMessages);
+    state = state.copyWith(messages: [..._allMessages]);
   }
 
   Future<void> deleteSelected() async {

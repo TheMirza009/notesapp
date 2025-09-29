@@ -72,23 +72,23 @@ class ChatState {
 
   /// Select a message
   ChatState selectMessage(Message message) {
-    message.isSelected = true;
-    if (selectedMessages.contains(message)) return this;
-    return copyWith(selectedMessages: [...selectedMessages, message]);
-  }
+  if (selectedMessages.any((m) => m.isarId == message.isarId)) return this;
+  return copyWith(selectedMessages: [...selectedMessages, message]);
+}
 
   /// Unselect a message
   ChatState unselectMessage(Message message) {
-    message.isSelected = false;
     return copyWith(
-      selectedMessages: selectedMessages.where((m) => m != message).toList(),
+      selectedMessages: selectedMessages.where((m) => m.isarId != message.isarId).toList(),
     );
   }
 
   /// Clear all selections
   ChatState clearSelection() {
+    // final cleared = messages.map((m) => m..isSelected = false).toList();
     return copyWith(selectedMessages: []);
   }
+
 
   /// Clear highlight
   ChatState clearHighlight() {

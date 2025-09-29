@@ -74,9 +74,11 @@ class ChatAppBar extends StatelessWidget {
                         width: 40,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(shape: BoxShape.circle),
-                        child: Image.file(
-                          File(chatPhotoPath!),
-                          fit: BoxFit.cover,
+                        child: RepaintBoundary(
+                          child: Image.file(
+                            File(chatPhotoPath!),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                   // Icon(

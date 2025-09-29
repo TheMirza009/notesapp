@@ -52,7 +52,8 @@ class MessageBubble extends StatefulWidget {
 
   /// Style
   final BubbleStyle style;
-  final bool isHighlighted;
+  final bool? isHighlighted;
+  final bool? isSelected; 
 
   const MessageBubble({
     super.key,
@@ -79,6 +80,7 @@ class MessageBubble extends StatefulWidget {
     this.bottomPadding = 5,
     this.onReplyTap,
     this.isHighlighted = false,
+    this.isSelected = false,
   });
 
   @override
@@ -104,7 +106,7 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
         BubbleStyle.opaque => opaqueBubble(
           messageBubbleColor: bubbleColor,
           bubblePadding: bubblePadding,
-          isHighlighted: widget.isHighlighted,
+          isHighlighted: widget.isHighlighted ?? false,
         ),
       };
     }
@@ -157,7 +159,7 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
                 onTap: widget.onTapWhileSelecting,
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 5),
-                  color: widget.message.isSelected
+                  color: widget.isSelected ?? false
                       ? Colors.blue.withValues(alpha: 0.2)
                       : Colors.transparent,
                 ),

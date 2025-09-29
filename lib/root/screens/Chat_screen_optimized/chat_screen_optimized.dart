@@ -22,6 +22,9 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 //TODO: 5. Sending a message rebuilds the appbar.
 //TODO: 5. Full-sized images being shown as thumbnails
 //TODO: 6. Everything rebuilds when the long press is called
+//TODO: 7. Issues with selection and state updates
+//TODO: 8. Deletion causes length issues
+//TODO: 9. Selection inconsistencies
 
 class ChatScreenOptimized extends ConsumerWidget {
   final Chat chat;
@@ -82,19 +85,24 @@ class ChatScreenOptimized extends ConsumerWidget {
             ),
           ),
           floatingActionButton: Consumer(
-            builder: (context, ref, _) {
-              final messages = ref.watch(chatStateController.select((s) => s.messages));
-              return AutoHideScrollToBottom(
-                itemScrollController: notifier.itemScrollController,
-                itemPositionsListener: notifier.itemPositionsListener,
-                lastIndex: messages.isNotEmpty ? messages.length - 1 : 0,
-                bottomPadding: notifier.isReplying ? 135 : 80,
-                backgroundColor: context.isLight
-                    ? const Color(0xFFD5F0FF)
-                    : const Color(0xFF94C1DB),
-              );
-            },
-          ),
+  builder: (context, ref, _) {
+    final state = ref.watch(chatStateController);
+    if (state.showEmojis || state.isSearching || state.messages.isEmpty) {
+      return const SizedBox.shrink(); // hide FAB
+    }
+
+    return AutoHideScrollToBottom(
+      itemScrollController: notifier.itemScrollController,
+      itemPositionsListener: notifier.itemPositionsListener,
+      lastIndex: state.messages.length - 1,
+      bottomPadding: notifier.isReplying ? 135 : 80,
+      backgroundColor: context.isLight
+          ? const Color(0xFFD5F0FF)
+          : const Color(0xFF94C1DB),
+    );
+  },
+),
+
           backgroundColor: Colors.transparent,
         ),
       ),
