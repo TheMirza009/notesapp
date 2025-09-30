@@ -22,6 +22,7 @@ import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen_optimized/chat_screen_optimized.dart';
+import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
 import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_test_screen.dart';
@@ -91,10 +92,11 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       final newChat = await chatNotifier.addChat();
       await newChat.messages.load();
       ref.read(chatListProvider.notifier).selectChat(newChat);
+      ref.read(isNewChat.notifier).state = true;
       Navigator.push(
         context,
         CupertinoPageRoute(
-          builder:(_) => ChatScreenOptimized(chat: newChat, newChat: true,),
+          builder:(_) => ChatScreenOptimized(chat: newChat),
         ),
       );
     }

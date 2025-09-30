@@ -52,13 +52,19 @@ class ChatSearchBar extends ConsumerWidget {
                       ),
                     ),
                     trailing: [
-                      notifier.searchController.text.isNotEmpty
-                          ? IconButton(
-                            icon: Icon(Icons.clear_rounded),
-                            onPressed: notifier.clearSearch,
-                          )
-                          : SizedBox.shrink(),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: notifier.searchController,
+                        builder: (context, value, _) {
+                          return value.text.isNotEmpty
+                              ? IconButton(
+                                icon: const Icon(Icons.clear_rounded),
+                                onPressed: notifier.clearSearch,
+                              )
+                              : const SizedBox.shrink();
+                        },
+                      ),
                     ],
+
                     hintText: "Search in notes...",
                     hintStyle: WidgetStatePropertyAll(
                       TextStyle(

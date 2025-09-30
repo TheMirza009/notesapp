@@ -11,6 +11,7 @@ import 'package:notesapp/root/screens/Chat_screen_optimized/components/chat_appb
 import 'package:notesapp/root/screens/Chat_screen_optimized/components/chat_searchbar.dart';
 import 'package:notesapp/root/screens/Chat_screen_optimized/components/emoji_board_optim.dart';
 import 'package:notesapp/root/screens/Chat_screen_optimized/components/message_list.dart';
+import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state.dart';
 import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
@@ -19,10 +20,11 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 //TODO: 6. Everything rebuilds when the long press is called
 //TODO: 9. Search clear icon not showing
 
+final StateProvider<bool> isNewChat = StateProvider((_) => false);
+
 class ChatScreenOptimized extends ConsumerWidget {
   final Chat chat;
-  final bool? newChat;
-  const ChatScreenOptimized({super.key, required this.chat, this.newChat = false});
+  const ChatScreenOptimized({super.key, required this.chat});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,13 +32,15 @@ class ChatScreenOptimized extends ConsumerWidget {
     final notifier = ref.read(chatStateController.notifier);
     final canPop = ref.watch( chatStateController.select((s) => !s.isSearching && !s.showEmojis));
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
+    final newChat = ref.read(isNewChat);
     debugPrint("🔃 ChatScreen rebuilt");
 
-     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (newChat ?? false) {
-        notifier.keyboardFocusNode.requestFocus();
-      }
-     });
+    if (newChat ?? false) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(chatStateController.notifier).keyboardFocusNode.requestFocus();
+        ref.read(isNewChat.notifier).state = false;
+      });
+    }
 
     return PopScope(
       canPop: canPop,
