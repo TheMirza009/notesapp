@@ -15,6 +15,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/au
 //TODO: 2. Notifier needs robustness and double checks
 //TODO: 5. Full-sized images being shown as thumbnails
 //TODO: 6. Everything rebuilds when the long press is called
+//TODO: 7. Search does not show new messages
 
 final StateProvider<bool> isNewChat = StateProvider((_) => false);
 

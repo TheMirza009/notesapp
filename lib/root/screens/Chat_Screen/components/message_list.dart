@@ -37,13 +37,14 @@ class MessageListWrapper extends ConsumerWidget {
               itemCount: messages.length + 1,
               itemBuilder: (context, index) {
                 if (index == messages.length) {
-                  return const SizedBox(height: 150);
+                  return const SizedBox(key: ValueKey('padding'), height: 150);
                 }
 
-                final messageId = messages[index].isarId; // 👈 use either IsarID or UUID not index
+                final message = messages[index]; // 👈 use either IsarID or UUID not index
                 return ProviderScope(
                   overrides: [
-                    messageIdProvider.overrideWith((_) => messageId),
+                    // messageIdProvider.overrideWith((_) => messageId),
+                    messageProvider.overrideWithValue(message),
                   ],
                   child: const _MessageItemBuilder(),
                 );
@@ -55,33 +56,23 @@ class MessageListWrapper extends ConsumerWidget {
 
 // Provide the ID instead of index
 final messageIdProvider = Provider<int>((_) => throw UnimplementedError());
+final messageProvider = Provider<Message>((_) => throw UnimplementedError());
 
 class _MessageItemBuilder extends ConsumerWidget {
   const _MessageItemBuilder({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final messageId = ref.read(messageIdProvider);
-
-    // 👇 Watch only this message
-    // Find this message by ID instead of index
-    final Message? message = ref.watch(
-      chatStateController.select<Message?>((state) {
-        return state.messages.cast<Message?>().firstWhere(
-          (message) => message!.isarId == messageId,
-          orElse: () => null,
-        );
-      }),
-    );
+    final message = ref.watch(messageProvider);
 
     if (message == null) {
       return const SizedBox.shrink(); // Message got deleted -> don't render
     }
 
     // 👇 Watch only derived info for this index
-    final info = ref.watch( chatStateController.select((s) => s.messages.layoutInfoById(messageId)));
-    final isHighlighted = ref.watch( chatStateController.select((s) => s.highlightedMessage?.isarId == messageId), );
-    final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == messageId)), );
+    final info = ref.watch( chatStateController.select((s) => s.messages.layoutInfoById(message.isarId)));
+    final isHighlighted = ref.watch( chatStateController.select((s) => s.highlightedMessage?.isarId == message.isarId), );
+    final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == message.isarId)), );
     final isSelecting = ref.watch( chatStateController.select((s) => s.isSelecting), );
 
     print("🔃 Built message: ${message.text}");

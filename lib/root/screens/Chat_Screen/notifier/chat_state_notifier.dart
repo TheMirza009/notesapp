@@ -227,38 +227,19 @@ class ChatStateNotifier extends Notifier<ChatState> {
     });
 
     unSelectAllMessages();
-    this.allMessages.removeWhere((m) => selected.contains(m));
+    allMessages.removeWhere((m) => selected.contains(m));
     state.clearSelection();
-    state = state.copyWith(messages: this.allMessages);
+    state = state.copyWith(messages: allMessages);
     // state = state.clearSelection().copyWith(
     //   messages: state.messages.where((m) => !selected.contains(m)).toList(),
     // );
   }
 
   Future<void> toggleSender(Message message) async {
-    // Create a new copy with toggled sender
-    final updatedMessage =
-        Message()
-          ..isarId = message.isarId
-          ..id = message.id
-          ..text = message.text
-          ..time = message.time
-          ..isSender = !message.isSender
-          ..media.value = message.media.value
-          ..replyingTo.value = message.replyingTo.value
-          ..isSelected = message.isSelected;
-
-    // Update Isar
+    message.isSender = !message.isSender;
     await _isar.writeTxn(() async {
-      await _isar.messages.put(updatedMessage);
+      await _isar.messages.put(message);
     });
-
-    // Update allMessages by replacing the object
-    final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
-    if (index != -1) allMessages[index] = updatedMessage;
-
-    // Update state to trigger Riverpod rebuild
-    unSelectAllMessages();
     state = state.copyWith(messages: [...allMessages]);
   }
 
@@ -331,7 +312,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   void toggleSearch() async {
     final newSearching = !state.isSearching;
     if (!newSearching) {
-      await clearSearch();
+      clearSearch();
     } else {
       searchController.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -341,20 +322,28 @@ class ChatStateNotifier extends Notifier<ChatState> {
     state = state.copyWith(isSearching: newSearching);
   }
 
-  Future<void> clearSearch() async {
+  void clearSearch() {
     searchController.clear();
-    state = state.copyWith(messages: allMessages);
+    state = state.copyWith(messages: [...allMessages]);
   }
 
+
+  // void searchChats(String query) {
+  //   final lowercaseQuery = query.toLowerCase();
+  //   final filtered = allMessages.where((m) => (m.text ?? "").toLowerCase().contains(lowercaseQuery)).toList();
+  //   state = state.copyWith(messages: query.isEmpty ? [...allMessages] : filtered);
+  // }
   void searchChats(String query) {
-    if (query.isEmpty) {
-      clearSearch();
-      return;
-    }
-    final lowercaseQuery = query.toLowerCase();
-    final filtered = allMessages.where((m) => (m.text ?? "").toLowerCase().contains(lowercaseQuery)).toList();
-    state = state.copyWith(messages: filtered);
+  if (query.isEmpty) {
+    state = state.copyWith(messages: [...allMessages]);
+    return;
   }
+  final filtered = allMessages.where(
+    (m) => (m.text ?? "").toLowerCase().contains(query.toLowerCase())
+  ).toList();
+  state = state.copyWith(messages: filtered);
+}
+
 
   void closeSearchAndKeyboard() {
     if (state.isSearching) toggleSearch();
