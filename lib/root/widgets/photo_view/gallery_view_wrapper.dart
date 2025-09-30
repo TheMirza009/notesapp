@@ -70,6 +70,13 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
         : null;
   }
 
+  String? get currentChatTitle {
+  final media = widget.galleryItems[currentIndex];
+  if (media.messagesBacklink.isEmpty) return null;
+  final chat = media.messagesBacklink.first.chat.value;
+  return chat?.title;
+}
+
   /// Get path for a given index
   String? mediaPath(int index) => widget.galleryItems[index].path;
 
@@ -105,9 +112,9 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.chatTitle != null)
+                  if (currentChatTitle != null)
                     Text(
-                      widget.chatTitle!,
+                      currentChatTitle!,
                       style: const TextStyle(color: Colors.white),
                     ),
                   if (currentImageTime != null)

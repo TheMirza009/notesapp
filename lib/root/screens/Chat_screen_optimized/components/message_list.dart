@@ -121,14 +121,16 @@ class _MessageItemBuilder extends ConsumerWidget {
                 );
               } else {
                 final notifier = ref.read(chatStateController.notifier);
-                message.isSender = !message.isSender;
-                notifier.updateMessage(message);
+                notifier.toggleSender(message);
+                // message.isSender = !message.isSender;
+                // notifier.updateMessage(message);
               }
             },
             onLongPress: (pos) {
               final notifier = ref.read(chatStateController.notifier);
               notifier.selectMessage(message);
               notifier.searchFocusNode.unfocus();
+              notifier.keyboardFocusNode.unfocus();
               CustomContextMenu.showMenuAt(
                 context,
                 position: pos,

@@ -78,8 +78,7 @@ class SlidingProfileScreenWrapper extends StatefulWidget {
 }
 
 
-class _SlidingProfileScreenWrapperState
-    extends State<SlidingProfileScreenWrapper> {
+class _SlidingProfileScreenWrapperState  extends State<SlidingProfileScreenWrapper> {
   late SlidingProfileController _controller;
 
   bool _showProfileWidget = false; // controls mounting
@@ -123,8 +122,7 @@ class _SlidingProfileScreenWrapperState
 
     const double avatarSize = 40.0;
 
-    final double topWhenHidden =
-        statusBarHeight + (kToolbarHeight - avatarSize) / 2;
+    final double topWhenHidden = statusBarHeight + (kToolbarHeight - avatarSize) / 2;
     const double leftWhenHidden = 16.0;
 
     final double topWhenShown = (screenSize.height / 5.5) - avatarSize / 2;

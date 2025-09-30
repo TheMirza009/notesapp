@@ -29,7 +29,7 @@ final chatStateController =  NotifierProvider<ChatStateNotifier, ChatState>(() =
 
 class ChatStateNotifier extends Notifier<ChatState> {
   /// Master references & controllers (not part of state)
-  List<Message> _allMessages = [];
+  List<Message> allMessages = [];
   final TextEditingController searchController = TextEditingController();
   final TextEditingController keyboardController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
@@ -68,8 +68,8 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (freshChat != null) {
       await freshChat.messages.load();
       await Future.wait(freshChat.messages.map((m) => m.media.load()));
-      _allMessages = freshChat.messages.toList();
-      state = state.copyWith(messages: _allMessages);
+      allMessages = freshChat.messages.toList();
+      state = state.copyWith(messages: allMessages);
     }
 
     isLoading = false;
@@ -89,16 +89,18 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
     final messages = [...state.messages];
     final index = messages.indexWhere((m) => m.isarId == message.isarId);
-    if (index != -1)
+    if (index != -1) {
       messages[index] = message;
-    else
+    } else {
       messages.add(message);
+    }
 
     state = state.copyWith(messages: messages);
   }
 
   Future<void> sendMessage(String text) async {
     if (_chat == null) return;
+    await deleteInitMessage();
 
     final newMessage = Message()
       ..text = text
@@ -118,9 +120,8 @@ class ChatStateNotifier extends Notifier<ChatState> {
       if (state.anchorMessage != null) await newMessage.replyingTo.save();
     });
 
-    _allMessages.add(newMessage);
-    state = state.copyWith(messages: [..._allMessages], anchorMessage: null);
-    deleteInitMessage();
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages], anchorMessage: null);
     scrollToBottom();
   }
 
@@ -158,8 +159,8 @@ class ChatStateNotifier extends Notifier<ChatState> {
       }
     });
 
-    _allMessages.add(newMessage);
-    state = state.copyWith(messages: [..._allMessages]);
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages]);
     // state = state.copyWith(messages: [...state.messages, newMessage]);
   }
 
@@ -198,8 +199,8 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
     final updatedMessages = state.messages.where((m) => m.isarId != message.isarId).toList();
     unSelectAllMessages();
-    _allMessages.remove(message);
-    state = state.copyWith(messages: [..._allMessages]);
+    allMessages.remove(message);
+    state = state.copyWith(messages: [...allMessages]);
   }
 
   Future<void> deleteSelected() async {
@@ -226,19 +227,41 @@ class ChatStateNotifier extends Notifier<ChatState> {
     });
 
     unSelectAllMessages();
-    _allMessages.removeWhere((m) => selected.contains(m));
+    this.allMessages.removeWhere((m) => selected.contains(m));
     state.clearSelection();
-    state = state.copyWith(messages: _allMessages);
+    state = state.copyWith(messages: this.allMessages);
     // state = state.clearSelection().copyWith(
     //   messages: state.messages.where((m) => !selected.contains(m)).toList(),
     // );
   }
 
-  void toggleSender(Message message) {
-    message.isSender = !message.isSender;
-    updateMessage(message);
+  Future<void> toggleSender(Message message) async {
+    // Create a new copy with toggled sender
+    final updatedMessage =
+        Message()
+          ..isarId = message.isarId
+          ..id = message.id
+          ..text = message.text
+          ..time = message.time
+          ..isSender = !message.isSender
+          ..media.value = message.media.value
+          ..replyingTo.value = message.replyingTo.value
+          ..isSelected = message.isSelected;
+
+    // Update Isar
+    await _isar.writeTxn(() async {
+      await _isar.messages.put(updatedMessage);
+    });
+
+    // Update allMessages by replacing the object
+    final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
+    if (index != -1) allMessages[index] = updatedMessage;
+
+    // Update state to trigger Riverpod rebuild
     unSelectAllMessages();
+    state = state.copyWith(messages: [...allMessages]);
   }
+
 
   // =====================================================
   // Section: Message selection & highlight
@@ -320,7 +343,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   Future<void> clearSearch() async {
     searchController.clear();
-    state = state.copyWith(messages: _allMessages);
+    state = state.copyWith(messages: allMessages);
   }
 
   void searchChats(String query) {
@@ -329,7 +352,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
       return;
     }
     final lowercaseQuery = query.toLowerCase();
-    final filtered = _allMessages.where((m) => (m.text ?? "").toLowerCase().contains(lowercaseQuery)).toList();
+    final filtered = allMessages.where((m) => (m.text ?? "").toLowerCase().contains(lowercaseQuery)).toList();
     state = state.copyWith(messages: filtered);
   }
 

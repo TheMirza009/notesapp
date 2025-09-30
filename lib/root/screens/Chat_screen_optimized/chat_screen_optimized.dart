@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
@@ -15,16 +14,10 @@ import 'package:notesapp/root/screens/Chat_screen_optimized/components/message_l
 import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
-//TODO: 1. GalleryWrapper cannot see Chat Title.
 //TODO: 2. Notifier needs robustness and double checks
-//TODO: 3. Chat Screen still rebuilds every time.
-//TODO: 4. Scroll-To-Bottom button still appears above Emojiboard 
-//TODO: 5. Sending a message rebuilds the appbar.
 //TODO: 5. Full-sized images being shown as thumbnails
 //TODO: 6. Everything rebuilds when the long press is called
-//TODO: 7. Issues with selection and state updates
-//TODO: 8. Deletion causes length issues
-//TODO: 9. Selection inconsistencies
+//TODO: 9. Search clear icon not showing
 
 class ChatScreenOptimized extends ConsumerWidget {
   final Chat chat;
@@ -34,33 +27,32 @@ class ChatScreenOptimized extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // final notifier = ref.read(chatMessagesController.notifier);
     final notifier = ref.read(chatStateController.notifier);
-    final canPop = ref.read(chatStateController.select((s) => !s.isSearching && !s.showEmojis));
+    final canPop = ref.watch( chatStateController.select((s) => !s.isSearching && !s.showEmojis));
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
-
     debugPrint("🔃 ChatScreen rebuilt");
 
     return PopScope(
       canPop: canPop,
       onPopInvokedWithResult: (didPop, result) {
-    final state = ref.read(chatStateController);
-    final notifier = ref.read(chatStateController.notifier);
+        final state = ref.read(chatStateController);
+        final notifier = ref.read(chatStateController.notifier);
 
-    // intercept back button
-    if (state.showEmojis) {
-      notifier.hideEmojiPicker();
-      return; // prevent popping
-    }
+        // intercept back button
+        if (state.showEmojis) {
+          notifier.hideEmojiPicker();
+          return; // prevent popping
+        }
 
-    if (state.isSearching) {
-      notifier.stopSearching();
-      return; // prevent popping
-    }
+        if (state.isSearching) {
+          notifier.stopSearching();
+          return; // prevent popping
+        }
 
-    // ✅ nothing to intercept → allow pop
-    notifier.unSelectAllMessages();
-    notifier.clearAnchorMessage();
-    notifier.removeChatIfEmpty();
-  },
+        // ✅ nothing to intercept → allow pop
+        notifier.unSelectAllMessages();
+        notifier.clearAnchorMessage();
+        notifier.removeChatIfEmpty();
+      },
       child: GestureDetector(
         onTap: () {
           notifier.stopSearching();
@@ -85,23 +77,21 @@ class ChatScreenOptimized extends ConsumerWidget {
             ),
           ),
           floatingActionButton: Consumer(
-  builder: (context, ref, _) {
-    final state = ref.watch(chatStateController);
-    if (state.showEmojis || state.isSearching || state.messages.isEmpty) {
-      return const SizedBox.shrink(); // hide FAB
-    }
+            builder: (context, ref, _) {
+              final state = ref.watch(chatStateController);
+              if (state.showEmojis || state.isSearching || state.messages.isEmpty) {
+                return const SizedBox.shrink(); // hide FAB
+              }
 
-    return AutoHideScrollToBottom(
-      itemScrollController: notifier.itemScrollController,
-      itemPositionsListener: notifier.itemPositionsListener,
-      lastIndex: state.messages.length - 1,
-      bottomPadding: notifier.isReplying ? 135 : 80,
-      backgroundColor: context.isLight
-          ? const Color(0xFFD5F0FF)
-          : const Color(0xFF94C1DB),
-    );
-  },
-),
+              return AutoHideScrollToBottom(
+                itemScrollController: notifier.itemScrollController,
+                itemPositionsListener: notifier.itemPositionsListener,
+                lastIndex: state.messages.length - 1,
+                bottomPadding: notifier.isReplying ? 135 : 80,
+                backgroundColor: context.isLight ? const Color(0xFFD5F0FF) : const Color(0xFF94C1DB),
+              );
+            },
+          ),
 
           backgroundColor: Colors.transparent,
         ),
