@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
+import 'package:notesapp/core/Theme/icon_paths.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_bubble.dart';
+import 'package:svg_flutter/svg.dart';
 
 class Swipeable extends StatefulWidget {
   final Widget child;
@@ -91,4 +95,36 @@ class _SwipeableState extends State<Swipeable>
       ],
     );
   }
+}
+
+
+// ------------------------
+// Reply Background
+// ------------------------
+Widget replyIconBackground(BuildContext context, {required bool alignLeft}) {
+  return Container(
+    alignment: alignLeft ? Alignment.centerLeft : Alignment.centerRight,
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: SvgPicture.string(
+          IconPaths.messageReply,
+          width: 24,
+          height: 24,
+          colorFilter: ColorFilter.mode(
+            context.isLight
+                ? ThemeConstants.textLight
+                : ThemeConstants.textDark2,
+            BlendMode.srcIn,
+          ),
+        ),
+      ),
+    ),
+  );
 }

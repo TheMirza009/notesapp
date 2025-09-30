@@ -1,43 +1,30 @@
 import 'dart:io';
 
-import 'package:contextmenu/contextmenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
-import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
-import 'package:notesapp/core/controllers/isar_database.dart';
-import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
-import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen_optimized/chat_screen_optimized.dart';
-import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
-import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_chat_list_screen.dart';
-import 'package:notesapp/root/screens/Load_test/isar_test.dart/screens/load_test_screen.dart';
 import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
 import 'package:notesapp/root/screens/Profile/hero_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/parent_slide_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
-import 'package:notesapp/root/screens/Profile/reverse_cupertino_page_route.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
-import 'package:notesapp/root/screens/chat_screen/chat_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
-import 'package:notesapp/root/widgets/glass_container.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
-import 'package:svg_flutter/svg.dart';
 
 
 class Homescreen extends ConsumerStatefulWidget {
@@ -83,7 +70,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       Navigator.push(
         context,
         CupertinoPageRoute(
-          builder:(_) =>  ChatScreenOptimized(chat: chat),  // ChatScreen(chat: chat)
+          builder:(_) =>  ChatScreen(chat: chat),  // ChatScreen(chat: chat)
         ),
       );
     }
@@ -96,7 +83,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       Navigator.push(
         context,
         CupertinoPageRoute(
-          builder:(_) => ChatScreenOptimized(chat: newChat),
+          builder:(_) => ChatScreen(chat: newChat),
         ),
       );
     }
@@ -136,77 +123,77 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       }
     }
 
-    // Widget circularAvatar() => CustomIconButton(
-    //   size: 40,
-    //   backgroundColor: Colors.transparent,
-    //   splashColor: const Color.fromARGB(144, 164, 182, 191),
-    //   icon: ClipRRect(
-    //     borderRadius: BorderRadiusGeometry.circular(100),
-    //     child: Transform.scale(
-    //       scale: 0.94,
-    //       child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
-    //     ),
-    //   ),
-    //   onPressed: () {
-    //     // ref.read(themeNotifierProvider.notifier).toggleTheme();
-    //     setState(() {
-    //         isSliding = true;
-    //       });
-    //   },
-    // );
-    Widget circularAvatar() => SizedBox(
-      height: 40,
-      width: 40,
-      child: GestureDetector(
-        onTap: () => setState(() {
-          isSliding = !isSliding;
-          print("IsSliding: $isSliding");
-        }),
-        child: HeroWrapper(
-          tag: "profile_photo",
-          onHeroTapped: () => isSliding = true,
-          defaultChild: ClipRRect(
-            borderRadius: BorderRadiusGeometry.circular(100),
-            child: Transform.scale(
-              scale: 0.94,
-              child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
-            ),
-          ),
-          expandedChild: ClipRRect(
-            borderRadius: BorderRadiusGeometry.circular(100),
-            child: Image.asset(
-              isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-            ),
-          ),
-          bottomWidget: AnimatedOpacity(
-            duration: Duration(milliseconds: 300),
-            opacity: isSliding ? 0.0 : 1.0,
-            child: Container(
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: const Color(0xFF141E20),
-                borderRadius: BorderRadius.circular(15)
-              ),
-              child: Column(
-                spacing: 10,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextButton(onPressed: () {}, child: Text("Notifications")),
-                  Container(color: Colors.black, width: 220, height: 1.5),
-                  TextButton(onPressed: () {}, child: Text("Theme Settings")),
-                  Container(color: Colors.black, width: 220, height: 1.5),
-                  TextButton(onPressed: () {}, child: Text("Two Factor Authentication")),
-                  Container(color: Colors.black, width: 220, height: 1.5),
-                  TextButton(onPressed: () {}, child: Text("Language Settings")),
-                  Container(color: Colors.black, width: 220, height: 1.5),
-                  TextButton(onPressed: () {}, child: Text("Logout")),
-                ],
-              ),
-            ),
-          ),
+    Widget circularAvatar() => CustomIconButton(
+      size: 40,
+      backgroundColor: Colors.transparent,
+      splashColor: const Color.fromARGB(144, 164, 182, 191),
+      icon: ClipRRect(
+        borderRadius: BorderRadiusGeometry.circular(100),
+        child: Transform.scale(
+          scale: 0.94,
+          child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
         ),
       ),
+      onPressed: () {
+        // ref.read(themeNotifierProvider.notifier).toggleTheme();
+        setState(() {
+            isSliding = true;
+          });
+      },
     );
+    // Widget circularAvatar() => SizedBox(
+    //   height: 40,
+    //   width: 40,
+    //   child: GestureDetector(
+    //     onTap: () => setState(() {
+    //       isSliding = !isSliding;
+    //       print("IsSliding: $isSliding");
+    //     }),
+    //     child: HeroWrapper(
+    //       tag: "profile_photo",
+    //       onHeroTapped: () => isSliding = true,
+    //       defaultChild: ClipRRect(
+    //         borderRadius: BorderRadiusGeometry.circular(100),
+    //         child: Transform.scale(
+    //           scale: 0.94,
+    //           child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
+    //         ),
+    //       ),
+    //       expandedChild: ClipRRect(
+    //         borderRadius: BorderRadiusGeometry.circular(100),
+    //         child: Image.asset(
+    //           isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+    //         ),
+    //       ),
+    //       bottomWidget: AnimatedOpacity(
+    //         duration: Duration(milliseconds: 300),
+    //         opacity: isSliding ? 0.0 : 1.0,
+    //         child: Container(
+    //           padding: EdgeInsets.all(15),
+    //           decoration: BoxDecoration(
+    //             color: const Color(0xFF141E20),
+    //             borderRadius: BorderRadius.circular(15)
+    //           ),
+    //           child: Column(
+    //             spacing: 10,
+    //             crossAxisAlignment: CrossAxisAlignment.start,
+    //             children: [
+    //               TextButton(onPressed: () {}, child: Text("Notifications")),
+    //               Container(color: Colors.black, width: 220, height: 1.5),
+    //               TextButton(onPressed: () {}, child: Text("Theme Settings")),
+    //               Container(color: Colors.black, width: 220, height: 1.5),
+    //               TextButton(onPressed: () {}, child: Text("Two Factor Authentication")),
+    //               Container(color: Colors.black, width: 220, height: 1.5),
+    //               TextButton(onPressed: () {}, child: Text("Language Settings")),
+    //               Container(color: Colors.black, width: 220, height: 1.5),
+    //               TextButton(onPressed: () {}, child: Text("Logout")),
+    //             ],
+    //           ),
+    //         ),
+    //       ),
+    //     ),
+    //   ),
+    // );
 
     DateTime? lastBackPress;
 

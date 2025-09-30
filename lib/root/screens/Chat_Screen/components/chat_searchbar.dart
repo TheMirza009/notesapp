@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
-import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 
 class ChatSearchBar extends ConsumerWidget {
   const ChatSearchBar({super.key});

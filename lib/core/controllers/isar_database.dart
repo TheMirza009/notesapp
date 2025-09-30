@@ -2,7 +2,6 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Load_test/isar_test.dart/note_item.dart';
 import 'package:path_provider/path_provider.dart';
 
 class IsarDatabase {

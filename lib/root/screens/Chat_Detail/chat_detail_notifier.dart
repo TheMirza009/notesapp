@@ -6,10 +6,6 @@ import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_2.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
 
 class ChatDetailState {
   final Chat? chat;

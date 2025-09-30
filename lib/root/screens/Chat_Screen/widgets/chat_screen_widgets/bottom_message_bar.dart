@@ -1,11 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/core/utils/pasteboard_kit.dart';
-import 'package:pasteboard/pasteboard.dart';
+
 
 class BottomMessageBar extends StatefulWidget {
   final VoidCallback onEmojiTap;

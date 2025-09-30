@@ -1,12 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notesapp/root/screens/Chat_Screen/chat_screen_notifier_3.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar.dart';
-import 'package:notesapp/root/screens/Chat_screen_optimized/components/emoji_board_optim.dart';
-import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/bottom_message_bar.dart';
 
-class BottomMessageBarOptimized extends ConsumerWidget {
-  const BottomMessageBarOptimized({super.key});
+class BottomMessageBarWrapper extends ConsumerWidget {
+  const BottomMessageBarWrapper({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

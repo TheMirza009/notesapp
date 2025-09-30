@@ -5,7 +5,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 
-class AnchorWrapper extends StatelessWidget {
+class ReplyAnchor extends StatelessWidget {
   final String? text;
   final Media? media;
   final VoidCallback? onClear;
@@ -13,7 +13,7 @@ class AnchorWrapper extends StatelessWidget {
   final Duration animationDuration;
   final Curve animationCurve;
 
-  const AnchorWrapper({
+  const ReplyAnchor({
     super.key,
     required this.text,
     this.media,

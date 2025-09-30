@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
@@ -7,16 +6,16 @@ import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/date_chip.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/message_bubbles.dart/message_bubble_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen_optimized/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/date_chip.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_bubble.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-class MessageList extends ConsumerWidget {
-  const MessageList({super.key});
+class MessageListWrapper extends ConsumerWidget {
+  const MessageListWrapper({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
