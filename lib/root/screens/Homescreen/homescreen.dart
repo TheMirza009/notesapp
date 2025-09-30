@@ -94,7 +94,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       Navigator.push(
         context,
         CupertinoPageRoute(
-          builder:(_) => ChatScreenOptimized(chat: newChat),
+          builder:(_) => ChatScreenOptimized(chat: newChat, newChat: true,),
         ),
       );
     }

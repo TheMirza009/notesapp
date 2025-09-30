@@ -21,9 +21,9 @@ void main() async {
   ]);
 
   runApp(
-    ProviderScope(
+   ProviderScope(
     child: const MyApp()),
-    );
+  );
 }
 
 class MyApp extends ConsumerStatefulWidget {

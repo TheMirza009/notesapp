@@ -21,7 +21,8 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
 class ChatScreenOptimized extends ConsumerWidget {
   final Chat chat;
-  const ChatScreenOptimized({super.key, required this.chat});
+  final bool? newChat;
+  const ChatScreenOptimized({super.key, required this.chat, this.newChat = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,6 +31,12 @@ class ChatScreenOptimized extends ConsumerWidget {
     final canPop = ref.watch( chatStateController.select((s) => !s.isSearching && !s.showEmojis));
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     debugPrint("🔃 ChatScreen rebuilt");
+
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (newChat ?? false) {
+        notifier.keyboardFocusNode.requestFocus();
+      }
+     });
 
     return PopScope(
       canPop: canPop,
@@ -62,7 +69,6 @@ class ChatScreenOptimized extends ConsumerWidget {
           notifier.unSelectAllMessages();
         },
         child: Scaffold(
-          // ✅ Scaffold provides background, don’t wrap in another Container
           body: Container(
             decoration: BoxDecoration(gradient: backgroundGradient),
             child: Column(
