@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/message_list_extensions.dart';
@@ -21,6 +26,7 @@ class MessageListWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatStateController.notifier);
     final messages = ref.watch( chatStateController.select((s) => s.messages));
+    final isLoading = ref.watch(chatStateController.notifier).isLoading;
 
   //   WidgetsBinding.instance.addPostFrameCallback((_) {
   //   if (notifier.itemScrollController.isAttached && messages.isNotEmpty) {
@@ -29,7 +35,7 @@ class MessageListWrapper extends ConsumerWidget {
   // });
 
     return Expanded(
-      child: messages.isEmpty
+      child: isLoading ? _LoadIndicator() : messages.isEmpty
           ? const NothingToSee()
           : ScrollablePositionedList.builder(
               itemScrollController: notifier.itemScrollController,
@@ -40,11 +46,11 @@ class MessageListWrapper extends ConsumerWidget {
                   return const SizedBox(key: ValueKey('padding'), height: 150);
                 }
 
-                final message = messages[index]; // 👈 use either IsarID or UUID not index
+                final message = messages[index]; // 👈 Get the message directly
                 return ProviderScope(
                   overrides: [
                     // messageIdProvider.overrideWith((_) => messageId),
-                    messageProvider.overrideWithValue(message),
+                    messageProvider.overrideWithValue(message), // 👈 Pass the message instead of finding it later
                   ],
                   child: const _MessageItemBuilder(),
                 );
@@ -67,6 +73,13 @@ class _MessageItemBuilder extends ConsumerWidget {
 
     if (message == null) {
       return const SizedBox.shrink(); // Message got deleted -> don't render
+    }
+
+    if (message.isImage) {
+      final path = message.media.value?.path;
+      if (path != null) {
+        precacheImage(ExtendedFileImageProvider(File(path), cacheRawData: true), context);
+      }
     }
 
     // 👇 Watch only derived info for this index
@@ -133,6 +146,32 @@ class _MessageItemBuilder extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+class _LoadIndicator extends StatelessWidget {
+  const _LoadIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter, // 👈 top center instead of center
+      child: Padding(
+        padding: const EdgeInsets.only(top: 50), // optional spacing from top
+        child: SizedBox(
+          height: 40,
+          width: 40,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            strokeCap: StrokeCap.round,
+            color: context.isLight
+                ? ThemeConstants.sacredSeed
+                : ThemeConstants.sinisterSeed,
+          ),
+        ),
+      ),
     );
   }
 }

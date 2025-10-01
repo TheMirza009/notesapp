@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -140,11 +141,12 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
             builder: (context, index) {
               final path = mediaPath(index);
               return PhotoViewGalleryPageOptions(
-                imageProvider: FileImage(File(path!)),
+                imageProvider: ExtendedFileImageProvider(File(path!), cacheRawData: true), // FileImage(File(path!)),
                 heroAttributes: PhotoViewHeroAttributes(tag: path),
                 minScale: PhotoViewComputedScale.contained * 0.9,
                 maxScale: PhotoViewComputedScale.covered * 2.0,
                 initialScale: PhotoViewComputedScale.contained,
+                
               );
             },
             loadingBuilder:

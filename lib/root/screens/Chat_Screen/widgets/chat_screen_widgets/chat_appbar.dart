@@ -87,7 +87,7 @@ class ChatAppBar extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          fontSize: ThemeConstants.screenWidth * (isSelecting! ? 0.05 : 0.045),
+                          fontSize: isSelecting! ? 23 : 22, // ThemeConstants.screenWidth * (isSelecting! ? 0.05 : 0.045),
                           fontWeight: FontWeight.w500,
                           color: textcolor,
                         ),
@@ -95,7 +95,7 @@ class ChatAppBar extends StatelessWidget {
                       if (!isSelecting!) Text(
                         timeString,
                         style: TextStyle(
-                          fontSize: ThemeConstants.screenWidth * 0.03,
+                          fontSize: 14, // ThemeConstants.screenWidth * 0.03,
                           color: ThemeConstants.subtitleLight,
                         ),
                       ),

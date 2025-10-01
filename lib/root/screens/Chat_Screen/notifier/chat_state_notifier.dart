@@ -68,11 +68,10 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (freshChat != null) {
       await freshChat.messages.load();
       await Future.wait(freshChat.messages.map((m) => m.media.load()));
+      isLoading = false;
       allMessages = freshChat.messages.toList();
       state = state.copyWith(messages: allMessages);
     }
-
-    isLoading = false;
   }
 
   Future<void> updateMessage(Message message) async {

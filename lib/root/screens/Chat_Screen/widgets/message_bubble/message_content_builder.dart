@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -99,7 +100,20 @@ class MessageContentBuilder extends StatelessWidget {
           child: Stack(
             alignment: Alignment.bottomRight,
             children: [
-              Image.file(file, fit: BoxFit.cover),
+              // Image.file(file, fit: BoxFit.cover),
+              ExtendedImage.file(
+                file,
+                fit: BoxFit.cover,
+                cacheHeight: maxHeight.toInt(),
+                clearMemoryCacheIfFailed: true,
+                gaplessPlayback: true,
+                cacheRawData: true,
+                clearMemoryCacheWhenDispose: false,
+                compressionRatio: 0.5,
+                // cache: true, // 🔥 memory + disk caching
+                // cacheWidth: maxBubbleWidth, // 🔑 downsample at decode
+                // enableMemoryCache: true,
+              ),
               Container(
                 height: 50,
                 alignment: Alignment.bottomRight,
