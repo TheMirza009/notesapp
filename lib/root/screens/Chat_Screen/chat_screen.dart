@@ -16,7 +16,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/au
 //TODO: 5. Full-sized images being shown as thumbnails
 //TODO: 6. Everything rebuilds when the long press is called
 //TODO: 7. Search does not show new messages
-//TODO: 8. First message does not change state.
+//TODO: 8. First message does not change isSender state.
 
 final StateProvider<bool> isNewChat = StateProvider((_) => false);
 

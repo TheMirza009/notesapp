@@ -234,13 +234,21 @@ class ChatStateNotifier extends Notifier<ChatState> {
     // );
   }
 
-  Future<void> toggleSender(Message message) async {
-    message.isSender = !message.isSender;
+  void toggleSender(Message message) async {
+    final updatedMessage = message.copyWith(isSender: !message.isSender);
+
+    // Replace the message in allMessages with the new instance
+    final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
+    if (index != -1) allMessages[index] = updatedMessage;
+
     await _isar.writeTxn(() async {
-      await _isar.messages.put(message);
+      await _isar.messages.put(updatedMessage);
     });
+
+    // Trigger state update with new list
     state = state.copyWith(messages: [...allMessages]);
   }
+
 
 
   // =====================================================

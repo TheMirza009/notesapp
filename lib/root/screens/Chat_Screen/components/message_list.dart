@@ -43,7 +43,7 @@ class MessageListWrapper extends ConsumerWidget {
               itemCount: messages.length + 1,
               itemBuilder: (context, index) {
                 if (index == messages.length) {
-                  return const SizedBox(key: ValueKey('padding'), height: 150);
+                  return const SizedBox( height: 150);
                 }
 
                 final message = messages[index]; // 👈 Get the message directly
@@ -95,7 +95,6 @@ class _MessageItemBuilder extends ConsumerWidget {
         if (info.showDateChip) DateChip(message.time),
         RepaintBoundary(
           child: MessageBubble(
-            key: ValueKey(message.id),
             style: BubbleStyle.opaque,
             message: message,
             isSelecting: isSelecting,
@@ -103,7 +102,6 @@ class _MessageItemBuilder extends ConsumerWidget {
             isHighlighted: isHighlighted,
             topPadding: info.topPadding,
             bottomPadding: info.bottomPadding,
-
             // interactions
             onSwipe: () => ref.read(chatStateController.notifier).setAnchorMessage(message),
             onTapWhileSelecting: () => isSelected
@@ -123,8 +121,7 @@ class _MessageItemBuilder extends ConsumerWidget {
                   ),
                 );
               } else {
-                final notifier = ref.read(chatStateController.notifier);
-                notifier.toggleSender(message);
+                ref.read(chatStateController.notifier).toggleSender(message);
                 // message.isSender = !message.isSender;
                 // notifier.updateMessage(message);
               }
