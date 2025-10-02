@@ -17,6 +17,9 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/au
 //TODO: 6. Everything rebuilds when the long press is called
 //TODO: 7. Search does not show new messages
 //TODO: 8. First message does not change isSender state.
+//TODO: 9. Clear Chat does not delete all messages properly.
+//TODO: 10. Square images not being displayed properly.
+//TODO: 11. State problems ocurring again.
 
 final StateProvider<bool> isNewChat = StateProvider((_) => false);
 

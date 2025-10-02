@@ -87,6 +87,7 @@ class MessageContentBuilder extends StatelessWidget {
     }
 
     final maxHeight = ThemeConstants.screenHeight * 0.5;
+    final maxWidth = ThemeConstants.screenWidth * 0.6;
 
     // Use stored aspect ratio, fallback to 1 if null
     final aspectRatio = media.aspectRatio ?? 1.0;
@@ -94,7 +95,10 @@ class MessageContentBuilder extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(6),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
+        constraints: BoxConstraints(
+          maxHeight: maxHeight,
+          maxWidth: maxWidth,
+          ),
         child: AspectRatio(
           aspectRatio: aspectRatio,
           child: Stack(
@@ -104,15 +108,13 @@ class MessageContentBuilder extends StatelessWidget {
               ExtendedImage.file(
                 file,
                 fit: BoxFit.cover,
-                cacheHeight: maxHeight.toInt(),
+                cacheHeight: maxHeight.toInt(), // 🔑 downsample at decode
+                cacheWidth: maxWidth.toInt(), // 🔑 downsample at decode
                 clearMemoryCacheIfFailed: true,
                 gaplessPlayback: true,
-                cacheRawData: true,
+                cacheRawData: true, // 🔥 memory + disk caching
                 clearMemoryCacheWhenDispose: false,
                 compressionRatio: 0.5,
-                // cache: true, // 🔥 memory + disk caching
-                // cacheWidth: maxBubbleWidth, // 🔑 downsample at decode
-                // enableMemoryCache: true,
               ),
               Container(
                 height: 50,

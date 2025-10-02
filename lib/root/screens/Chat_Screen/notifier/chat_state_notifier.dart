@@ -213,7 +213,9 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
         if (m.media.value != null && m.media.value!.type != Mediatype.text) {
           final allMessages = await _isar.messages.where().findAll();
-          for (final msg in allMessages) await msg.media.load();
+          for (final msg in allMessages) {
+            await msg.media.load();
+          }
           final isUsedByMultiple = allMessages.hasDuplicateMediaPath(m);
           if (!isUsedByMultiple) await MediaHandler.deleteMedia(m.media.value!);
         }
@@ -235,20 +237,21 @@ class ChatStateNotifier extends Notifier<ChatState> {
   }
 
   void toggleSender(Message message) async {
-    final updatedMessage = message.copyWith(isSender: !message.isSender);
-
-    // Replace the message in allMessages with the new instance
-    final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
-    if (index != -1) allMessages[index] = updatedMessage;
+    message.isSender = !message.isSender;
 
     await _isar.writeTxn(() async {
-      await _isar.messages.put(updatedMessage);
+      await _isar.messages.put(message); // save the same instance
     });
 
-    // Trigger state update with new list
-    state = state.copyWith(messages: [...allMessages]);
-  }
+    // Update the list
+    final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
+    if (index != -1) allMessages[index] = message;
 
+    // Trigger state update
+    state =  allMessages.length == 1
+            ? state.copyWith( messages: [message.copyWith()]) // new instance for first-message animation (BUG FIX)
+            : state.copyWith(messages: [...allMessages]);
+  }
 
 
   // =====================================================

@@ -36,6 +36,7 @@ class Message {
     bool? isSender,
     bool? isSelected,
     Media? media,
+    Message? replyingTo,
   }) {
     final newMessage = Message()
       ..id = id ?? this.id
@@ -44,10 +45,18 @@ class Message {
       ..isSender = isSender ?? this.isSender
       ..isSelected = isSelected ?? this.isSelected;
 
+    // Copy media link
     if (media != null) {
       newMessage.media.value = media;
     } else if (this.media.value != null) {
       newMessage.media.value = this.media.value;
+    }
+
+    // Copy replyingTo link
+    if (replyingTo != null) {
+      newMessage.replyingTo.value = replyingTo;
+    } else if (this.replyingTo.value != null) {
+      newMessage.replyingTo.value = this.replyingTo.value;
     }
 
     return newMessage;
