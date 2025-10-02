@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:typeset/typeset.dart';
 
 class MessageContentBuilder extends StatelessWidget {
   final Message message;
@@ -43,10 +45,16 @@ class MessageContentBuilder extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                child: Text(
+                child: TypeSet(
                   message.text,
                   style: const TextStyle(fontSize: 20),
                   softWrap: true,
+                  linkRecognizerBuilder: (linkText, url) {
+                      return TapGestureRecognizer()
+                        ..onTap = () {
+                          debugPrint('URL: $url and Text: $linkText');
+                        };
+                    },
                 ),
               ),
             ],
@@ -87,7 +95,7 @@ class MessageContentBuilder extends StatelessWidget {
     }
 
     final maxHeight = ThemeConstants.screenHeight * 0.5;
-    final maxWidth = ThemeConstants.screenWidth * 0.6;
+    final maxWidth = ThemeConstants.screenWidth * 0.7;
 
     // Use stored aspect ratio, fallback to 1 if null
     final aspectRatio = media.aspectRatio ?? 1.0;

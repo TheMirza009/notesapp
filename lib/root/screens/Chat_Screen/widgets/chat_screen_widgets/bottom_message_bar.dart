@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-
+import 'package:typeset/typeset.dart';
 
 class BottomMessageBar extends StatefulWidget {
   final VoidCallback onEmojiTap;
@@ -12,7 +12,7 @@ class BottomMessageBar extends StatefulWidget {
   final Function(String)? onSubmitted;
   final void Function(Uint8List)? onImagePasted;
   final void Function()? onFieldTap;
-  final TextEditingController? keyboardController;
+  final TypeSetEditingController? keyboardController;
   final FocusNode? focusNode;
 
   const BottomMessageBar({
@@ -33,33 +33,34 @@ class BottomMessageBar extends StatefulWidget {
 }
 
 class _BottomMessageBarState extends State<BottomMessageBar> {
-  late final TextEditingController _messageController;
-  late final messageController = widget.keyboardController ?? _messageController;
+  late final TypeSetEditingController _internalController;
+  late final TypeSetEditingController messageController;
 
   @override
   void initState() {
     super.initState();
-    _messageController = TextEditingController();
+    _internalController = TypeSetEditingController();
+    // If parent provided controller, use that; else use internal
+    messageController = widget.keyboardController ?? _internalController;
   }
 
   @override
   void dispose() {
-    _messageController.dispose();
+    // Only dispose internal controller (don’t dispose external one passed in)
+    if (widget.keyboardController == null) {
+      _internalController.dispose();
+    }
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
     const iconLight = Color(0xFF54666F);
-    const iconPadding = EdgeInsets.only(left: 5.0, right: 5.0, top: 0, bottom: 5);
+    const iconPadding =
+        EdgeInsets.only(left: 5.0, right: 5.0, top: 0, bottom: 5);
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: 8
-        // vertical: context.screenWidth * 0.02,
-        // horizontal: context.screenWidth * 0.04,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: context.isLight
             ? ThemeConstants.hometoolbarLight2
@@ -84,15 +85,15 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: 5),
+              padding: const EdgeInsets.only(left: 5),
               child: TextField(
                 autofocus: false,
                 focusNode: widget.focusNode,
-                controller: messageController, // widget.keyboardController ?? 
+                controller: messageController,
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,
                 minLines: 1,
-                maxLines: 5, // expand up to 5 lines
+                maxLines: 5,
                 decoration: const InputDecoration(
                   hintText: "Type a message",
                   border: InputBorder.none,
@@ -106,11 +107,11 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                     );
 
                     if (content.mimeType.startsWith('image/')) {
-                      // Image or GIF
                       widget.onImagePasted?.call(content.data!);
                     } else if (content.mimeType == 'text/plain') {
-                      // Text fallback
-                      _messageController.text += String.fromCharCodes(content.data!);
+                      // Append pasted plain text
+                      messageController.text +=
+                          String.fromCharCodes(content.data!);
                     }
                   },
                 ),

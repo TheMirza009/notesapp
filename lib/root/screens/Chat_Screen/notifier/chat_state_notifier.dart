@@ -21,8 +21,9 @@ import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+import 'package:typeset/typeset.dart';
+import 'chat_state.dart';
 
-import 'chat_state.dart'; // import the ChatState class you created earlier
 
 /// Provider for ChatStateNotifier
 final chatStateController =  NotifierProvider<ChatStateNotifier, ChatState>(() => ChatStateNotifier());
@@ -31,12 +32,11 @@ class ChatStateNotifier extends Notifier<ChatState> {
   /// Master references & controllers (not part of state)
   List<Message> allMessages = [];
   final TextEditingController searchController = TextEditingController();
-  final TextEditingController keyboardController = TextEditingController();
+  final TypeSetEditingController keyboardController = TypeSetEditingController();
   final FocusNode searchFocusNode = FocusNode();
   final FocusNode keyboardFocusNode = FocusNode();
   final ItemScrollController itemScrollController = ItemScrollController();
-  final ItemPositionsListener itemPositionsListener =
-      ItemPositionsListener.create();
+  final ItemPositionsListener itemPositionsListener =  ItemPositionsListener.create();
   final _isar = IsarDatabase.isar;
   Chat? _chat;
   bool isLoading = false;
