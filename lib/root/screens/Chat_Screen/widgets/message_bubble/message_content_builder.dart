@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:typeset/typeset.dart';
@@ -49,6 +51,12 @@ class MessageContentBuilder extends StatelessWidget {
                   message.text,
                   style: const TextStyle(fontSize: 20),
                   softWrap: true,
+                  monospaceStyle: TextStyle(
+                    fontFamily: "Consolas",
+                    backgroundColor: ThemeConstants.iconColorNeutral.withValues(
+                      alpha: navigatorKey.currentContext!.isLight ? 0.2 : 0.5,
+                    ),
+                  ),
                   linkRecognizerBuilder: (linkText, url) {
                       return TapGestureRecognizer()
                         ..onTap = () {

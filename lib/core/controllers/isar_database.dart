@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/data/models/user_model.dart';
 import 'package:path_provider/path_provider.dart';
 
 class IsarDatabase {
@@ -12,7 +13,7 @@ class IsarDatabase {
     if (_isar != null && _isar!.isOpen) return;
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [ChatSchema, MessageSchema, MediaSchema],
+      [ChatSchema, MessageSchema, MediaSchema, UserSchema],
       directory: dir.path,
       name: 'chat_repo',
     );
@@ -27,6 +28,10 @@ class IsarDatabase {
   /// Load all chats
   static Future<List<Chat>> loadAllChats() async {
     return await isar.chats.where().findAll();
+  }
+
+  static Future<User?> loadUserData() async {
+    return await isar.users.where().findFirst();
   }
 
   /// Load first N messages for a chat

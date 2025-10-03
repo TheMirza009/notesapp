@@ -213,7 +213,7 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
               borderRadius: BorderRadius.circular(widget.borderRadius),
               color: isHighlighted ? _getHighlightedBubbleColor(context) : Colors.transparent,
               boxShadow: [
-                BoxShadow(
+                 BoxShadow(
                   color: Colors.white.withOpacity(
                     isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0,
                   ),
