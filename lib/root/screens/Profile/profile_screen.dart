@@ -12,6 +12,7 @@ import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
 import 'package:photo_view/photo_view.dart';
@@ -71,17 +72,20 @@ class ProfileScreenState extends ProfileScreenBaseState {
                 tag: "profile-avatar",
                 defaultChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: false),
                 expandedChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: true),
+                topWidget: Align(
+                  alignment: Alignment.topLeft,
+                  child: TextButton.icon(
+                    icon: Icon(Icons.arrow_back_rounded),
+                    onPressed: () => Navigator.pop(context),
+                    label: const Text("Back"),
+                  ),
+                ),
                 bottomWidget: Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: Row(
                     spacing: 10,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // TextButton.icon(
-                      //   icon: Icon(Icons.arrow_back_rounded),
-                      //   onPressed: () => Navigator.pop(context),
-                      //   label: const Text("Back"),
-                      // ),
                       TextButton.icon(
                         icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
                         onPressed: () => pickNewProfilePhoto(),
@@ -142,6 +146,8 @@ class ProfileScreenState extends ProfileScreenBaseState {
                   ],
                 ),
               ),
+              SizedBox(height: 50),
+              buildOptionsColumn(),
             ],
           ),
         ),
@@ -164,7 +170,6 @@ Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = f
             : AssetImage(
                 context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
               ) as ImageProvider,
-        backgroundDecoration: const BoxDecoration(color: Colors.transparent),
         minScale: PhotoViewComputedScale.contained, // can zoom out to fit
         initialScale: PhotoViewComputedScale.contained, // start fitting inside
         maxScale: PhotoViewComputedScale.covered * 3,
@@ -198,4 +203,75 @@ Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = f
     ),
     clipBehavior: Clip.antiAlias,
     child: image);
+}
+Widget buildOptionsColumn() {
+  final context = navigatorKey.currentContext!;
+  final dividerColor = context.isLight
+      ? ThemeConstants.homeDividerLight
+      : ThemeConstants.darkIconBorder;
+
+  BorderRadius _radius({bool top = false, bool bottom = false}) {
+    return BorderRadius.only(
+      topLeft: top ? const Radius.circular(25) : Radius.circular(8),
+      topRight: top ? const Radius.circular(25) : Radius.circular(8),
+      bottomLeft: bottom ? const Radius.circular(25) : Radius.circular(8),
+      bottomRight: bottom ? const Radius.circular(25) : Radius.circular(8),
+    );
+  }
+
+  Widget _buildTile({
+    required String title,
+    required IconData icon,
+    bool top = false,
+    bool bottom = false,
+    VoidCallback? onTap,
+  }) {
+    return ClipRRect(
+      borderRadius: _radius(top: top, bottom: bottom),
+      child: Material(
+        color: dividerColor,
+        child: ListTile(
+          contentPadding: EdgeInsets.all(8),
+          leading: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Icon(icon),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w200),
+          ),
+          onTap: onTap,
+        ),
+      ),
+    );
+  }
+
+  return Container(
+    width: context.screenWidth - 70,
+    child: Column(
+      spacing: 0.5,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildTile(
+          title: "Settings",
+          icon: Icons.settings,
+          top: true,
+          onTap: () => print("Tapped Settings 1"),
+        ),
+        const SizedBox(height: 2),
+        _buildTile(
+          title: "Refer a friend",
+          icon: Icons.tune_rounded,
+          onTap: () => print("Tapped Settings 2"),
+        ),
+        const SizedBox(height: 2),
+        _buildTile(
+          title: "Contact us",
+          icon: Icons.mail_outline_outlined,
+          bottom: true,
+          onTap: () => print("Tapped Settings 3"),
+        ),
+      ],
+    ),
+  );
 }

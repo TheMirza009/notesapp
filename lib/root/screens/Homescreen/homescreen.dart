@@ -1,251 +1,64 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
-import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
-import 'package:notesapp/root/data/models/chat_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
-import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
-import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
-import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/parent_slide_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
-import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
-
+import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
+import 'homescreen_state.dart';
 
 class Homescreen extends ConsumerStatefulWidget {
   const Homescreen({super.key});
 
   @override
-  ConsumerState<Homescreen> createState() => _HomescreenState();
+  ConsumerState<Homescreen> createState() => HomescreenState();
 }
 
-class _HomescreenState extends ConsumerState<Homescreen> {
-  final FocusNode _searchFocusNode = FocusNode();
-  final TextEditingController _searchController = TextEditingController();
-  bool isSliding = false;
-
-  @override 
-  void initState() {
-    super.initState();
-    ref.read(userController.notifier).loadUser();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose();
-    super.dispose();
-  }
-
+class HomescreenState extends HomeScreenBaseState {
+  
   @override
   Widget build(BuildContext context) {
-
-    // Declarations
     final chatNotifier = ref.read(chatListProvider.notifier);
-    Size screensize = MediaQuery.sizeOf(context);
-    final List<Chat> chatlist = ref.watch(chatListProvider).chats;
-    bool isLight = Theme.brightnessOf(context) == Brightness.light;
-    LinearGradient backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
-    Color headerColor =  isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
-    Color dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
-    String addNotePath = isLight ? IconPaths.addNoteLight : IconPaths.addNoteDark;
-
-    void clearSearch() {
-      _searchController.clear();
-      _searchFocusNode.unfocus();
-      chatNotifier.clearSearch();
-    }
-    
-    void navigateToChatScreen(Chat chat) {
-      ref.read(chatListProvider.notifier).selectChat(chat);
-      Navigator.push(
-        context,
-        CupertinoPageRoute(
-          builder:(_) =>  ChatScreen(chat: chat),  // ChatScreen(chat: chat)
-        ),
-      );
-    }
-
-    void createNewChat() async {
-      final newChat = await chatNotifier.addChat();
-      await newChat.messages.load();
-      ref.read(chatListProvider.notifier).selectChat(newChat);
-      ref.read(isNewChat.notifier).state = true;
-      Navigator.push(
-        context,
-        CupertinoPageRoute(
-          builder:(_) => ChatScreen(chat: newChat),
-        ),
-      );
-    }
-
-
-    void handleContextMenuAction(value) {
-      switch (value) {
-        case "profile":
-          setState(() {
-            isSliding = true; // slide parent to the right
-          });
-          // schedule push after frame to let animation start
-
-      break;
-        case "settings": Navigator.push(context, CupertinoPageRoute(builder: (_) => SlideScreenTest()));
-        case "deleteAll":
-          showCupertinoDialog(
-            context: context,
-            builder: (_) => CustomAlertDialog(
-              title: "Delete all notes",
-              content: "Are you sure you want to delete all notes?",
-              iconColor: Colors.redAccent,
-              iconData: (Mdi.delete_empty_outline), // (IconParkTwotone.delete_five), // Iconify(Fluent.delete_28_regular)
-              iconSize: 25,
-              option: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  chatNotifier.clearChats();
-                },
-                child: Text(
-                  "Delete",
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-              ),
-            ),
-          );
-      }
-    }
-
-    Widget circularAvatar() {
-  final String? path = ref.watch(userController)?.profilePhotoPath;
-
-  return CustomIconButton(
-    size: 40,
-    backgroundColor: Colors.transparent,
-    splashColor: const Color.fromARGB(144, 164, 182, 191),
-    icon: ClipOval(
-      child: SizedBox(
-        width: 40,  // make it square
-        height: 40, // make it square
-        child: Transform.scale(
-          scale: 0.94,
-          child: path != null
-              ? Image.file(
-                  File(path),
-                  fit: BoxFit.cover, // make it fill the circle
-                )
-              : Image.asset(
-                  isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-                  fit: BoxFit.cover,
-                ),
-        ),
-      ),
-    ),
-    onPressed: () {
-      setState(() => isSliding = true);
-    },
-  );
-}
-
-    // Widget circularAvatar() => SizedBox(
-    //   height: 40,
-    //   width: 40,
-    //   child: GestureDetector(
-    //     onTap: () => setState(() {
-    //       isSliding = !isSliding;
-    //       print("IsSliding: $isSliding");
-    //     }),
-    //     child: HeroWrapper(
-    //       tag: "profile_photo",
-    //       onHeroTapped: () => isSliding = true,
-    //       defaultChild: ClipRRect(
-    //         borderRadius: BorderRadiusGeometry.circular(100),
-    //         child: Transform.scale(
-    //           scale: 0.94,
-    //           child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
-    //         ),
-    //       ),
-    //       expandedChild: ClipRRect(
-    //         borderRadius: BorderRadiusGeometry.circular(100),
-    //         child: Image.asset(
-    //           isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-    //         ),
-    //       ),
-    //       bottomWidget: AnimatedOpacity(
-    //         duration: Duration(milliseconds: 300),
-    //         opacity: isSliding ? 0.0 : 1.0,
-    //         child: Container(
-    //           padding: EdgeInsets.all(15),
-    //           decoration: BoxDecoration(
-    //             color: const Color(0xFF141E20),
-    //             borderRadius: BorderRadius.circular(15)
-    //           ),
-    //           child: Column(
-    //             spacing: 10,
-    //             crossAxisAlignment: CrossAxisAlignment.start,
-    //             children: [
-    //               TextButton(onPressed: () {}, child: Text("Notifications")),
-    //               Container(color: Colors.black, width: 220, height: 1.5),
-    //               TextButton(onPressed: () {}, child: Text("Theme Settings")),
-    //               Container(color: Colors.black, width: 220, height: 1.5),
-    //               TextButton(onPressed: () {}, child: Text("Two Factor Authentication")),
-    //               Container(color: Colors.black, width: 220, height: 1.5),
-    //               TextButton(onPressed: () {}, child: Text("Language Settings")),
-    //               Container(color: Colors.black, width: 220, height: 1.5),
-    //               TextButton(onPressed: () {}, child: Text("Logout")),
-    //             ],
-    //           ),
-    //         ),
-    //       ),
-    //     ),
-    //   ),
-    // );
-
-    DateTime? lastBackPress;
+    final chatlist = ref.watch(chatListProvider).chats;
+    final isLight = Theme.brightnessOf(context) == Brightness.light;
+    final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+    final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        final now = DateTime.now();
 
-        if (isSliding == true) {
-          setState(() {
-            isSliding = false;
-          });
+        if (isSliding) {
+          setState(() => isSliding = false);
+        } else if (lastBackPress == null || now.difference(lastBackPress!) > const Duration(seconds: 2)) {
+          lastBackPress = now;
+          Utils.showGlobalSnackBar("Press again to exit.", Colors.blueGrey);
         } else {
-          final now = DateTime.now();
-          if (lastBackPress == null || now.difference(lastBackPress!) > Duration(seconds: 2)) {
-            lastBackPress = now;
-            Utils.showGlobalSnackBar("Press again to exit.", Colors.blueGrey);
-          } else {
-            SystemNavigator.pop(); // closes the app
-          }
+          SystemNavigator.pop();
         }
       },
       child: ParentSlideWrapper(
         overlay: ProfileScreen(
           leading: IconButton(
-          onPressed: () {
-            setState(() {
-              isSliding = false;
-            });
-          },
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
-        ),
+            onPressed: () => setState(() => isSliding = false),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+          ),
         ),
         trigger: isSliding,
         child: Scaffold(
@@ -253,24 +66,20 @@ class _HomescreenState extends ConsumerState<Homescreen> {
             size: 60,
             splashColor: const Color.fromARGB(14, 96, 125, 139),
             onPressed: createNewChat,
-            icon:  Image.asset(IconPaths.addNoteLight, scale: 10,), // addNotePath
+            icon: Image.asset(IconPaths.addNoteLight, scale: 10),
           ),
           appBar: AppBar(
-            // backgroundColor: ThemeConstants.hometoolbarLight,
             elevation: 0,
             backgroundColor: headerColor,
             shadowColor: Colors.transparent,
             toolbarHeight: 65,
             title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: circularAvatar(),
-            ),
+            leading: Padding(padding: const EdgeInsets.only(left: 12), child: circularAvatar(isLight)),
             actions: [
               CustomContextMenu(
                 icon: const Icon(Icons.more_vert),
                 menuItems: homeScreenOptions,
-                onSelected: (value) => handleContextMenuAction(value)
+                onSelected: handleContextMenuAction,
               ),
             ],
           ),
@@ -278,12 +87,11 @@ class _HomescreenState extends ConsumerState<Homescreen> {
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
             child: Container(
-              height: screensize.height,
-              width: screensize.width,
-              padding: EdgeInsets.only(top: 12),
+              height: context.screenHeight,
+              width: context.screenWidth,
+              padding: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(gradient: backgroundGradient),
-              child: 
-              Column(
+              child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
@@ -291,70 +99,92 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                       spacing: Platform.isWindows ? 5 : 0,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-        
                         Expanded(
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: 40,
-                            ),
+                            constraints: const BoxConstraints(maxHeight: 40),
                             child: SearchBar(
-                              focusNode: _searchFocusNode,
-                              controller: _searchController,
+                              focusNode: searchFocusNode,
+                              controller: searchController,
                               autoFocus: false,
                               shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
                               padding: WidgetStatePropertyAll(EdgeInsets.zero),
                               shadowColor: WidgetStatePropertyAll(Colors.transparent),
                               backgroundColor: WidgetStatePropertyAll(headerColor),
                               leading: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                                child: Icon(Icons.search, color: ThemeConstants.iconLight,),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10.0,
+                                ),
+                                child: Icon(
+                                  Icons.search,
+                                  color: ThemeConstants.iconLight,
+                                ),
                               ),
-                              trailing: [_searchController.text.isNotEmpty ? IconButton(icon: Icon(Icons.clear_rounded), onPressed: clearSearch,) : SizedBox.shrink()] ,
+                              trailing: [
+                                searchController.text.isNotEmpty
+                                  ? IconButton(
+                                    icon: Icon(Icons.clear_rounded),
+                                    onPressed: clearSearch,
+                                  )
+                                  : SizedBox.shrink(),
+                              ],
                               hintText: "Search in notes...",
-                              hintStyle: WidgetStatePropertyAll(TextStyle(color: ThemeConstants.iconLight, fontWeight: FontWeight.w500)),
+                              hintStyle: WidgetStatePropertyAll(
+                                TextStyle(
+                                  color: ThemeConstants.iconLight,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                               onChanged: (value) => chatNotifier.searchChats(value),
                             ),
                           ),
                         ),
                         Align(
                           alignment: Alignment.topCenter,
-                          child: IconButton(onPressed: () {
-                            Navigator.push(context, CupertinoPageRoute(builder: (_) => ProfileScreen()));
-                          }, icon: Icon(Icons.filter_list, color: ThemeConstants.iconLight,)))
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (_) => ProfileScreen(),
+                                ),
+                              );
+                            },
+                            icon: Icon(
+                              Icons.filter_list,
+                              color: ThemeConstants.iconLight,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   Expanded(
                     child: chatlist.isEmpty
-                    ? NothingToSee()
-                    : ListView.separated(
-                      itemCount: chatlist.length,
-                      itemBuilder: (context, index) {
-                        final chat = chatlist[index];
-                         return TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: const Duration(milliseconds: 300),
-                          builder: (context, value, child) {
-                            return Opacity(opacity: value, child: child);
+                      ? const NothingToSee()
+                      : ListView.separated(
+                          itemCount: chatlist.length,
+                          itemBuilder: (context, index) {
+                            final chat = chatlist[index];
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: 1),
+                              duration: const Duration(milliseconds: 300),
+                              builder: (context, value, child) => Opacity(opacity: value, child: child),
+                              child: ChatTile(
+                                title: chat.title ?? "New Note",
+                                subtitle: chat.loadLastMessage(),
+                                chatPhotoPath: chat.chatPhotoPath,
+                                time: TimeFormat.formatChatTime(chat.date),
+                                onDismissed: (_) => chatNotifier.removeChat(chat),
+                                onTap: () => navigateToChatScreen(chat),
+                              ),
+                            );
                           },
-                          child: ChatTile(
-                            title: chat.title ?? "New Note",
-                            subtitle: chat.loadLastMessage(), // lastMessageText, 
-                            chatPhotoPath: chat.chatPhotoPath,
-                            time: TimeFormat.formatChatTime(chat.date),
-                            onDismissed: (_) => chatNotifier.removeChat(chat),
-                            onTap: () => navigateToChatScreen(chat),
+                          separatorBuilder: (context, index) => Divider(
+                            thickness: 1,
+                            indent: ThemeConstants.screenWidth * 0.07,
+                            color: dividerColor,
                           ),
-                        );
-                      },
-                      separatorBuilder: (context, index) {
-                        return Divider(
-                        thickness: 1,
-                        indent: ThemeConstants.screenWidth * (1 - 0.93),
-                        color: dividerColor,
-                      );
-                      },
-                    ),
+                        ),
                   ),
                 ],
               ),
