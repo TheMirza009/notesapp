@@ -20,32 +20,44 @@ class MediaHandler {
   /// - If [isProfilePicture] = true → crop + save to ProfilePictures.
   /// - Else → save to Photos.
   static Future<Media?> pickImage({bool isProfilePicture = false}) async {
-    // Pick image from gallery
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return null;
-
-    File file = File(pickedFile.path);
-
-    // Optional cropping for profile pictures
-    if (isProfilePicture && !kisWindows) {
-      final croppedFile = await _cropImage(file);
-      if (croppedFile != null) file = croppedFile;
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile == null) {
+      print("⚠️ No image picked");
+      return null;
     }
 
-    // Save file to storage folder
-    final savedFile = await _saveToStorage(file, isProfilePicture ? 'Profile Pictures' : 'Photos');
+    File file = File(pickedFile.path);
+    print("✅ Picked file: ${file.path}");
 
-    // Compute aspect ratio
+    if (isProfilePicture && !kisWindows) {
+      final croppedFile = await _cropImage(file);
+      if (croppedFile != null) {
+        print("✂️ Cropped file: ${croppedFile.path}");
+        file = croppedFile;
+      } else {
+        print("❌ Cropper returned null");
+      }
+    }
+
+    final savedFile = await _saveToStorage(
+      file,
+      isProfilePicture ? 'Profile Pictures' : 'Photos',
+    );
+    print("💾 Saved file: ${savedFile.path}");
+
     final bytes = await savedFile.readAsBytes();
     final decodedImage = await decodeImageFromList(bytes);
     final aspectRatio = decodedImage.width / decodedImage.height;
 
-    // Create Media object with aspect ratio
     final media = Media.fromFilePath(savedFile.path);
     media.aspectRatio = aspectRatio;
 
+    print("🎉 Returning media with path: ${media.path}");
     return media;
   }
+
 
   static Future<Media> fromImageBytes(Uint8List bytes) async {
     final tempDir = await getTemporaryDirectory();

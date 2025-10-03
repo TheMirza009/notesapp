@@ -37,11 +37,12 @@ class ProfileScreenState extends ProfileScreenBaseState {
     final user = ref.watch(userController);
     final Color shareColor = user?.profilePhotoPath == null ? ThemeConstants.iconColorNeutral : darkPrimary;
 
-    titleController.text = ref.watch(userController)?.name ?? "Loading..."; 
+    titleController.text = ref.watch(userController)?.name ?? "Name"; 
     print("Profile Screen built");
     return PullDownWrapper(
       child: Scaffold(
         extendBodyBehindAppBar: true,
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.transparent,
@@ -65,90 +66,91 @@ class ProfileScreenState extends ProfileScreenBaseState {
           width: screensize.width,
           padding: const EdgeInsets.only(top: 12),
           decoration: BoxDecoration(gradient: backgroundGradient),
-          child: Column(
-            children: [
-              const SizedBox(height: 75),
-              HeroWrapper(
-                tag: "profile-avatar",
-                defaultChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: false),
-                expandedChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: true),
-                topWidget: Align(
-                  alignment: Alignment.topLeft,
-                  child: TextButton.icon(
-                    icon: Icon(Icons.arrow_back_rounded),
-                    onPressed: () => Navigator.pop(context),
-                    label: const Text("Back"),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 75),
+                HeroWrapper(
+                  tag: "profile-avatar",
+                  defaultChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: false),
+                  expandedChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: true),
+                  topWidget: Align(
+                    alignment: Alignment.topLeft,
+                    child: TextButton.icon(
+                      icon: Icon(Icons.arrow_back_rounded),
+                      onPressed: () => Navigator.pop(context),
+                      label: const Text("Back"),
+                    ),
+                  ),
+                  bottomWidget: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Row(
+                      spacing: 10,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton.icon(
+                          icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
+                          onPressed: () => pickNewProfilePhoto(),
+                          label: const Text("Upload", style: TextStyle(color: darkPrimary),),
+                        ),
+                        TextButton.icon(
+                          icon: vectorBuild(IconPaths.shareIcon, color:  shareColor),
+                          onPressed: () {print(Theme.of(context).colorScheme.primary);}, // () => Navigator.pop(context),
+                          label: Text("Share", style: TextStyle(color: shareColor),),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                bottomWidget: Padding(
-                  padding: const EdgeInsets.all(15.0),
+                Container(
+                  margin: const EdgeInsets.all(30),
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
+                  decoration: BoxDecoration(
+                    border: Border.all(width: 1.5, color: dividerColor),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Row(
-                    spacing: 10,
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      TextButton.icon(
-                        icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
-                        onPressed: () => pickNewProfilePhoto(),
-                        label: const Text("Upload", style: TextStyle(color: darkPrimary),),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 5.0, right: 20),
+                        child: vectorBuild(IconPaths.userHUGE),
                       ),
-                      TextButton.icon(
-                        icon: vectorBuild(IconPaths.shareIcon, color:  shareColor),
-                        onPressed: () {print(Theme.of(context).colorScheme.primary);}, // () => Navigator.pop(context),
-                        label: Text("Share", style: TextStyle(color: shareColor),),
+                      Expanded(
+                        child: TextField(
+                          focusNode: focusNode,
+                          enableInteractiveSelection: isEditing,
+                          controller: titleController,
+                          autofocus: isEditing,
+                          readOnly: !isEditing,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 21.5,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(isEditing ? Icons.check : Icons.edit),
+                        onPressed: () {
+                          if (isEditing) {
+                            finishEditing();
+                            setState(() {});
+                          } else {
+                            startEditing();
+                            setState(() {});
+                          }
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
-              Container(
-                margin: const EdgeInsets.all(30),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-                decoration: BoxDecoration(
-                  border: Border.all(width: 1.5, color: dividerColor),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 5.0, right: 20),
-                      child: vectorBuild(IconPaths.userHUGE),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        focusNode: focusNode,
-                        enableInteractiveSelection: isEditing,
-                        controller: titleController,
-                        autofocus: isEditing,
-                        readOnly: !isEditing,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isCollapsed: true,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 21.5,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(isEditing ? Icons.check : Icons.edit),
-                      onPressed: () {
-                        if (isEditing) {
-                          finishEditing();
-                          setState(() {});
-                        } else {
-                          startEditing();
-                          setState(() {});
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 50),
-              buildOptionsColumn(),
-            ],
+                SizedBox(height: 50),
+                buildOptionsColumn(),
+              ],
+            ),
           ),
         ),
       ),
@@ -158,21 +160,23 @@ class ProfileScreenState extends ProfileScreenBaseState {
 
 Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = false}) {
   if (expanded) {
-    final double availableHeight = context.screenHeight - 120; // leave space for buttons
+    final double availableHeight = context.screenHeight - 200; // leave space for buttons
 
-    return SizedBox(
-      height: availableHeight,
-      width: context.screenWidth,
-      child: PhotoView(
-        gestureDetectorBehavior: HitTestBehavior.opaque,
-        imageProvider: path != null
-            ? FileImage(File(path))
-            : AssetImage(
-                context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-              ) as ImageProvider,
-        minScale: PhotoViewComputedScale.contained, // can zoom out to fit
-        initialScale: PhotoViewComputedScale.contained, // start fitting inside
-        maxScale: PhotoViewComputedScale.covered * 3,
+    return IntrinsicHeight(
+      child: SizedBox(
+        height: availableHeight,
+        width: context.screenWidth,
+        child: PhotoView(
+          gestureDetectorBehavior: HitTestBehavior.opaque,
+          imageProvider: path != null
+              ? FileImage(File(path))
+              : AssetImage(
+                  context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+                ) as ImageProvider,
+          minScale: PhotoViewComputedScale.contained, // can zoom out to fit
+          initialScale: PhotoViewComputedScale.contained, // start fitting inside
+          maxScale: PhotoViewComputedScale.covered * 3,
+        ),
       ),
     );
   }
@@ -182,6 +186,7 @@ Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = f
 
   final Widget image = path != null
       ? ExtendedImage.file(
+          key: ValueKey(path), 
           File(path),
           width: size,
           height: size,

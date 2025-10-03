@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/user_model.dart';
 import 'profile_screen.dart';
 
@@ -66,20 +69,61 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
     setState(() => isEditing = false);
     focusNode.unfocus();
   }
-
-  /// Pick and save a new profile photo
-  void pickNewProfilePhoto() async {
-    final croppedPhoto = await MediaHandler.pickImage(isProfilePicture: true);
-    if (croppedPhoto == null) return;
-
-    final user = ref.read(userController);
-    if (user != null) {
-      final updated = user.copyWith(profilePhotoPath: croppedPhoto.path);
-      await ref.read(userController.notifier).updateUser(updated);
-       _precacheProfileImage(croppedPhoto.path);
-    }
-    Navigator.pop(context.mounted ? context : navigatorKey.currentContext!);
+  
+Future<void> pickNewProfilePhoto() async {
+  final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
+  if (pickedMedia == null) {
+    print("❌ No media selected");
+    return;
   }
+
+  print("📷 Picked media: ${pickedMedia.path}");
+
+  final currentUser = ref.read(userController);
+  print("💳 Current User: ${currentUser.toString()}");
+  if (currentUser == null) return;
+
+  // Check if this media already exists in DB by path
+  final existingMedia = await IsarDatabase.isar.medias
+      .filter()
+      .pathEqualTo(pickedMedia.path)
+      .findFirst();
+  final mediaToUse = existingMedia ?? pickedMedia;
+
+  // Persist only if it's new
+  if (existingMedia == null) {
+    await IsarDatabase.isar.writeTxn(() async {
+      await IsarDatabase.isar.medias.put(mediaToUse);
+    });
+  }
+
+  // Always re-fetch the managed User from Isar
+  final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
+  print("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
+
+  if (managedUser == null) return;
+
+  // Update user with new profile photo
+  await IsarDatabase.isar.writeTxn(() async {
+    managedUser.profilePhotoPath = mediaToUse.path;
+    await IsarDatabase.isar.users.put(managedUser);
+  });
+
+  // Update state in provider
+  await ref.read(userController.notifier).updateUser(managedUser);
+
+  // Precache image
+  _precacheProfileImage(mediaToUse.path);
+
+  // Close the sheet/dialog
+  if (context.mounted) {
+    Navigator.pop(context);
+  } else {
+    final navCtx = navigatorKey.currentContext;
+    if (navCtx != null) Navigator.pop(navCtx);
+  }
+}
+
 
   void _precacheProfileImage(String? path) {
     if (path == null) return;

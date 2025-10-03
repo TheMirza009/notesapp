@@ -13,7 +13,7 @@ bool kisWindows = Platform.isWindows;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await IsarDatabase.init();
-
+  await IsarDatabase.loadUserData();
   // Lock orientation in portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
