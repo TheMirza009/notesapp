@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:ui';
+
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,11 +9,12 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
+import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
-
+import 'package:photo_view/photo_view.dart';
 import 'profile_screen_state.dart'; // import the state class
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -25,11 +30,14 @@ class ProfileScreenState extends ProfileScreenBaseState {
   Widget build(BuildContext context) {
     final screensize = MediaQuery.sizeOf(context);
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final backgroundGradient =
-        isLight ? Gradients.lightBackground : Gradients.darkBackground;
-    final dividerColor =
-        isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+    final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+    const Color darkPrimary = Color(0xFF81D3DF);
+    final user = ref.watch(userController);
+    final Color shareColor = user?.profilePhotoPath == null ? ThemeConstants.iconColorNeutral : darkPrimary;
 
+    titleController.text = ref.watch(userController)?.name ?? "Loading..."; 
+    print("Profile Screen built");
     return PullDownWrapper(
       child: Scaffold(
         extendBodyBehindAppBar: true,
@@ -61,18 +69,31 @@ class ProfileScreenState extends ProfileScreenBaseState {
               const SizedBox(height: 75),
               HeroWrapper(
                 tag: "profile-avatar",
-                defaultChild: Image.asset(
-                  height: context.screenHeight / 4,
-                  context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-                  fit: BoxFit.contain,
-                ),
-                expandedChild: Image.asset(
-                  context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-                  fit: BoxFit.contain,
-                ),
-                bottomWidget: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Back"),
+                defaultChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: false),
+                expandedChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: true),
+                bottomWidget: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Row(
+                    spacing: 10,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // TextButton.icon(
+                      //   icon: Icon(Icons.arrow_back_rounded),
+                      //   onPressed: () => Navigator.pop(context),
+                      //   label: const Text("Back"),
+                      // ),
+                      TextButton.icon(
+                        icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
+                        onPressed: () => pickNewProfilePhoto(),
+                        label: const Text("Upload", style: TextStyle(color: darkPrimary),),
+                      ),
+                      TextButton.icon(
+                        icon: vectorBuild(IconPaths.shareIcon, color:  shareColor),
+                        onPressed: () {print(Theme.of(context).colorScheme.primary);}, // () => Navigator.pop(context),
+                        label: Text("Share", style: TextStyle(color: shareColor),),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -127,4 +148,54 @@ class ProfileScreenState extends ProfileScreenBaseState {
       ),
     );
   }
+}
+
+Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = false}) {
+  if (expanded) {
+    final double availableHeight = context.screenHeight - 120; // leave space for buttons
+
+    return SizedBox(
+      height: availableHeight,
+      width: context.screenWidth,
+      child: PhotoView(
+        gestureDetectorBehavior: HitTestBehavior.opaque,
+        imageProvider: path != null
+            ? FileImage(File(path))
+            : AssetImage(
+                context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+              ) as ImageProvider,
+        backgroundDecoration: const BoxDecoration(color: Colors.transparent),
+        minScale: PhotoViewComputedScale.contained, // can zoom out to fit
+        initialScale: PhotoViewComputedScale.contained, // start fitting inside
+        maxScale: PhotoViewComputedScale.covered * 3,
+      ),
+    );
+  }
+
+  // Default (small avatar) -> circle clipped
+  final double size = context.screenHeight / 4;
+
+  final Widget image = path != null
+      ? ExtendedImage.file(
+          File(path),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          cacheRawData: true,
+        )
+      : Image.asset(
+          context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        );
+
+  return Container(
+    height: size,
+    width: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: image);
 }

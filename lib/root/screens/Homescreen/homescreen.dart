@@ -9,6 +9,7 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
@@ -37,9 +38,15 @@ class Homescreen extends ConsumerStatefulWidget {
 class _HomescreenState extends ConsumerState<Homescreen> {
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
-    bool isSliding = false;
+  bool isSliding = false;
 
-    @override
+  @override 
+  void initState() {
+    super.initState();
+    ref.read(userController.notifier).loadUser();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -123,24 +130,37 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       }
     }
 
-    Widget circularAvatar() => CustomIconButton(
-      size: 40,
-      backgroundColor: Colors.transparent,
-      splashColor: const Color.fromARGB(144, 164, 182, 191),
-      icon: ClipRRect(
-        borderRadius: BorderRadiusGeometry.circular(100),
+    Widget circularAvatar() {
+  final String? path = ref.watch(userController)?.profilePhotoPath;
+
+  return CustomIconButton(
+    size: 40,
+    backgroundColor: Colors.transparent,
+    splashColor: const Color.fromARGB(144, 164, 182, 191),
+    icon: ClipOval(
+      child: SizedBox(
+        width: 40,  // make it square
+        height: 40, // make it square
         child: Transform.scale(
           scale: 0.94,
-          child: Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark),
+          child: path != null
+              ? Image.file(
+                  File(path),
+                  fit: BoxFit.cover, // make it fill the circle
+                )
+              : Image.asset(
+                  isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+                  fit: BoxFit.cover,
+                ),
         ),
       ),
-      onPressed: () {
-        // ref.read(themeNotifierProvider.notifier).toggleTheme();
-        setState(() {
-            isSliding = true;
-          });
-      },
-    );
+    ),
+    onPressed: () {
+      setState(() => isSliding = true);
+    },
+  );
+}
+
     // Widget circularAvatar() => SizedBox(
     //   height: 40,
     //   width: 40,

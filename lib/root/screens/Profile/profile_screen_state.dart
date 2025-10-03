@@ -1,23 +1,41 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/core/controllers/user_provider.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/models/user_model.dart';
 import 'profile_screen.dart';
 
-/// Base state class that holds all the logic and state
+/// Base state class that holds UI logic but delegates data to UserController
 abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
   late TextEditingController titleController;
   late FocusNode focusNode;
   bool isEditing = false;
-  String name = "Name";
 
-  @override
+    @override
   void initState() {
     super.initState();
     focusNode = FocusNode();
-    titleController = TextEditingController(text: name);
-    loadUserData();
+    titleController = TextEditingController();
+    final user = ref.read(userController);
+    if (user?.profilePhotoPath != null) {
+    _precacheProfileImage(user!.profilePhotoPath);
+    }
   }
+
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+
+  //   // Move ref.listen here (allowed in lifecycle after initState)
+  //   ref.listen<User?>(userController, (prev, next) {
+  //     if (next != null && next.name != titleController.text && !isEditing) {
+  //       titleController.text = next.name;
+  //     }
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -26,25 +44,9 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
     super.dispose();
   }
 
-  void loadUserData() async {
-    final User? userData = await IsarDatabase.loadUserData();
-    setState(() {
-      name = userData?.name ?? "name";
-      titleController.text = name;
-    });
-  }
-
-  void saveUserData() async {
-    final User currentUser = User()
-    ..isarID = 0
-    ..name = name;
-    await IsarDatabase.isar.writeTxn(() async {
-      await IsarDatabase.isar.users.put(currentUser);
-    });
-  }
-
+  /// Start editing the name field
   void startEditing() {
-    isEditing = true;
+    setState(() => isEditing = true);
     Future.delayed(Duration.zero, () {
       focusNode.requestFocus();
       titleController.selection = TextSelection.fromPosition(
@@ -53,11 +55,47 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
     });
   }
 
+  /// Finish editing and update user data
   void finishEditing() {
     final newText = titleController.text.trim();
-    name = newText;
-    isEditing = false;
+    final user = ref.read(userController);
+    if (user != null) {
+      final updated = user.copyWith(name: newText);
+      ref.read(userController.notifier).updateUser(updated);
+    }
+    setState(() => isEditing = false);
     focusNode.unfocus();
-    saveUserData();
+  }
+
+  /// Pick and save a new profile photo
+  void pickNewProfilePhoto() async {
+    final croppedPhoto = await MediaHandler.pickImage(isProfilePicture: true);
+    if (croppedPhoto == null) return;
+
+    final user = ref.read(userController);
+    if (user != null) {
+      final updated = user.copyWith(profilePhotoPath: croppedPhoto.path);
+      await ref.read(userController.notifier).updateUser(updated);
+       _precacheProfileImage(croppedPhoto.path);
+    }
+    Navigator.pop(context.mounted ? context : navigatorKey.currentContext!);
+  }
+
+  void _precacheProfileImage(String? path) {
+    if (path == null) return;
+
+    // Wrap in try/catch in case file doesn't exist yet
+    try {
+      precacheImage(FileImage(File(path)), context);
+    } catch (e) {
+      debugPrint('Error precaching profile image: $e');
+    }
+  }
+
+
+  void removeProfilePhoto() {
+    final user = ref.read(userController);
+    final removedUser = user!.copyWith(profilePhotoPath: null);
+    ref.read(userController.notifier).updateUser(removedUser);
   }
 }

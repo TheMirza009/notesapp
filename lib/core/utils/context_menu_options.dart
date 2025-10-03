@@ -32,10 +32,10 @@ Widget buildOptionTile({
 }
 
 /// Helper: SVG icon with default theme color
-Widget vectorBuild(String svgPath, {double? scale}) {
+Widget vectorBuild(String svgPath, {double? scale, Color? color}) {
   Widget svg = SvgPicture.string(
     svgPath,
-    color: ThemeConstants.iconColorNeutral,
+    color: color ?? ThemeConstants.iconColorNeutral,
   );
 
   if (scale != null) {
