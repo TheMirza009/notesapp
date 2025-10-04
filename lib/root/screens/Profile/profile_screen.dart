@@ -103,52 +103,9 @@ class ProfileScreenState extends ProfileScreenBaseState {
                     ),
                   ),
                 ),
-                Container(
-                  margin: const EdgeInsets.all(30),
-                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-                  decoration: BoxDecoration(
-                    border: Border.all(width: 1.5, color: dividerColor),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 5.0, right: 20),
-                        child: vectorBuild(IconPaths.userHUGE),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          focusNode: focusNode,
-                          enableInteractiveSelection: isEditing,
-                          controller: titleController,
-                          autofocus: isEditing,
-                          readOnly: !isEditing,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isCollapsed: true,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 21.5,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(isEditing ? Icons.check : Icons.edit),
-                        onPressed: () {
-                          if (isEditing) {
-                            finishEditing();
-                            setState(() {});
-                          } else {
-                            startEditing();
-                            setState(() {});
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 50),
+                // nameBuilderBordered(),
+                nameBuilderSimple(),
+                // SizedBox(height: 50),
                 TileContainer.solidBox(
                   backgroundColor: Colors.transparent,
                   dividerColor: context.isLight ? dividerColor : null,

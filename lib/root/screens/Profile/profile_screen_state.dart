@@ -1,5 +1,9 @@
 import 'dart:io';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:notesapp/core/Theme/icon_paths.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -180,4 +184,121 @@ Future<void> pickNewProfilePhoto() async {
     );
   }
   }
+
+  
+Widget nameBuilderSimple() {
+  const Color darkPrimary = Color(0xFF81D3DF);
+  return Padding(
+    padding: const EdgeInsets.only(top: 8.0, bottom: 16),
+    child: Center(
+      child: Transform.translate(
+        offset: Offset(22, 0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: context.screenWidth - 100),
+              child: IntrinsicWidth(
+                child: TextField(
+                  focusNode: focusNode,
+                  enableInteractiveSelection: isEditing,
+                  controller: titleController,
+                  autofocus: isEditing,
+                  readOnly: !isEditing,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isCollapsed: true,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 21.5,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              icon:
+                  !isEditing
+                      ? vectorBuild(
+                        IconPaths.pencil,
+                        color:
+                            context.isDark
+                                ? ThemeConstants.circleIconBackgroundLight
+                                : ThemeConstants.darkIconbackground,
+                      )
+                      : vectorBuild(
+                        IconPaths.tick,
+                        scale: 1.2,
+                        color:
+                            context.isDark
+                                ? darkPrimary
+                                : ThemeConstants.sinisterSeed,
+                      ),
+              onPressed: () {
+                if (isEditing) {
+                  finishEditing();
+                  setState(() {});
+                } else {
+                  startEditing();
+                  setState(() {});
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+  
+Widget nameBuilderBordered(){
+  final dividerColor = navigatorKey.currentContext!.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+  return Container(
+    margin: const EdgeInsets.all(30),
+    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
+    decoration: BoxDecoration(
+      border: Border.all(width: 1.5, color: dividerColor),
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 5.0, right: 20),
+          child: vectorBuild(IconPaths.userHUGE),
+        ),
+        Expanded(
+          child: TextField(
+            focusNode: focusNode,
+            enableInteractiveSelection: isEditing,
+            controller: titleController,
+            autofocus: isEditing,
+            readOnly: !isEditing,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isCollapsed: true,
+            ),
+            style: const TextStyle(
+              fontSize: 21.5,
+              fontWeight: FontWeight.w300,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: Icon(isEditing ? Icons.check : Icons.edit),
+          onPressed: () {
+            if (isEditing) {
+              finishEditing();
+              setState(() {});
+            } else {
+              startEditing();
+              setState(() {});
+            }
+          },
+        ),
+      ],
+    ),
+  );
+}
 }
