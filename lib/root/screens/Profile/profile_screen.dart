@@ -14,6 +14,7 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
+import 'package:notesapp/root/screens/Profile/widgets/tile_container.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
 import 'package:photo_view/photo_view.dart';
 import 'profile_screen_state.dart'; // import the state class
@@ -148,7 +149,19 @@ class ProfileScreenState extends ProfileScreenBaseState {
                   ),
                 ),
                 SizedBox(height: 50),
-                buildOptionsColumn(),
+                TileContainer.solidBox(
+                  backgroundColor: Colors.transparent,
+                  tilePadding: EdgeInsets.symmetric(vertical: 10),
+                  iconPadding: EdgeInsets.only(left: 20, right: 12),
+                  borderRadius: 25,
+                  borderThickness: 2,
+                  dividerThickness: 2,
+                  items: [
+                    TileItem(title: "Settings", icon: Icon(Icons.settings), onTap: navigateToSettings),
+                    TileItem(title: "Refer a friend", icon: Icon(Icons.tune_rounded), onTap: () async => await refer()),
+                    TileItem(title: "Contact us", icon: Icon(Icons.mail_outline_outlined), onTap: () async => await contactUs()),
+                  ],
+                ),
               ],
             ),
           ),
@@ -162,21 +175,22 @@ Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = f
   if (expanded) {
     final double availableHeight = context.screenHeight - 200; // leave space for buttons
 
-    return IntrinsicHeight(
-      child: SizedBox(
-        height: availableHeight,
-        width: context.screenWidth,
-        child: PhotoView(
-          gestureDetectorBehavior: HitTestBehavior.opaque,
-          imageProvider: path != null
-              ? FileImage(File(path))
-              : AssetImage(
-                  context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
-                ) as ImageProvider,
-          minScale: PhotoViewComputedScale.contained, // can zoom out to fit
-          initialScale: PhotoViewComputedScale.contained, // start fitting inside
-          maxScale: PhotoViewComputedScale.covered * 3,
-        ),
+    return SizedBox(
+      height: availableHeight,
+      width: context.screenWidth,
+      child: PhotoView(
+        gestureDetectorBehavior: HitTestBehavior.opaque,
+        imageProvider: path != null
+            ? FileImage(File(path))
+            : AssetImage(
+                context.isLight ? IconPaths.avatarLight : IconPaths.avatarDark,
+              ) as ImageProvider,
+        minScale: PhotoViewComputedScale.contained, // can zoom out to fit
+        initialScale: PhotoViewComputedScale.contained, // start fitting inside
+        maxScale: PhotoViewComputedScale.covered * 3,
+        tightMode: true,
+        disableGestures: false,
+        backgroundDecoration: BoxDecoration(color: Colors.transparent),
       ),
     );
   }
@@ -209,71 +223,77 @@ Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = f
     clipBehavior: Clip.antiAlias,
     child: image);
 }
+
 Widget buildOptionsColumn() {
   final context = navigatorKey.currentContext!;
-  final dividerColor = context.isLight
-      ? ThemeConstants.homeDividerLight
-      : ThemeConstants.darkIconBorder;
+  final isLight = context.isLight;
 
-  BorderRadius _radius({bool top = false, bool bottom = false}) {
-    return BorderRadius.only(
-      topLeft: top ? const Radius.circular(25) : Radius.circular(8),
-      topRight: top ? const Radius.circular(25) : Radius.circular(8),
-      bottomLeft: bottom ? const Radius.circular(25) : Radius.circular(8),
-      bottomRight: bottom ? const Radius.circular(25) : Radius.circular(8),
-    );
-  }
+  const lightBG = Color.fromARGB(255, 228, 239, 240);
+  const darkBG = Color.fromARGB(255, 34, 52, 65);
+
+  final backgroundColor = isLight ? lightBG : darkBG;
+  final dividerColor = isLight
+      ? ThemeConstants.homeDividerLight.withValues(alpha: 0.3)
+      : ThemeConstants.homeDividerLight.withValues(alpha: 0.2);
 
   Widget _buildTile({
     required String title,
     required IconData icon,
-    bool top = false,
-    bool bottom = false,
     VoidCallback? onTap,
   }) {
-    return ClipRRect(
-      borderRadius: _radius(top: top, bottom: bottom),
-      child: Material(
-        color: dividerColor,
-        child: ListTile(
-          contentPadding: EdgeInsets.all(8),
-          leading: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Icon(icon),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w200),
-          ),
-          onTap: onTap,
-        ),
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Icon(icon),
       ),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w200),
+      ),
+      onTap: onTap,
     );
   }
 
   return Container(
     width: context.screenWidth - 70,
+    decoration: ShapeDecoration(
+      color: backgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: BorderSide(color: dividerColor, width: 1.5),
+      ),
+    ),
     child: Column(
-      spacing: 0.5,
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildTile(
           title: "Settings",
           icon: Icons.settings,
-          top: true,
           onTap: () => print("Tapped Settings 1"),
         ),
-        const SizedBox(height: 2),
+        Divider(
+          height: 1,
+          thickness: 1.5,
+          color: dividerColor,
+          indent: 15,
+          endIndent: 15,
+        ),
         _buildTile(
           title: "Refer a friend",
           icon: Icons.tune_rounded,
           onTap: () => print("Tapped Settings 2"),
         ),
-        const SizedBox(height: 2),
+        Divider(
+          height: 1,
+          thickness: 1.5,
+          color: dividerColor,
+          indent: 15,
+          endIndent: 15,
+        ),
         _buildTile(
           title: "Contact us",
           icon: Icons.mail_outline_outlined,
-          bottom: true,
           onTap: () => print("Tapped Settings 3"),
         ),
       ],

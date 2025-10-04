@@ -1,5 +1,9 @@
 import 'dart:io';
-
+import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -9,6 +13,8 @@ import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/user_model.dart';
+import 'package:notesapp/root/screens/Settings/settings_screen.dart';
+import 'package:share_plus/share_plus.dart';
 import 'profile_screen.dart';
 
 /// Base state class that holds UI logic but delegates data to UserController
@@ -141,5 +147,37 @@ Future<void> pickNewProfilePhoto() async {
     final user = ref.read(userController);
     final removedUser = user!.copyWith(profilePhotoPath: null);
     ref.read(userController.notifier).updateUser(removedUser);
+  }
+
+  /// Menu callbacks
+  Future<void> navigateToSettings() async {
+    Navigator.push(context, CupertinoPageRoute(builder: (_) => SettingsScreen()));
+  }
+
+  Future<void> refer() async {
+    await Share.share("Download NotesApp please :D");
+  }
+
+  Future<void> contactUs() async {
+  final Uri emailUri = Uri(
+    scheme: 'mailto',
+    path: 'themirza009@outlook.com',
+    query: Uri.encodeFull('subject=Greetings&body=Good Day, Mirza AbdulMoeed'),
+  );
+
+  if (await canLaunchUrl(emailUri)) {
+    await launchUrl(emailUri);
+  } else {
+    showCupertinoDialog(
+      context: navigatorKey.currentContext!,
+      builder: (_) => CustomAlertDialog(
+        title: "Error",
+        content: "Failed to open email app.",
+        iconColor: Colors.redAccent,
+        iconData: Mdi.error,
+        iconSize: 25,
+      ),
+    );
+  }
   }
 }
