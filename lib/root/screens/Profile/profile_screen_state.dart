@@ -189,7 +189,7 @@ Future<void> pickNewProfilePhoto() async {
 Widget nameBuilderSimple() {
   const Color darkPrimary = Color(0xFF81D3DF);
   return Padding(
-    padding: const EdgeInsets.only(top: 8.0, bottom: 16),
+    padding: const EdgeInsets.only(top: 8.0, bottom: 26),
     child: Center(
       child: Transform.translate(
         offset: Offset(22, 0),

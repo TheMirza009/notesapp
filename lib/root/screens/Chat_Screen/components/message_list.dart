@@ -14,6 +14,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_bubble.dart';
+import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
@@ -70,6 +71,7 @@ class _MessageItemBuilder extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final message = ref.watch(messageProvider);
+    final bubbleStyle = ref.watch(settingsController)?.selectedBubbleStyle ?? BubbleStyle.opaque;
 
     if (message == null) {
       return const SizedBox.shrink(); // Message got deleted -> don't render
@@ -95,7 +97,7 @@ class _MessageItemBuilder extends ConsumerWidget {
         if (info.showDateChip) DateChip(message.time),
         RepaintBoundary(
           child: MessageBubble(
-            style: BubbleStyle.opaque,
+            style: bubbleStyle,
             message: message,
             isSelecting: isSelecting,
             isSelected: isSelected,

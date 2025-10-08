@@ -16,6 +16,7 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/widgets/tile_container.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
+import 'package:notesapp/root/widgets/theme_switch.dart';
 import 'package:photo_view/photo_view.dart';
 import 'profile_screen_state.dart'; // import the state class
 
@@ -53,13 +54,7 @@ class ProfileScreenState extends ProfileScreenBaseState {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
           ),
           actions: [
-            IconButton(
-              icon: Icon(
-                isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-              ),
-              onPressed:
-                  () => ref.read(themeNotifierProvider.notifier).toggleTheme(),
-            ),
+            ThemeSwitch()
           ],
         ),
         body: Container(

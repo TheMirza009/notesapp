@@ -22,23 +22,18 @@ const MessageSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'isSelected': PropertySchema(
-      id: 1,
-      name: r'isSelected',
-      type: IsarType.bool,
-    ),
     r'isSender': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'isSender',
       type: IsarType.bool,
     ),
     r'text': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'text',
       type: IsarType.string,
     ),
     r'time': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'time',
       type: IsarType.dateTime,
     )
@@ -95,10 +90,9 @@ void _messageSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.id);
-  writer.writeBool(offsets[1], object.isSelected);
-  writer.writeBool(offsets[2], object.isSender);
-  writer.writeString(offsets[3], object.text);
-  writer.writeDateTime(offsets[4], object.time);
+  writer.writeBool(offsets[1], object.isSender);
+  writer.writeString(offsets[2], object.text);
+  writer.writeDateTime(offsets[3], object.time);
 }
 
 Message _messageDeserialize(
@@ -109,11 +103,10 @@ Message _messageDeserialize(
 ) {
   final object = Message();
   object.id = reader.readString(offsets[0]);
-  object.isSelected = reader.readBool(offsets[1]);
-  object.isSender = reader.readBool(offsets[2]);
+  object.isSender = reader.readBool(offsets[1]);
   object.isarId = id;
-  object.text = reader.readString(offsets[3]);
-  object.time = reader.readDateTime(offsets[4]);
+  object.text = reader.readString(offsets[2]);
+  object.time = reader.readDateTime(offsets[3]);
   return object;
 }
 
@@ -129,10 +122,8 @@ P _messageDeserializeProp<P>(
     case 1:
       return (reader.readBool(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
-    case 3:
       return (reader.readString(offset)) as P;
-    case 4:
+    case 3:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -358,16 +349,6 @@ extension MessageQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'id',
         value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Message, Message, QAfterFilterCondition> isSelectedEqualTo(
-      bool value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isSelected',
-        value: value,
       ));
     });
   }
@@ -677,18 +658,6 @@ extension MessageQuerySortBy on QueryBuilder<Message, Message, QSortBy> {
     });
   }
 
-  QueryBuilder<Message, Message, QAfterSortBy> sortByIsSelected() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isSelected', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Message, Message, QAfterSortBy> sortByIsSelectedDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isSelected', Sort.desc);
-    });
-  }
-
   QueryBuilder<Message, Message, QAfterSortBy> sortByIsSender() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSender', Sort.asc);
@@ -737,18 +706,6 @@ extension MessageQuerySortThenBy
   QueryBuilder<Message, Message, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Message, Message, QAfterSortBy> thenByIsSelected() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isSelected', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Message, Message, QAfterSortBy> thenByIsSelectedDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isSelected', Sort.desc);
     });
   }
 
@@ -810,12 +767,6 @@ extension MessageQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Message, Message, QDistinct> distinctByIsSelected() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isSelected');
-    });
-  }
-
   QueryBuilder<Message, Message, QDistinct> distinctByIsSender() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSender');
@@ -847,12 +798,6 @@ extension MessageQueryProperty
   QueryBuilder<Message, String, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
-    });
-  }
-
-  QueryBuilder<Message, bool, QQueryOperations> isSelectedProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isSelected');
     });
   }
 

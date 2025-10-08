@@ -70,6 +70,10 @@ dependencies:
   extended_image: ^10.0.1
   typeset: ^2.3.0
   url_launcher: ^6.3.2
+  camera: ^0.11.2
+  color_filter_extension: ^1.0.1
+  voice_message_package: ^2.2.1
+  record: ^6.1.2
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +93,9 @@ dev_dependencies:
   isar_flutter_libs: ^3.1.0+1
 
 dependency_overrides:
+  http: ^1.2.0
+  uuid: ^4.5.1
+  intl: ^0.20.2
   isar_flutter_libs:
     path: plugins/isar_flutter_libs
 

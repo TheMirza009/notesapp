@@ -65,7 +65,6 @@ class Chat {
         Message()
           ..text = "This is a new chat. Start typing to create your first note."
           ..isSender = false
-          ..isSelected = false
           ..time = DateTime.now();
 
     chat.messages.add(firstMessage);

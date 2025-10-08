@@ -52,6 +52,18 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
       state = _lightTheme;
     }
   }
+
+  void setDarkTheme() {
+    state = _darkTheme;
+  }
+
+  void setLightTheme() {
+    state = _lightTheme;
+  }
+
+  void setSystemDefaultTheme() {
+    state = _initialTheme;
+  }
 }
 
 final themeNotifierProvider = StateNotifierProvider<ThemeNotifier, ThemeData>((ref) => ThemeNotifier());

@@ -4,6 +4,7 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/bottom_message_bar_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/chat_appbar_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/chat_searchbar.dart';
@@ -31,7 +32,7 @@ class ChatScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // final notifier = ref.read(chatMessagesController.notifier);
     final notifier = ref.read(chatStateController.notifier);
-    final canPop = ref.watch( chatStateController.select((s) => !s.isSearching && !s.showEmojis));
+    final canPop = ref.watch( chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && !ref.watch(overlayControllerProvider);
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     final newChat = ref.read(isNewChat);
     debugPrint("🔃 ChatScreen rebuilt");
@@ -64,6 +65,7 @@ class ChatScreen extends ConsumerWidget {
         notifier.unSelectAllMessages();
         notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
+        ref.read(overlayControllerProvider.notifier).close();
       },
       child: GestureDetector(
         onTap: () {
@@ -72,6 +74,7 @@ class ChatScreen extends ConsumerWidget {
           notifier.keyboardFocusNode.unfocus();
           notifier.hideEmojiPicker();
           notifier.unSelectAllMessages();
+          ref.read(overlayControllerProvider.notifier).close();
         },
         child: Scaffold(
           backgroundColor: Colors.transparent,

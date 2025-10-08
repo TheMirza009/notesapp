@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
@@ -41,7 +43,7 @@ class MediaHandler {
       }
     }
 
-    final savedFile = await _saveToStorage(
+    final savedFile = await saveToStorage(
       file,
       isProfilePicture ? 'Profile Pictures' : 'Photos',
     );
@@ -99,7 +101,7 @@ class MediaHandler {
     }
 
     // Save to storage folder
-    final savedFile = await _saveToStorage(
+    final savedFile = await saveToStorage(
       file,
       isProfilePicture ? 'Profile Pictures' : 'Photos',
     );
@@ -126,7 +128,7 @@ class MediaHandler {
   static Future<Media?> pickVideo() async {
     final XFile? pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile == null) return null;
-    final savedFile = await _saveToStorage(File(pickedFile.path), 'Videos');
+    final savedFile = await saveToStorage(File(pickedFile.path), 'Videos');
     return Media.fromFilePath(savedFile.path);
   }
 
@@ -139,7 +141,29 @@ class MediaHandler {
     if (result == null || result.files.single.path == null) return null;
 
     final file = File(result.files.single.path!);
-    final savedFile = await _saveToStorage(file, 'Documents');
+    final savedFile = await saveToStorage(file, 'Documents');
+    return Media.fromFilePath(savedFile.path);
+  }
+
+  /// Pick Audio -> save to Media/Audio
+  static Future<Media?> pickAudio() async {
+    final audioPath = await Recorder().stopRecording();
+    if (audioPath == null) return null;
+
+    final savedFile = await saveToStorage(File(audioPath), 'Audio');
+    return Media.fromFilePath(savedFile.path);
+  }
+
+  /// Save recorded Audio
+  static Future<Media?> saveAudio() async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+    );
+
+    if (result == null || result.files.single.path == null) return null;
+
+    final file = File(result.files.single.path!);
+    final savedFile = await saveToStorage(file, 'Audio');
     return Media.fromFilePath(savedFile.path);
   }
 
@@ -186,19 +210,56 @@ class MediaHandler {
   }
 
   /// Save file into app storage under Media/<subfolder>/
-  static Future<File> _saveToStorage(File file, String subfolder) async {
+  static Future<File> saveToStorage(
+    File file,
+    String subfolder, {
+    String baseFolder = 'Media',
+  }) async {
     final Directory appDir = await getApplicationDocumentsDirectory();
-    final Directory mediaDir = Directory('${appDir.path}/Media/$subfolder');
+    final Directory targetDir = Directory(
+      '${appDir.path}/$baseFolder/$subfolder',
+    );
 
-    if (!await mediaDir.exists()) {
-      await mediaDir.create(recursive: true);
+    if (!await targetDir.exists()) {
+      await targetDir.create(recursive: true);
     }
 
     final String fileName = file.uri.pathSegments.last;
-    final String newPath = '${mediaDir.path}/$fileName';
+    final String newPath = '${targetDir.path}/$fileName';
 
     return file.copy(newPath);
   }
+
+  // static Future<File> saveTemporary(
+  //   File file, {
+  //   String baseFolder = 'Media',
+  // }) async {
+  //   final Directory appDir = await getApplicationDocumentsDirectory();
+  //   final Directory targetDir = Directory(
+  //     '${appDir.path}/$baseFolder/temporary',
+  //   );
+
+  //   if (!await targetDir.exists()) {
+  //     await targetDir.create(recursive: true);
+  //   }
+
+  //   final String fileName = file.uri.pathSegments.last;
+  //   final String newPath = '${targetDir.path}/$fileName';
+
+  //   return file.copy(newPath);
+  // }
+
+  // static Future<String> getTemporaryDirectoryPath() async {
+  //   final Directory appDir = await getApplicationDocumentsDirectory();
+  //   final Directory targetDir = Directory(
+  //     '${appDir.path}/Media/temporary',
+  //   );
+
+  //   if (!await targetDir.exists()) {
+  //     await targetDir.create(recursive: true);
+  //   }
+  //   return targetDir.path;
+  // }
 
   /// (Optional) Compress image before saving (stub)
   static Future<File?> _compressImage(File file) async {

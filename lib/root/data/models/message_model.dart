@@ -13,7 +13,6 @@ class Message {
   late String text;
   late DateTime time;
   late bool isSender;
-  late bool isSelected;
 
   IsarLink<Media> media = IsarLink<Media>();
   IsarLink<Message> replyingTo = IsarLink<Message>();
@@ -26,7 +25,6 @@ class Message {
     text = "";
     time = DateTime.now();
     isSender = true;
-    isSelected = false;
   }
 
   Message copyWith({
@@ -34,7 +32,6 @@ class Message {
     String? text,
     DateTime? time,
     bool? isSender,
-    bool? isSelected,
     Media? media,
     Message? replyingTo,
   }) {
@@ -42,8 +39,7 @@ class Message {
       ..id = id ?? this.id
       ..text = text ?? this.text
       ..time = time ?? this.time
-      ..isSender = isSender ?? this.isSender
-      ..isSelected = isSelected ?? this.isSelected;
+      ..isSender = isSender ?? this.isSender;
 
     // Copy media link
     if (media != null) {

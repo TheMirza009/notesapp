@@ -52,34 +52,34 @@ extension MessageListX on List<Message> {
     return updateMessageById(id, (message) => message.copyWith(isSender: !message.isSender));
   }
 
-  List<Message> selectMessageByID(String id) {
-    return updateMessageById(id, (message) => message.copyWith(isSelected: true));
-  }
+  // List<Message> selectMessageByID(String id) {
+  //   return updateMessageById(id, (message) => message.copyWith(isSelected: true));
+  // }
 
-  List<Message> unselectMessageByID(String id) {
-    return updateMessageById(id, (message) => message.copyWith(isSelected: false));
-  }
+  // List<Message> unselectMessageByID(String id) {
+  //   return updateMessageById(id, (message) => message.copyWith(isSelected: false));
+  // }
 
-  List<Message> updateSelectedMessages(Message Function(Message) update) {
-    return map((message) => message.isSelected ? update(message) : message).toList();
-  }
+  // List<Message> updateSelectedMessages(Message Function(Message) update) {
+  //   return map((message) => message.isSelected ? update(message) : message).toList();
+  // }
 
-  bool get allSelected => isNotEmpty && every((m) => m.isSelected);
-  bool get allUnselected => isNotEmpty && every((m) => !m.isSelected);
-  bool get partiallySelected => any((m) => m.isSelected) && !allSelected;
-  int get selectedCount => where((m) => m.isSelected).length;
+  // bool get allSelected => isNotEmpty && every((m) => m.isSelected);
+  // bool get allUnselected => isNotEmpty && every((m) => !m.isSelected);
+  // bool get partiallySelected => any((m) => m.isSelected) && !allSelected;
+  // int get selectedCount => where((m) => m.isSelected).length;
 
-  List<Message> deleteSelectedMessages() {
-    return where((message) => !message.isSelected).toList();
-  }
+  // List<Message> deleteSelectedMessages() {
+  //   return where((message) => !message.isSelected).toList();
+  // }
 
-  List<Message> selectAllMessages() {
-    return map((message) => message.copyWith(isSelected: true)).toList();
-  }
+  // List<Message> selectAllMessages() {
+  //   return map((message) => message.copyWith(isSelected: true)).toList();
+  // }
 
-  List<Message> unselectAll() {
-    return map((message) => message.copyWith(isSelected: false)).toList();
-  }
+  // List<Message> unselectAll() {
+  //   return map((message) => message.copyWith(isSelected: false)).toList();
+  // }
 
   List<Message> replaceMessage(Message newMessage) {
     return map((m) => m.id == newMessage.id ? newMessage : m).toList();

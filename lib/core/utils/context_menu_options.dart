@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
@@ -157,3 +158,47 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
     ),
   ),
 ];
+
+/// Options: Theme options
+List<PopupMenuItem<String>> get themeOptions => [
+  PopupMenuItem(
+    value: 'light',
+    child: buildOptionTile(
+      icon: Icon(Icons.light_mode_outlined),
+      text: "Light Mode",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'dark',
+    child: buildOptionTile(
+      icon: Icon(Icons.dark_mode_outlined),
+      text: "Dark Mode",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'systemDefault',
+    child: buildOptionTile(
+      icon: Icon(Icons.phone_android_outlined),
+      text: "System Default",
+    ),
+  ),
+];
+
+/// Options: Theme options
+List<PopupMenuItem<String>> get bubbleStyleOptions => [
+  PopupMenuItem(
+    value: 'opaque',
+    child: buildOptionTile(
+      icon: Icon(Icons.opacity),
+      text: "Opaque Style",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'glass',
+    child: buildOptionTile(
+      icon: Icon(CupertinoIcons.cube),
+      text: "Glass Style",
+    ),
+  ),
+];
+

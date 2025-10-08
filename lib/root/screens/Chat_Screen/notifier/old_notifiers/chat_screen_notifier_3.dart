@@ -236,69 +236,43 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   }
 
   /// Delete selected messages
-  Future<void> deleteSelected() async {
-    final selected = _allMessages.where((m) => m.isSelected).toList();
-    if (selected.isEmpty) return;
+  // Future<void> deleteSelected() async {
+  //   final selected = _allMessages.where((m) => m.isSelected).toList();
+  //   if (selected.isEmpty) return;
 
-    await _isar.writeTxn(() async {
-      for (final m in selected) {
-        await _isar.messages.delete(m.isarId);
-        if (_chat != null) {
-          _chat!.messages.remove(m);
-        }
+  //   await _isar.writeTxn(() async {
+  //     for (final m in selected) {
+  //       await _isar.messages.delete(m.isarId);
+  //       if (_chat != null) {
+  //         _chat!.messages.remove(m);
+  //       }
 
-        // Handle media deletion (only if not reused elsewhere)
-        if (m.media.value != null && m.media.value!.type != Mediatype.text) {
-          final allMessages = await _isar.messages.where().findAll();
-          for (final msg in allMessages) {
-            await msg.media.load(); // ensure relation is loaded
-          }
-          final isUsedByMultiple = allMessages.hasDuplicateMediaPath(m);
-          if (!isUsedByMultiple) {
-            await MediaHandler.deleteMedia(m.media.value!);
-          }
-        }
-      }
+  //       // Handle media deletion (only if not reused elsewhere)
+  //       if (m.media.value != null && m.media.value!.type != Mediatype.text) {
+  //         final allMessages = await _isar.messages.where().findAll();
+  //         for (final msg in allMessages) {
+  //           await msg.media.load(); // ensure relation is loaded
+  //         }
+  //         final isUsedByMultiple = allMessages.hasDuplicateMediaPath(m);
+  //         if (!isUsedByMultiple) {
+  //           await MediaHandler.deleteMedia(m.media.value!);
+  //         }
+  //       }
+  //     }
 
-      if (_chat != null) {
-        await _chat!.messages.save();
-        await _isar.chats.put(_chat!);
-      }
-    });
+  //     if (_chat != null) {
+  //       await _chat!.messages.save();
+  //       await _isar.chats.put(_chat!);
+  //     }
+  //   });
 
-    // Update local collections
-    unSelectAllMessages();
-    _allMessages.removeWhere((m) => selected.contains(m));
-    state = [..._allMessages]; // refresh UI
-  }
+  //   // Update local collections
+  //   unSelectAllMessages();
+  //   _allMessages.removeWhere((m) => selected.contains(m));
+  //   state = [..._allMessages]; // refresh UI
+  // }
 
 
-  /// Select / unselect messages
-  void selectMessage(Message message) {
-    message.isSelected = true;
-    isSelecting = true;
-    state = [...state];
-  }
-
-  void unselectMessage(Message message) {
-    message.isSelected = false;
-    if (state.every((m) => !m.isSelected)) isSelecting = false;
-    state = [...state];
-  }
-
-  void unSelectAllMessages() {
-    for (var m in state) m.isSelected = false;
-    isSelecting = false;
-    state = [...state];
-  }
-
-  void selectAllMessages() {
-    for (var m in state) m.isSelected = true;
-    isSelecting = true;
-    state = [...state];
-  }
-
-  int selectCount() => state.where((m) => m.isSelected).length;
 
   /// Clears the selected chat
   void clearChat() async {
@@ -319,7 +293,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
     state = [...state];
   }
 
-  void clearAnchorMessage() {
+  Future<void> clearAnchorMessage() async {
     anchorMessage = null;
     keyboardFocusNode.unfocus();
     state = [...state];
@@ -495,31 +469,31 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
   }
 
   /// Context menu actions
-  void handleMessageMenuAction(String action, Message message) async {
-    switch (action) {
-      case 'deleteMessage':
-        deleteMessage(message);
-        isSelecting = false;
-        break;
-      case 'reply':
-        unSelectAllMessages();
-        setAnchorMessage(message);
-        break;
-      case 'copy':
-        Utils.copyToClipboard(message.text);
-        unSelectAllMessages();
-        break;
-      case 'toggleSender':
-        message.isSender = !message.isSender;
-        updateMessage(message);
-        unSelectAllMessages();
-        break;
-      case "share":
-        await Utils.shareToApps(XFile(message.media.value!.path!));
-        unSelectAllMessages();
-        break;
-    }
-  }
+  // void handleMessageMenuAction(String action, Message message) async {
+  //   switch (action) {
+  //     case 'deleteMessage':
+  //       deleteMessage(message);
+  //       isSelecting = false;
+  //       break;
+  //     case 'reply':
+  //       unSelectAllMessages();
+  //       setAnchorMessage(message);
+  //       break;
+  //     case 'copy':
+  //       Utils.copyToClipboard(message.text);
+  //       unSelectAllMessages();
+  //       break;
+  //     case 'toggleSender':
+  //       message.isSender = !message.isSender;
+  //       updateMessage(message);
+  //       unSelectAllMessages();
+  //       break;
+  //     case "share":
+  //       await Utils.shareToApps(XFile(message.media.value!.path!));
+  //       unSelectAllMessages();
+  //       break;
+  //   }
+  // }
 
   void handleChatScreenOptions(String action, Chat chat) {
     switch (action) {

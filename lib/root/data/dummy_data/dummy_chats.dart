@@ -12,13 +12,11 @@ final List<Chat> dummyChats = [
       Message()
         ..text = "Don't forget the deadline tomorrow!"
         ..time = DateTime(2025, 4, 9, 14, 30)
-        ..isSender = false
-        ..isSelected = false,
+        ..isSender = false,
       Message()
         ..text = "Sure, I'll send it by EOD."
         ..time = DateTime(2025, 4, 9, 15, 10)
-        ..isSender = true
-        ..isSelected = false,
+        ..isSender = true,
     ]),
   Chat()
     ..title = "Family Group"
@@ -29,13 +27,11 @@ final List<Chat> dummyChats = [
       Message()
         ..text = "Dinner at 8 PM tonight?"
         ..time = DateTime(2024, 4, 8, 18, 0)
-        ..isSender = false
-        ..isSelected = false,
+        ..isSender = false,
       Message()
         ..text = "Sounds good! I'll be there."
         ..time = DateTime(2025, 4, 8, 18, 15)
-        ..isSender = true
-        ..isSelected = false,
+        ..isSender = true,
     ]),
   Chat()
     ..title = "Travel Plans"
@@ -46,12 +42,10 @@ final List<Chat> dummyChats = [
       Message()
         ..text = "We need to finalize the itinerary."
         ..time = DateTime(2025, 4, 7, 10, 45)
-        ..isSender = false
-        ..isSelected = false,
+        ..isSender = false,
       Message()
         ..text = "I'll send you the draft itinerary tonight."
         ..time = DateTime(2025, 4, 7, 11, 30)
-        ..isSender = true
-        ..isSelected = false,
+        ..isSender = true,
     ]),
 ];

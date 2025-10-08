@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/data/models/settings_model.dart';
 import 'package:notesapp/root/data/models/user_model.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -13,7 +14,7 @@ class IsarDatabase {
     if (_isar != null && _isar!.isOpen) return;
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [ChatSchema, MessageSchema, MediaSchema, UserSchema],
+      [ChatSchema, MessageSchema, MediaSchema, UserSchema, SettingsSchema],
       directory: dir.path,
       name: 'chat_repo',
     );
@@ -31,6 +32,10 @@ class IsarDatabase {
   }
 
   static Future<User?> loadUserData() async {
+    return await isar.users.where().findFirst();
+  }
+
+  static Future<User?> loadSettings() async {
     return await isar.users.where().findFirst();
   }
 
@@ -68,7 +73,6 @@ static Future<Chat> addNewChat() async {
       ..id = "0000"
       ..text = "This is a new chat. Start typing to create your first note."
       ..isSender = false
-      ..isSelected = false
       ..time = DateTime.now();
 
     // Save both
