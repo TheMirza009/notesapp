@@ -7,6 +7,7 @@ class ChatState {
   final bool isSearching;
   final bool showEmojis;
   final bool isLoading;
+  final bool isRecording;
   final Message? anchorMessage;
 
   // Optimized message subsets
@@ -19,8 +20,9 @@ class ChatState {
   ChatState({
     this.messages = const [],
     this.isSearching = false,
-    this.showEmojis = false,
     this.isLoading = false,
+    this.isRecording = false,
+    this.showEmojis = false,
     this.anchorMessage,
     this.highlightedMessage,
     this.selectedMessages = const [],
@@ -32,6 +34,7 @@ class ChatState {
     bool? isSearching,
     bool? showEmojis,
     bool? isLoading,
+    bool? isRecording,
     Message? anchorMessage,
     Message? highlightedMessage,
     List<Message>? selectedMessages,
@@ -41,6 +44,7 @@ class ChatState {
       isSearching: isSearching ?? this.isSearching,
       showEmojis: showEmojis ?? this.showEmojis,
       isLoading: isLoading ?? this.isLoading,
+      isRecording: isRecording ?? this.isRecording,
       anchorMessage: anchorMessage,
       highlightedMessage: highlightedMessage,
       selectedMessages: selectedMessages ?? this.selectedMessages,

@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/ph.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/helpers/ripple_well.dart';
+
 
 /// A reusable reply bubble with ripple effect.
 /// Shows "reply-to" text and optional media preview.
@@ -82,7 +84,7 @@ class ReplyWrapper extends StatelessWidget {
                 ),
               ),
 
-              if (mediaPath != null) ...[
+              if (mediaPath != null && media?.type == Mediatype.image) ...[
                 const SizedBox(width: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(5),

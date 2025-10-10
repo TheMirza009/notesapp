@@ -423,7 +423,7 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_cache_manager:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_cache_manager
       sha256: "400b6592f16a4409a7f2bb929a9a7e38c72cceb8ffb99ee57bbf2cb2cecf8386"
@@ -736,7 +736,7 @@ packages:
     source: hosted
     version: "4.9.0"
   just_audio:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: just_audio
       sha256: f978d5b4ccea08f267dae0232ec5405c1b05d3f3cd63f82097ea46c015d5c09e
@@ -1293,7 +1293,7 @@ packages:
     source: hosted
     version: "25.2.7"
   syncfusion_flutter_sliders:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: syncfusion_flutter_sliders
       sha256: "842a452fd73fd61fbebbff72d726ffea4cdaacf088ca2738aeaf7f4454b3861e"
@@ -1476,14 +1476,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "15.0.0"
-  voice_message_package:
-    dependency: "direct main"
-    description:
-      name: voice_message_package
-      sha256: cd7a717751e60908d37624309c6995c1c62c1bab6b54f7d15c2d71289f0b0cb6
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.1"
   watcher:
     dependency: transitive
     description:

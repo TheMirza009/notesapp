@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:typeset/typeset.dart';
 
 class BottomMessageBar extends StatefulWidget {
@@ -132,9 +134,14 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
               builder: (context, value, child) {
                 final text = value.text.trim();
                 if (text.isEmpty) {
-                  return IconButton(
-                    onPressed: widget.onMicTap,
-                    icon: const Icon(Icons.mic, color: iconLight),
+                  return Consumer(
+                    builder: (context, ref, child) {
+                      final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
+                      return IconButton(
+                        onPressed: widget.onMicTap,
+                        icon: Icon(Icons.mic, color: isRecording ? ThemeConstants.sinisterSeed : iconLight , ),
+                      );
+                    }
                   );
                 } else {
                   return IconButton(

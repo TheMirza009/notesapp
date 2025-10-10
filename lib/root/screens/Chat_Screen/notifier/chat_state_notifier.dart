@@ -7,6 +7,7 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -31,6 +32,7 @@ final chatStateController =  NotifierProvider<ChatStateNotifier, ChatState>(() =
 
 class ChatStateNotifier extends Notifier<ChatState> {
   /// Master references & controllers (not part of state)
+  final _isar = IsarDatabase.isar;
   List<Message> allMessages = [];
   final TextEditingController searchController = TextEditingController();
   final TypeSetEditingController keyboardController = TypeSetEditingController();
@@ -38,7 +40,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   final FocusNode keyboardFocusNode = FocusNode();
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =  ItemPositionsListener.create();
-  final _isar = IsarDatabase.isar;
+  final Recorder recorder = Recorder();
   Chat? _chat;
   bool isLoading = false;
   bool get isReplying => state.anchorMessage != null;
@@ -364,6 +366,56 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   void stopSearching() {
     state = state.copyWith(isSearching: false);
+  }
+  
+  // =====================================================
+  // Section: Recording Audio helpers
+  // =====================================================
+
+  Future<void> startAudioRecording() async {
+    await recorder.startRecording();
+    state = state.copyWith(isRecording: true);
+  }
+
+  void stopAudioRecording() async {
+    final String? recordingPath = await recorder.stopRecording();
+    if (recordingPath == null) return;
+
+    final savedAudio = await MediaHandler.saveAudio(recordingPath);
+    if (savedAudio == null) return;
+
+    await deleteInitMessage();
+
+    await _isar.writeTxn(() async {
+      await _isar.medias.put(savedAudio);
+    });
+
+    final persistedMedia = await _isar.medias.get(savedAudio.isarId);
+    if (persistedMedia == null) return;
+
+    final newMessage = Message()
+      ..text = "🎙️ Recording"
+      ..isSender = true
+      ..time = DateTime.now()
+      ..media.value = persistedMedia;
+
+    await _isar.writeTxn(() async {
+      await _isar.messages.put(newMessage);
+      await newMessage.media.save();
+
+      final managedChat = await _isar.chats.get(_chat!.isarID);
+      if (managedChat != null) {
+        await managedChat.messages.load();
+        managedChat.messages.add(newMessage);
+        await managedChat.messages.save();
+        await _isar.chats.put(managedChat);
+        _chat = managedChat;
+      }
+    });
+
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages], isRecording: false);
+    // state = state.copyWith(messages: [...state.messages, newMessage]);
   }
 
   // =====================================================

@@ -72,8 +72,12 @@ dependencies:
   url_launcher: ^6.3.2
   camera: ^0.11.2
   color_filter_extension: ^1.0.1
-  voice_message_package: ^2.2.1
   record: ^6.1.2
+
+  # Voice Message Packages
+  flutter_cache_manager: ^3.3.1
+  just_audio: ^0.9.37
+  syncfusion_flutter_sliders: ^25.1.41 
 
 dev_dependencies:
   flutter_test:

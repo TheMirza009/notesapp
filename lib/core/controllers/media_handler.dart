@@ -146,8 +146,8 @@ class MediaHandler {
   }
 
   /// Pick Audio -> save to Media/Audio
-  static Future<Media?> pickAudio() async {
-    final audioPath = await Recorder().stopRecording();
+  static Future<Media?> saveAudio(String audioPath) async {
+    // final audioPath = await Recorder().stopRecording();
     if (audioPath == null) return null;
 
     final savedFile = await saveToStorage(File(audioPath), 'Audio');
@@ -155,7 +155,7 @@ class MediaHandler {
   }
 
   /// Save recorded Audio
-  static Future<Media?> saveAudio() async {
+  static Future<Media?> pickAudio() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.audio,
     );

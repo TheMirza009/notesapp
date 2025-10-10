@@ -13,6 +13,7 @@ class BottomMessageBarWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatStateController.notifier);
+    final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
 
     return RepaintBoundary(
       child: AttachmentWrapper(
@@ -36,7 +37,15 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             // final state = ref.read(openingProvider.notifier);
             // state.state = !state.state; // <======= Called here
           },
-          onMicTap: () => debugPrint("🎤 Mic tapped"),
+          onMicTap: () async {
+            if (isRecording) {
+              notifier.stopAudioRecording();
+              print("🎙️Recording stopped");
+            } else {
+              notifier.startAudioRecording();
+              print("🎙️Recordting started");
+            }
+          },
           onSend: notifier.sendMessage,
           onImagePasted: (bytes) => notifier.pickImage(imageBytes: bytes),
         ),

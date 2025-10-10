@@ -8,6 +8,8 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/widgets/voice_message/components/voice_controller.dart';
+import 'package:notesapp/root/widgets/voice_message/components/voice_message_view.dart';
 import 'package:typeset/typeset.dart';
 
 class MessageContentBuilder extends StatelessWidget {
@@ -204,7 +206,47 @@ class MessageContentBuilder extends StatelessWidget {
     return image.width / image.height;
   }
 
+  Widget _buildAudioMessage() {
+    final bool isLight = navigatorKey.currentContext!.isLight;
+    final bool isSender = message.isSender;
+    final Color bgColor =
+        isSender
+            ? (isLight
+                ? ThemeConstants.senderBlue
+                : ThemeConstants.senderBlueDark)
+            : (isLight
+                ? ThemeConstants.hometoolbarLight3
+                : ThemeConstants.darkIconBorder);
+
+    VoiceController controller = VoiceController(
+        audioSrc: message.media.value!.path!,
+        maxDuration: Duration(minutes: 1),
+        noiseCount: 35,
+        isFile: true,
+        onComplete: () {},
+        onPause: () {},
+        onPlaying: () {},
+      );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        VoiceMessageView(
+          controller: controller,
+          innerPadding: 0,
+          backgroundColor: Colors.transparent, // bgColor,
+          circlesColor: ThemeConstants.sinisterSeed,
+          activeSliderColor: ThemeConstants.sinisterSeed,
+          notActiveSliderColor: ThemeConstants.iconColorNeutral,
+          showDuration: true,
+          showSentTime: true,
+          sentTime: message.time,
+        ),
+        
+      ],
+    );
+  }
+
   Widget _buildVideoMessage() => const Icon(Icons.video_call);
-  Widget _buildAudioMessage() => const Icon(Icons.music_note);
   Widget _buildDocumentMessage() => const Icon(Icons.insert_drive_file);
 }
