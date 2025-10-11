@@ -18,8 +18,8 @@ class VoiceMessageView extends StatelessWidget {
       {super.key,
       required this.controller,
       this.backgroundColor = Colors.white,
-      this.activeSliderColor = Colors.red,
-      this.notActiveSliderColor,
+      this.activeWaveColor = Colors.red,
+      this.inactiveWaveColor,
       this.circlesColor = Colors.red,
       this.innerPadding = 12,
       this.cornerRadius = 20,
@@ -70,10 +70,10 @@ class VoiceMessageView extends StatelessWidget {
   final Color circlesColor;
 
   /// The color of the active slider.
-  final Color activeSliderColor;
+  final Color activeWaveColor;
 
   /// The color of the not active slider.
-  final Color? notActiveSliderColor;
+  final Color? inactiveWaveColor;
 
   /// The text style of the circles.
   final TextStyle circlesTextStyle;
@@ -140,9 +140,10 @@ class VoiceMessageView extends StatelessWidget {
 
   final bool showBothTimes = showDuration == true && showSentTime == true;
   final bool showEither = showDuration == true || showSentTime == true;
+  final maxWidth = 130 + (controller.noiseCount * .72.width());
 
   return Container(
-    width: 130 + (controller.noiseCount * .72.width()),
+    width: maxWidth,
     padding: EdgeInsets.all(innerPadding),
     decoration: BoxDecoration(
       color: backgroundColor,
@@ -182,7 +183,7 @@ class VoiceMessageView extends StatelessWidget {
               mainRow,
               SizedBox(
                 height: showEither ? 10 : 0,
-                width: 175,
+                width: maxWidth - (size * 1.2),
                 child: Row(
                   mainAxisAlignment: showBothTimes ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
                   children: [
@@ -227,14 +228,14 @@ class VoiceMessageView extends StatelessWidget {
                     end: Alignment.centerRight,
                     stops: [playedFraction, playedFraction],
                     colors: [
-                      activeSliderColor, // played
-                      notActiveSliderColor ?? backgroundColor.withOpacity(.4), // unplayed
+                      activeWaveColor, // played
+                      inactiveWaveColor ?? backgroundColor.withOpacity(.4), // unplayed
                     ],
                   ).createShader(Rect.fromLTWH(0, 0, rect.width, rect.height));
                 },
                 child: Center(
                   child: Noises(
-                    rList: controller.randoms!,
+                     rList: controller.randoms!,
                     activeSliderColor: Colors.white, // placeholder for ShaderMask
                   ),
                 ),

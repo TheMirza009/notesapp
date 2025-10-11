@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
-import 'package:notesapp/root/screens/Settings/widgets/attachment_board.dart';
 import 'package:notesapp/root/screens/Settings/widgets/bordered_container.dart';
 
 class EmergingCircle extends StatefulWidget {

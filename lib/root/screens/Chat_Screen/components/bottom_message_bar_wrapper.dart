@@ -4,8 +4,8 @@ import 'package:notesapp/root/screens/Chat_screen/components/attachment/attachme
 import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/emerging_overlay.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/attachment_board.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/bottom_message_bar.dart';
-import 'package:notesapp/root/screens/Settings/widgets/attachment_board.dart';
 
 class BottomMessageBarWrapper extends ConsumerWidget {
   const BottomMessageBarWrapper({super.key});
@@ -26,7 +26,7 @@ class BottomMessageBarWrapper extends ConsumerWidget {
           keyboardController: notifier.keyboardController,
           onFieldTap: () {
             notifier.hideEmojiPicker();
-            notifier.closeSearchAndKeyboard();
+            // notifier.closeSearchAndKeyboard();
             ref.read(overlayControllerProvider.notifier).close();
           },
           onEmojiTap: () => notifier.toggleEmojiPicker(),

@@ -21,9 +21,9 @@ class MediaHandler {
   /// Pick an image.
   /// - If [isProfilePicture] = true → crop + save to ProfilePictures.
   /// - Else → save to Photos.
-  static Future<Media?> pickImage({bool isProfilePicture = false}) async {
+  static Future<Media?> pickImage({bool isProfilePicture = false, ImageSource? source = ImageSource.gallery}) async {
     final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
+      source: source ?? ImageSource.gallery,
     );
     if (pickedFile == null) {
       print("⚠️ No image picked");

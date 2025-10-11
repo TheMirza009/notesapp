@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/attachment_board.dart';
 import 'package:notesapp/root/screens/Settings/widgets/emerging_circle.dart';
-import 'package:notesapp/root/screens/Settings/widgets/attachment_board.dart';
 
 /// Shared provider that controls whether the overlay is open or closed
 final openingProvider = StateProvider<bool>((_) => false);

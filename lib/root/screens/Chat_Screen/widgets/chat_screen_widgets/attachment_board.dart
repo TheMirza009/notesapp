@@ -1,11 +1,14 @@
 import 'package:color_filter_extension/color_filter_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/attachment/desaturator.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Settings/widgets/bordered_container.dart';
 import 'package:notesapp/root/screens/Utils/camera_screen.dart';
@@ -56,7 +59,7 @@ class AttachmentBoard extends ConsumerWidget {
           ? ThemeConstants.darkIconbackground
           : ThemeConstants.attachmentLightBG,
       width: context.screenWidth,
-      height: 350,
+      height: 250, // 350,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: 20,
@@ -66,9 +69,9 @@ class AttachmentBoard extends ConsumerWidget {
             open: isOpen,
             tiles: [
               AttachmentItem(
-                widget: Icon(Icons.edit_document, color: Color(0xFFAD76CE), size: iconSize),
-                title: "Document",
-                onPressed: onDocumentsPressed,
+                widget: Icon(Icons.music_note, color: Colors.deepOrange, size: iconSize),
+                title: "Audio",
+                onPressed: onAudioPressed ?? () async => await ref.read(chatStateController.notifier).pickAudio(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.photo, color: Color(0xFFF43665), size: iconSize),
@@ -78,7 +81,7 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.camera, color: Color(0xFFCE6789), size: iconSize),
                 title: "Camera",
-                onPressed: onCameraPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => CameraScreen())),
+                onPressed: onCameraPressed ?? () async => await ref.read(chatStateController.notifier).pickImage(isCamera: true) // () => Navigator.push(context, MaterialPageRoute(builder: (_) => CameraScreen())),
               ),
             ],
           ),
@@ -87,30 +90,9 @@ class AttachmentBoard extends ConsumerWidget {
             open: isOpen,
             tiles: [
               AttachmentItem(
-                widget: Icon(Icons.music_note, color: Colors.deepOrange, size: iconSize),
-                title: "Audio",
-                onPressed: onAudioPressed,
-              ),
-              AttachmentItem(
-                widget: Icon(Icons.location_pin, color: Colors.red, size: iconSize),
-                title: "Location",
-                onPressed: onLocationPressed,
-              ),
-              AttachmentItem(
-                widget: Icon(Icons.person_2_rounded, color: Colors.blueAccent, size: iconSize),
-                title: "Contact",
-                onPressed: onContactPressed,
-              ),
-            ],
-          ),
-          AttachmentRow(
-            spacing: rowSpacing,
-            open: isOpen,
-            tiles: [
-              AttachmentItem(
-                widget: Icon(Icons.bar_chart, color: Colors.cyan, size: iconSize),
-                title: "Chart",
-                onPressed: onChartPressed,
+                widget: Icon(Icons.edit_document, color: Color(0xFFAD76CE), size: iconSize),
+                title: "Document",
+                onPressed: onDocumentsPressed ?? () async => await ref.read(chatStateController.notifier).pickDocument(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.list, color: Colors.amber, size: iconSize),
@@ -118,12 +100,35 @@ class AttachmentBoard extends ConsumerWidget {
                 onPressed: onThreadPressed,
               ),
               AttachmentItem(
-                widget: Icon(Icons.scanner, color: Colors.redAccent, size: iconSize),
-                title: "Scan",
-                onPressed: onScanPressed,
+                widget: Icon(Icons.bar_chart, color: Colors.cyan, size: iconSize),
+                title: "Chart",
+                onPressed: onChartPressed,
               ),
+              
             ],
           ),
+          // AttachmentRow(
+          //   spacing: rowSpacing,
+          //   open: isOpen,
+          //   tiles: [
+          //     AttachmentItem(
+          //       widget: Icon(Icons.location_pin, color: Colors.red, size: iconSize),
+          //       title: "Location",
+          //       onPressed: onLocationPressed,
+          //     ),
+              
+          //     AttachmentItem(
+          //       widget: Icon(Icons.person_2_rounded, color: Colors.blueAccent, size: iconSize),
+          //       title: "Contact",
+          //       onPressed: onContactPressed,
+          //     ),
+          //     AttachmentItem(
+          //       widget: Icon(Icons.scanner, color: Colors.redAccent, size: iconSize),
+          //       title: "Scan",
+          //       onPressed: onScanPressed,
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );

@@ -127,9 +127,11 @@ class ChatStateNotifier extends Notifier<ChatState> {
     scrollToBottom();
   }
 
-  Future<void> pickImage({Uint8List? imageBytes}) async {
-    final Media? pickedMedia =
-        imageBytes != null ? await MediaHandler.fromImageBytes(imageBytes) : await MediaHandler.pickImage();
+  Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false}) async {
+    final Media? pickedMedia =  imageBytes != null 
+      ? await MediaHandler.fromImageBytes(imageBytes) 
+      : await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery );
+
     if (pickedMedia == null || _chat == null) return;
 
     await deleteInitMessage();
@@ -395,6 +397,83 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
     final newMessage = Message()
       ..text = "🎙️ Recording"
+      ..isSender = true
+      ..time = DateTime.now()
+      ..media.value = persistedMedia;
+
+    await _isar.writeTxn(() async {
+      await _isar.messages.put(newMessage);
+      await newMessage.media.save();
+
+      final managedChat = await _isar.chats.get(_chat!.isarID);
+      if (managedChat != null) {
+        await managedChat.messages.load();
+        managedChat.messages.add(newMessage);
+        await managedChat.messages.save();
+        await _isar.chats.put(managedChat);
+        _chat = managedChat;
+      }
+    });
+
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages], isRecording: false);
+    // state = state.copyWith(messages: [...state.messages, newMessage]);
+  }
+
+
+  Future<void> pickDocument() async {
+    final Media? pickedMedia = await MediaHandler.pickDocument();
+
+    if (pickedMedia == null || _chat == null) return;
+    await deleteInitMessage();
+
+    await _isar.writeTxn(() async {
+      await _isar.medias.put(pickedMedia);
+    });
+
+    final persistedMedia = await _isar.medias.get(pickedMedia.isarId);
+    if (persistedMedia == null) return;
+
+    final newMessage = Message()
+      ..text = "📃 Document"
+      ..isSender = true
+      ..time = DateTime.now()
+      ..media.value = persistedMedia;
+
+    await _isar.writeTxn(() async {
+      await _isar.messages.put(newMessage);
+      await newMessage.media.save();
+
+      final managedChat = await _isar.chats.get(_chat!.isarID);
+      if (managedChat != null) {
+        await managedChat.messages.load();
+        managedChat.messages.add(newMessage);
+        await managedChat.messages.save();
+        await _isar.chats.put(managedChat);
+        _chat = managedChat;
+      }
+    });
+
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages], isRecording: false);
+    // state = state.copyWith(messages: [...state.messages, newMessage]);
+  }
+
+  Future<void> pickAudio() async {
+    final Media? pickedMedia = await MediaHandler.pickDocument();
+
+    if (pickedMedia == null || _chat == null) return;
+    await deleteInitMessage();
+
+    await _isar.writeTxn(() async {
+      await _isar.medias.put(pickedMedia);
+    });
+
+    final persistedMedia = await _isar.medias.get(pickedMedia.isarId);
+    if (persistedMedia == null) return;
+
+    final newMessage = Message()
+      ..text = "🎧 Audio"
       ..isSender = true
       ..time = DateTime.now()
       ..media.value = persistedMedia;

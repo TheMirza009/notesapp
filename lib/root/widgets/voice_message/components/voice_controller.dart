@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_waveform/just_waveform.dart';
 import 'package:notesapp/root/widgets/voice_message/components/helpers/play_status.dart';
 import 'package:notesapp/root/widgets/voice_message/components/helpers/utils.dart';
 
@@ -30,6 +32,9 @@ import 'package:notesapp/root/widgets/voice_message/components/helpers/utils.dar
 /// );
 ///
 class VoiceController extends MyTicker {
+  static final Map<String, List<double>> _waveformCache = {}; // 🧠 keep waveform memory cache
+  static final Map<String, String> _remainingTimeCache = {}; // 🧠 keep remaining time memory cache
+
   final String audioSrc;
   late Duration maxDuration;
   Duration currentDuration = Duration.zero;
@@ -91,7 +96,25 @@ class VoiceController extends MyTicker {
     this.randoms,
     this.cacheKey,
   }) {
-    if (randoms?.isEmpty ?? true) _setRandoms();
+    if (randoms == null || randoms!.isEmpty) {
+  // Check if we already have cached waveform in memory
+  if (_waveformCache.containsKey(audioSrc)) {
+    randoms = _waveformCache[audioSrc]!;
+  } else {
+    setSilent(); // placeholders only once
+    if (isFile) {
+      getWaveform().then((wave) {
+        if (wave.isNotEmpty) {
+          randoms = wave;
+          _waveformCache[audioSrc] = wave; // 💾 cache waveform in memory
+          _updateUi();
+        }
+      });
+    }
+  }
+}
+
+
     animController = AnimationController(
       vsync: this,
       upperBound: noiseWidth,
@@ -144,14 +167,20 @@ class VoiceController extends MyTicker {
     positionStream = _player.positionStream.listen((Duration p) async {
       if (!isDownloading) currentDuration = p;
 
+      // keep a cached display string so new controller instances can show it immediately
+      _remainingTimeCache[audioSrc] = currentDuration.formattedTime;
+
       final value = (noiseWidth * currentMillSeconds) / maxMillSeconds;
       animController.value = value;
       _updateUi();
+
       if (p.inMilliseconds >= maxMillSeconds) {
         await _player.stop();
         currentDuration = Duration.zero;
         playStatus = PlayStatus.init;
         animController.reset();
+        // clear cached position/time when audio completes
+        _remainingTimeCache.remove(audioSrc);
         _updateUi();
         onComplete();
       }
@@ -284,6 +313,66 @@ class VoiceController extends MyTicker {
       randoms!.add(5.74.width() * Random().nextDouble() + .26.width());
     }
   }
+
+  void setSilent({double maxHeight = 40}) {
+    const minHeightFactor = 0.2;
+    final minHeight = minHeightFactor * maxHeight;
+
+    // Create an even "flat" placeholder — no randomness
+    randoms = List.generate(noiseCount, (_) => minHeight);
+  }
+
+  Future<List<double>> getWaveform({double? maxHeight}) async {
+    final waveOutFile = File('$audioSrc.waveform');
+
+    // ✅ STEP 1: If waveform cache already exists, just parse it.
+    if (await waveOutFile.exists()) {
+      final waveform = await JustWaveform.parse(waveOutFile);
+      return _convertWaveformToBars(waveform, maxHeight ?? 40);
+    }
+
+    // ✅ STEP 2: Otherwise, extract and save waveform.
+    final waveformStream = JustWaveform.extract(
+      audioInFile: File(audioSrc),
+      waveOutFile: waveOutFile,
+    );
+
+    Waveform? waveform;
+    await for (final progress in waveformStream) {
+      if (progress.waveform != null) {
+        waveform = progress.waveform;
+        break;
+      }
+    }
+
+    if (waveform == null) return [];
+
+    return _convertWaveformToBars(waveform, maxHeight ?? 40);
+  }
+
+  List<double> _convertWaveformToBars(Waveform waveform, double maxHeight) {
+    final List<double> scaled = [];
+    final step = waveform.length / noiseCount;
+
+    for (int i = 0; i < noiseCount; i++) {
+      final idx = (i * step).floor().clamp(0, waveform.length - 1);
+      final minVal = waveform.getPixelMin(idx);
+      final maxVal = waveform.getPixelMax(idx);
+
+      // Normalize
+      final normalized = (maxVal - minVal).abs() / 65535.0;
+
+      // Apply slight boost for quiet parts
+      const minHeightFactor = 0.2;
+      final value = (normalized * (1 - minHeightFactor) + minHeightFactor) * maxHeight;
+
+      scaled.add(value);
+    }
+
+    return scaled;
+  }
+
+
 
   /// Changes the speed of the voice playback.
   void onChanging(double d) {

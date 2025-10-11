@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/root/screens/Settings/widgets/attachment_board.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/attachment_board.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
 
 /// Combines the behavior of EmergingOverlay + EmergingCircle into one widget.

@@ -18,7 +18,9 @@ import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+import 'package:open_file/open_file.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MessageListWrapper extends ConsumerWidget {
   const MessageListWrapper({super.key});
@@ -109,7 +111,7 @@ class _MessageItemBuilder extends ConsumerWidget {
             onTapWhileSelecting: () => isSelected
                 ? ref.read(chatStateController.notifier).unselectMessage(message)
                 : ref.read(chatStateController.notifier).selectMessage(message),
-            onTap: () {
+            onTap: () async {
               if (message.isImage) {
                 final allImages = ref.read(chatStateController).messages.imageMedias;
                 final initialIndex = allImages.indexOfMediaIsarID(message);
@@ -122,10 +124,10 @@ class _MessageItemBuilder extends ConsumerWidget {
                     ),
                   ),
                 );
+              } else if (message.isDocument) {
+                await OpenFile.open(message.media!.value!.path!);
               } else {
                 ref.read(chatStateController.notifier).toggleSender(message);
-                // message.isSender = !message.isSender;
-                // notifier.updateMessage(message);
               }
             },
             onLongPress: (pos) {
@@ -136,7 +138,7 @@ class _MessageItemBuilder extends ConsumerWidget {
               CustomContextMenu.showMenuAt(
                 context,
                 position: pos,
-                menuItems: messageHoldOptions(isImage: message.isImage),
+                menuItems: messageHoldOptions(isImage: (message.isImage || message.isDocument) ),
                 triangleHorizontalOffset: message.isSender ? 120 : 40,
                 onSelected: (val) => notifier.handleMessageMenuAction(val, message),
               );

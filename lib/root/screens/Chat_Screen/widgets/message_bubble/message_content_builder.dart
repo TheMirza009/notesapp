@@ -207,6 +207,7 @@ class MessageContentBuilder extends StatelessWidget {
   }
 
   Widget _buildAudioMessage() {
+    print("Voice message built");
     final bool isLight = navigatorKey.currentContext!.isLight;
     final bool isSender = message.isSender;
     final Color bgColor =
@@ -236,8 +237,8 @@ class MessageContentBuilder extends StatelessWidget {
           innerPadding: 0,
           backgroundColor: Colors.transparent, // bgColor,
           circlesColor: ThemeConstants.sinisterSeed,
-          activeSliderColor: ThemeConstants.sinisterSeed,
-          notActiveSliderColor: ThemeConstants.iconColorNeutral,
+          activeWaveColor: ThemeConstants.sinisterSeed,
+          inactiveWaveColor: ThemeConstants.iconColorNeutral,
           showDuration: true,
           showSentTime: true,
           sentTime: message.time,
@@ -248,5 +249,37 @@ class MessageContentBuilder extends StatelessWidget {
   }
 
   Widget _buildVideoMessage() => const Icon(Icons.video_call);
-  Widget _buildDocumentMessage() => const Icon(Icons.insert_drive_file);
+  Widget _buildDocumentMessage() => IntrinsicWidth(
+    child: Column(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 16),
+          decoration: BoxDecoration(
+          color: const Color(0x0F000000),
+          borderRadius: BorderRadius.circular(10)
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.insert_drive_file, color: Colors.red),
+              SizedBox(width: 10),
+              Text(message.media.value?.name ?? "Unknown file"),
+              SizedBox(width: 10),
+            ],
+          ),
+        ),
+          Align(
+                alignment: Alignment.bottomRight,
+                child: Text(
+                  DateFormat.jm().format(message.time),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ThemeConstants.subtitleLight,
+                  ),
+                ),
+              ),
+      ],
+    ),
+  );
 }
