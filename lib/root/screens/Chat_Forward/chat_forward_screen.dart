@@ -28,61 +28,62 @@ class ChatForwardScreen extends ConsumerWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
 
-    void _forwardSelectedChats() {
-      // TODO: Implement your forward logic
-      debugPrint("Forwarding to ${selectedIds.length} chats...");
-    }
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.transparent,
-      appBar: const BlurredForwardAppBar(),
-      body: Container(
-        decoration: BoxDecoration(gradient: backgroundGradient),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: chatlist.isEmpty
-                    ? const NothingToSee()
-                    : ListView.builder(
-                        itemCount: chatlist.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == chatlist.length) {
-                            return const SizedBox(height: 150);
-                          }
-
-                          final chat = chatlist[index];
-                          final isSelected = selectedIds.contains(chat.uuid);
-
-                          return AnimatedOpacity(
-                            opacity: 1,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            child: ChatTile(
-                              title: chat.title ?? "New Note",
-                              subtitle: chat.loadLastMessage(),
-                              chatPhotoPath: chat.chatPhotoPath,
-                              time: TimeFormat.formatChatTime(chat.date),
-                              isDismissible: false,
-                              onTap: () => notifier.toggle(chat.uuid),
-                              trailing: SelectionCheck(
-                                isSelected: isSelected,
-                                onTap: () => notifier.toggle(chat.uuid),
+    return PopScope(
+      canPop: notifier.isSearching == false,
+      onPopInvokedWithResult: (didPop, result) {
+        notifier.clearSearch();
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.transparent,
+        appBar: const BlurredForwardAppBar(),
+        body: Container(
+          decoration: BoxDecoration(gradient: backgroundGradient),
+          child: SafeArea(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: chatlist.isEmpty
+                      ? const NothingToSee()
+                      : ListView.builder(
+                          itemCount: chatlist.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == chatlist.length) {
+                              return const SizedBox(height: 150);
+                            }
+      
+                            final chat = chatlist[index];
+                            final isSelected = selectedIds.contains(chat.uuid);
+      
+                            return TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0, end: 1),
+                                duration: const Duration(milliseconds: 300),
+                                builder: (context, value, child) => Opacity(opacity: value, child: child),
+                              child: ChatTile(
+                                title: chat.title ?? "New Note",
+                                subtitle: chat.loadLastMessage(),
+                                chatPhotoPath: chat.chatPhotoPath,
+                                time: TimeFormat.formatChatTime(chat.date),
+                                isDismissible: false,
+                                onTap: () => notifier.toggleSelect(chat.uuid),
+                                trailing: SelectionCheck(
+                                  isSelected: isSelected,
+                                  onTap: () => notifier.toggleSelect(chat.uuid),
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-
-              // ✅ Floating send button
-              SendButton(
-                backgroundColor: ThemeConstants.sinisterSeed,
-                isVisible: selectedIds.isNotEmpty,
-                onPressed: () async => await notifier.forwardMessageToSelected(message),
-              ),
-            ],
+                            );
+                          },
+                        ),
+                ),
+      
+                // ✅ Floating send button
+                SendButton(
+                  backgroundColor: ThemeConstants.sinisterSeed,
+                  isVisible: selectedIds.isNotEmpty,
+                  onPressed: () async => await notifier.forwardMessageToSelected(message),
+                ),
+              ],
+            ),
           ),
         ),
       ),

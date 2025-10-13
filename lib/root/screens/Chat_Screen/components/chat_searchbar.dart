@@ -17,8 +17,7 @@ class ChatSearchBar extends ConsumerWidget {
     return AnimatedSize(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOutQuint,
-      child:
-          isSearching
+      child: isSearching
               ? Padding(
                 padding: const EdgeInsets.only(
                   left: 12.0,

@@ -8,12 +8,16 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/media_extensions.dart';
+import 'package:notesapp/core/utils/time_format.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 import 'package:notesapp/root/widgets/photo_view/photo_view_wrapper.dart';
+import 'package:open_file/open_file.dart';
 import 'package:svg_flutter/svg.dart';
 
 /// Provider for ChatDetailNotifier
@@ -35,6 +39,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   late TextEditingController titleController;
   final ScrollController _scrollController = ScrollController();
   bool isEditing = false;
+  static const TextStyle subStyle = TextStyle(color: ThemeConstants.iconColorNeutral, fontSize: 13);
+
 
   @override
   void initState() {
@@ -87,6 +93,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     final chat = state.chat;
     final photoMessages = state.photos;
+    final docMessages = state.documents;
     final isLight = context.isLight;
     final screenSize = MediaQuery.sizeOf(context);
 
@@ -211,25 +218,89 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         ),
                       ),
                     ),
-              ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 10,
-                    children: [
-                      SvgPicture.string(
-                        IconPaths.catSitting,
-                        color: ThemeConstants.iconLight,
-                        height: 20,
-                      ),
-                      const Text("No Documents in chat yet"),
-                    ],
-                  ),
-                  const SizedBox(height: 800),
-                ],
-              ),
+
+              /// Document list      
+              docMessages.isEmpty
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: 10,
+                      children: [
+                        SvgPicture.string(
+                          IconPaths.catSitting,
+                          color: ThemeConstants.iconLight,
+                          height: 20,
+                        ),
+                        const Text("No Photos in chat yet"),
+                      ],
+                    )
+                  : ListView.builder(
+                      itemCount: docMessages.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == docMessages.length) {
+                          return SizedBox(height: 100);
+                        }
+
+                        final doc = docMessages[index]; 
+                        return FadeInDynamic(
+                          isImage: false,
+                          ListTile(
+                            onTap: () async => await OpenFile.open(doc.path),
+                            leading: const Icon(Icons.insert_drive_file, color: Colors.red),
+                            title: Text( doc.name ?? "Unknown file", overflow: TextOverflow.ellipsis, maxLines: 1),
+                            subtitle: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  spacing: 10,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                  // FutureBuilder to show file size
+                                  if (doc.path != null)
+                                    FutureBuilder<String>(
+                                      future: Utils.getFileSize( doc.path!, ),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==  ConnectionState.waiting) {
+                                          return const Text('Loading size...', style: subStyle,);
+                                        } else if (snapshot.hasError) {
+                                          return const Text('Size unknown', style: subStyle,);
+                                        } else {
+                                          return Text(snapshot.data ?? '', style: subStyle,);
+                                        }
+                                      },
+                                    ),
+                                  
+                                  Text(
+                                    doc.extension.toUpperCase() ?? "",
+                                    style: subStyle,
+                                  ),
+                                ],
+                              ),
+                                Text(doc.timeString, style: subStyle),
+                              ],
+                            ),
+                          ),
+                          index,
+                        );
+                      },),
+                    //    List.generate(
+                    //     docMessages.length,
+                    //     (index) => Container(
+                    //       margin: EdgeInsets.all(0.75),
+                    //       clipBehavior: Clip.antiAlias,
+                    //       decoration: BoxDecoration(
+                    //         borderRadius: BorderRadius.circular(5)
+                    //       ),
+                    //       child: InkWell(
+                    //       onTap: OpenFile.open(),
+                    //         child: FadeInDynamic(
+                    //           File(photoMessages[index].path!), 
+                    //           index,
+                    //           ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
             ],
           ),
         ),
@@ -242,7 +313,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 class FadeInDynamic extends StatefulWidget {
   final dynamic child;
   final int? index;
-  const FadeInDynamic(this.child, this.index, {super.key});
+  final bool? isImage;
+  const FadeInDynamic(this.child, this.index, {super.key, this.isImage = true});
 
   @override
   State<FadeInDynamic> createState() => _FadeInDynamicState();
@@ -266,10 +338,10 @@ class _FadeInDynamicState extends State<FadeInDynamic> {
     return AnimatedOpacity(
       duration: Duration(milliseconds: 300),
       opacity: opacity,
-      child: Image.file(
+      child: (widget.isImage ?? true) ? Image.file(
         widget.child,
         fit: BoxFit.cover,
-      ),
+      ) : widget.child,
     );
   }
 }

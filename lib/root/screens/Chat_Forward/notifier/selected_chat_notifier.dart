@@ -13,10 +13,36 @@ final forwardingController =
     });
 
 class ForwardNotifier extends Notifier<Set<String>> {
+
+  /// Search fields
+  final TextEditingController searchController = TextEditingController();
+  final FocusNode searchFocusNode = FocusNode();
+  bool isSearching = false;
+
   @override
   Set<String> build() => {};
 
-  void toggle(String chatId) {
+  // --- Search control ---
+  void toggleSearch([bool? value]) {
+    isSearching = value ?? !isSearching;
+    if (!isSearching) clearSearch();
+    ref.notifyListeners(); // notify UI rebuild
+  }
+
+  void clearSearch() {
+    searchController.clear();
+    searchFocusNode.unfocus();
+    ref.read(chatListProvider.notifier).clearSearch();
+  }
+
+  void searchChats(String query) {
+    ref.read(chatListProvider.notifier).searchChats(query);
+  }
+
+  /// Selection control ///
+  
+
+  void toggleSelect(String chatId) {
     final newState = Set<String>.from(state);
     if (!newState.remove(chatId)) newState.add(chatId);
     state = newState;

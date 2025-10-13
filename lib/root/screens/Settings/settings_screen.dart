@@ -33,7 +33,7 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () {
                 CustomContextMenu.showMenuAt(
                 context,
-                position:  Offset(context.screenWidth - 20, 160), // Offset(200, 120),
+                position:  Offset(context.screenWidth - 20, 120), // Offset(200, 120),
                 menuItems: themeOptions,
                 triangleHorizontalOffset: 180,
                 onSelected: (val) => handleThemeOptions(ref, val),
@@ -48,7 +48,7 @@ class SettingsScreen extends ConsumerWidget {
                 CustomContextMenu.showMenuAt(
                 context,
                 triangleHorizontalOffset: 180,
-                position: Offset(context.screenWidth - 20, 230), // Offset(200, 120),
+                position: Offset(context.screenWidth - 20, 190), // Offset(200, 120),
                 menuItems: bubbleStyleOptions,
                 onSelected: (val) => handleBubbleStyle(ref, val),
               );

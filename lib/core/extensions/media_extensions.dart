@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -6,6 +8,19 @@ extension MediaX on Media {
   DateTime? get messageTime {
     // backlinks always point to the messages containing this media
     return messagesBacklink.isNotEmpty ? messagesBacklink.first.time : null;
+  }
+
+  String get timeString {
+    try {
+      final msgs = (messagesBacklink..loadSync()).toList();
+      if (msgs.isEmpty || msgs.first.time == null) {
+        return "Unknown time";
+      }
+      return TimeFormat.formatChatTime(msgs.first.time);
+    } catch (e) {
+      debugPrint("Error reading time for media $name: $e");
+      return "Unknown time";
+    }
   }
 }
 

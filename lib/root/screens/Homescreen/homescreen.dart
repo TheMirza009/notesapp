@@ -13,6 +13,7 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
+import 'package:notesapp/root/screens/Chat_screen/components/message_list.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/parent_slide_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
@@ -33,7 +34,8 @@ class HomescreenState extends HomeScreenBaseState {
   @override
   Widget build(BuildContext context) {
     final chatNotifier = ref.read(chatListProvider.notifier);
-    final chatlist = ref.watch(chatListProvider).chats;
+    final chatlist = ref.watch(chatListProvider.select((state) => state.chats));
+    final isLoading = ref.watch(chatListProvider.select((state) => state.isLoading));
     final isLight = Theme.brightnessOf(context) == Brightness.light;
     final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
@@ -172,7 +174,7 @@ class HomescreenState extends HomeScreenBaseState {
                     ),
                   ),
                   Expanded(
-                    child: chatlist.isEmpty
+                    child: isLoading ? LoadIndicator() : chatlist.isEmpty
                       ? const NothingToSee()
                       : ListView.separated(
                           itemCount: chatlist.length,

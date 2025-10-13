@@ -8,13 +8,23 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 class ChatListState {
   final List<Chat> chats;
   final Chat? selectedChat;
+  final bool isLoading; 
 
-  const ChatListState({this.chats = const [], this.selectedChat});
+  const ChatListState({
+    this.chats = const [],
+    this.selectedChat,
+    this.isLoading = false,
+  });
 
-  ChatListState copyWith({List<Chat>? chats, Chat? selectedChat}) {
+  ChatListState copyWith({
+    List<Chat>? chats,
+    Chat? selectedChat,
+    bool? isLoading,
+  }) {
     return ChatListState(
       chats: chats ?? this.chats,
       selectedChat: selectedChat ?? this.selectedChat,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
@@ -35,9 +45,10 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
 
   /// Load all chats from DB
   Future<void> loadChats() async {
+    state = state.copyWith(isLoading: true);
     final loadedChats = await IsarDatabase.loadAllChats();
     _allChats = loadedChats;
-    state = state.copyWith(chats: loadedChats);
+    state = state.copyWith(chats: loadedChats, isLoading: false);
   }
 
   Future<void> refreshChat(int isarId) async {

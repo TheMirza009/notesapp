@@ -10,13 +10,15 @@ import 'package:notesapp/root/data/models/media_model.dart';
 class ChatDetailState {
   final Chat? chat;
   final List<Media> photos;
+  final List<Media> documents;
 
-  const ChatDetailState({this.chat, this.photos = const []});
+  const ChatDetailState({this.chat, this.photos = const [], this.documents = const []});
 
-  ChatDetailState copyWith({Chat? chat, List<Media>? photos}) {
+  ChatDetailState copyWith({Chat? chat, List<Media>? photos, List<Media>? documents}) {
     return ChatDetailState(
       chat: chat ?? this.chat,
       photos: photos ?? this.photos,
+      documents: documents ?? this.documents,
     );
   }
 
@@ -29,11 +31,11 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
   @override
   ChatDetailState build() {
     final selectedChat = ref.watch(chatListProvider).selectedChat;
-    Future.microtask(() => getPhotos());
+    Future.microtask(() => getMedia());
     return ChatDetailState(chat: selectedChat, photos: []);
   }
 
-  Future<void> getPhotos() async {
+  Future<void> getMedia() async {
     final chat = ref.read(chatListProvider).selectedChat;
     if (chat == null) return;
 
@@ -49,14 +51,13 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
       }),
     );
 
-    final photoMessages =
-        freshChat.messages
-            .where((m) => m.media.value?.type == Mediatype.image)
-            .toList();
+    final photoMessages = freshChat.messages.where((m) => m.media.value?.type == Mediatype.image).toList();
+    final documentMessages = freshChat.messages.where((m) => m.media.value?.type == Mediatype.document).toList();
     final photos = photoMessages.map((m) => m.media.value!).toList();
+    final documents = documentMessages.map((m) => m.media.value!).toList();
 
     // Update state with managed chat and loaded photos
-    state = state.copyWith(chat: freshChat, photos: photos);
+    state = state.copyWith(chat: freshChat, photos: photos, documents: documents);
   }
 
   Future<void> updateChatPhoto() async {

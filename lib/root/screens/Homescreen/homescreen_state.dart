@@ -11,6 +11,7 @@ import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
+import 'package:notesapp/root/screens/Settings/settings_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 
@@ -71,7 +72,7 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
       case "settings":
         Navigator.push(
           context,
-          CupertinoPageRoute(builder: (_) => SlideScreenTest()),
+          CupertinoPageRoute(builder: (_) => const SettingsScreen()),
         );
         break;
       case "deleteAll":
@@ -97,7 +98,7 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   }
 
   void handleChatFilter(String value) {
-    
+
   }
 
   Widget circularAvatar(bool isLight) {

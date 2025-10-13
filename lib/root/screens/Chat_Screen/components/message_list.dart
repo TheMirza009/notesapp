@@ -38,7 +38,7 @@ class MessageListWrapper extends ConsumerWidget {
   // });
 
     return Expanded(
-      child: isLoading ? _LoadIndicator() : messages.isEmpty
+      child: isLoading ? LoadIndicator() : messages.isEmpty
           ? const NothingToSee()
           : ScrollablePositionedList.builder(
               itemScrollController: notifier.itemScrollController,
@@ -152,8 +152,8 @@ class _MessageItemBuilder extends ConsumerWidget {
 }
 
 
-class _LoadIndicator extends StatelessWidget {
-  const _LoadIndicator({super.key});
+class LoadIndicator extends StatelessWidget {
+  const LoadIndicator({super.key});
 
   @override
   Widget build(BuildContext context) {

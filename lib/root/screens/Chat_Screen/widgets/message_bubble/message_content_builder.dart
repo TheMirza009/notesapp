@@ -286,8 +286,7 @@ class MessageContentBuilder extends StatelessWidget {
                                   message.media.value!.path!,
                                 ),
                                 builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
+                                  if (snapshot.connectionState ==  ConnectionState.waiting) {
                                     return const Text('Loading size...', style: subStyle,);
                                   } else if (snapshot.hasError) {
                                     return const Text('Size unknown', style: subStyle,);
@@ -310,16 +309,19 @@ class MessageContentBuilder extends StatelessWidget {
           ),
         ),
         
-              const SizedBox(height: 3),
+        const SizedBox(height: 3),
         Align(
           alignment: Alignment.bottomRight,
-          child: Text(
-            DateFormat.jm().format(message.time),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              color: ThemeConstants.subtitleLight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Text(
+              DateFormat.jm().format(message.time),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: ThemeConstants.subtitleLight,
+              ),
             ),
           ),
         ),

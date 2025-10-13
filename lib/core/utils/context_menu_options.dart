@@ -89,41 +89,44 @@ List<PopupMenuItem<String>> get homeScreenOptions => [
   ),
 ];
 
-List<PopupMenuItem<String>> get chatFilterOptions {
-  return ChatlistFilter.values.map((filter) {
-    Icon icon;
-    String text;
-
-    switch (filter) {
-      case ChatlistFilter.alphabetical:
-        icon = const Icon(Icons.sort_by_alpha_outlined);
-        text = "Alphabetical order";
-        break;
-      case ChatlistFilter.newestCreated:
-        icon = const Icon(Icons.fiber_new);
-        text = "Newest created";
-        break;
-      case ChatlistFilter.oldestCreated:
-        icon = const Icon(Icons.history);
-        text = "Oldest created";
-        break;
-      case ChatlistFilter.newestModified:
-        icon = const Icon(Icons.update);
-        text = "Newest modified";
-        break;
-      case ChatlistFilter.oldestModified:
-        icon = const Icon(Icons.update_disabled);
-        text = "Oldest modified";
-        break;
-    }
-
-    return PopupMenuItem<String>(
-      value: filter.name, // ✅ Use .name instead of .toString()
-      child: buildOptionTile(icon: icon, text: text),
-    );
-  }).toList();
-}
-
+/// Options: Chat Filter
+List<PopupMenuItem<String>> get chatFilterOptions => [
+  PopupMenuItem(
+    value: ChatlistFilter.alphabetical.name,
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.sortAZ, scale: 1.3),
+      text: "Alphabetical",
+    ),
+  ),
+  PopupMenuItem(
+    value: ChatlistFilter.newestCreated.name,
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.sortUP, scale: 1.3),
+      text: "Newest created",
+    ),
+  ),
+  PopupMenuItem(
+    value: ChatlistFilter.oldestCreated.name,
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.sortDOWN, scale: 1.3),
+      text: "Oldest created",
+    ),
+  ),
+  PopupMenuItem(
+    value: ChatlistFilter.newestModified.name,
+    child: buildOptionTile(
+      icon: SizedBox(width: 18, child: vectorBuild(IconPaths.sortNEW, scale: 1.3)),
+      text: "Newest modified",
+    ),
+  ),
+  PopupMenuItem(
+    value: ChatlistFilter.oldestModified.name,
+    child: buildOptionTile(
+      icon: SizedBox(width: 18, child: vectorBuild(IconPaths.sortOLD, scale: 1.3)),
+      text: "Oldest modified",
+    ),
+  ),
+];
 
 
 /// Options: Chat Screen
