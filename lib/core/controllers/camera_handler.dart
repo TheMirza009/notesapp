@@ -13,6 +13,11 @@ class CameraHandler {
 
   /// Used to trigger preview rebuilds when controller changes
   final ValueNotifier<int> rebuildNotifier = ValueNotifier(0);
+  final ValueNotifier<bool> showGrid = ValueNotifier(false);
+
+  void toggleGrid() {
+    showGrid.value = !showGrid.value;
+  }
 
   /// Initialize the camera (front/back optional).
   Future<void> initializeCamera({

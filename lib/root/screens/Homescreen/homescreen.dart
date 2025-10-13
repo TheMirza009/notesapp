@@ -12,6 +12,7 @@ import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/parent_slide_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
@@ -142,12 +143,24 @@ class HomescreenState extends HomeScreenBaseState {
                           alignment: Alignment.topCenter,
                           child: IconButton(
                             onPressed: () {
-                              Navigator.push(
+                              CustomContextMenu.showMenuAt(
                                 context,
-                                CupertinoPageRoute(
-                                  builder: (_) => ProfileScreen(),
-                                ),
+                                position: Offset(context.screenWidth, kToolbarHeight * 2),
+                                showTail: false,
+                                menuItems: chatFilterOptions,
+                                onSelected: (value) {
+                                  final selectedFilter = ChatlistFilter.values.firstWhere((f) => f.name == value);
+                                  chatNotifier.applyFilter(selectedFilter);
+                                  },
+                                triangleHorizontalOffset: 200,
                               );
+                              // Navigator.push(
+                              //   context,
+                              //   CupertinoPageRoute(
+                              //     builder: (_) => ProfileScreen(),
+                              //   ),
+                              // );
+                              // ref.read(chatListProvider.notifier).applyFilter(ChatlistFilter.oldestCreated);
                             },
                             icon: Icon(
                               Icons.filter_list,

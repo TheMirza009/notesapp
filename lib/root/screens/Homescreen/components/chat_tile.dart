@@ -10,10 +10,12 @@ class ChatTile extends StatelessWidget {
   final String time;
   final bool showDivider;
   final Widget? chatIcon;
+  final Widget? trailing;
   final String? chatPhotoPath;
   final VoidCallback? onTap; // Nullable onTap function
   final VoidCallback? onLongPress;
   final  Function(DismissDirection)? onDismissed;
+  final bool? isDismissible;
 
   // Constructor
   const ChatTile({
@@ -27,6 +29,8 @@ class ChatTile extends StatelessWidget {
     this.onLongPress,
     this.onDismissed,
     this.chatPhotoPath,
+    this.trailing,
+    this.isDismissible = true,
   });
 
   @override
@@ -36,6 +40,7 @@ class ChatTile extends StatelessWidget {
       color: Colors.transparent,
       child: Dismissible(
         key: Key(DateTime.now().toString()),
+        direction: (isDismissible ?? true) ? DismissDirection.endToStart : DismissDirection.none,
         onDismissed: onDismissed,
         background: Align(
           alignment: Alignment.centerRight,
@@ -54,7 +59,6 @@ class ChatTile extends StatelessWidget {
               ],
             )),
         ),
-        direction: DismissDirection.endToStart,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -96,7 +100,7 @@ class ChatTile extends StatelessWidget {
                               children: [
                                 // Title Text
                                 SizedBox(
-                                  width: ThemeConstants.screenWidth * 0.6, // Adjust width for title
+                                  width: ThemeConstants.screenWidth * ((trailing == null) ? 0.6 : 0.5), // Adjust width for title
                                   child: Text(
                                     title,
                                     style: TextStyle(
@@ -107,7 +111,7 @@ class ChatTile extends StatelessWidget {
                                   ),
                                 ),
                                 // Time Text
-                                Text(
+                                if (trailing == null) Text(
                                   time,
                                   style: TextStyle(
                                     fontSize: 12,
@@ -136,6 +140,7 @@ class ChatTile extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (trailing != null) trailing!,
                   ],
                 ),
               ),

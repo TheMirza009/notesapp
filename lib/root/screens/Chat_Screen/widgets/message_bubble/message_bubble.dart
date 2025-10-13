@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -164,9 +165,9 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
 
   // ------------------------
   EdgeInsets _getDefaultPadding() {
-    return widget.message.media.value?.type == Mediatype.image
+    return widget.message.isImage
         ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10)
-        : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
+        : widget.message.isDocument ? const EdgeInsets.all(4) : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
   }
 
   Color _getBubbleColor(BuildContext context) {

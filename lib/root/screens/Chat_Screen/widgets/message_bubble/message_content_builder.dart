@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/widgets/voice_message/components/voice_controller.dart';
@@ -249,37 +250,80 @@ class MessageContentBuilder extends StatelessWidget {
   }
 
   Widget _buildVideoMessage() => const Icon(Icons.video_call);
-  Widget _buildDocumentMessage() => IntrinsicWidth(
+
+  Widget _buildDocumentMessage() {
+    const TextStyle subStyle = TextStyle(color: ThemeConstants.iconColorNeutral, fontSize: 13);
+    return IntrinsicWidth(
     child: Column(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 16),
           decoration: BoxDecoration(
-          color: const Color(0x0F000000),
-          borderRadius: BorderRadius.circular(10)
+            color: const Color(0x0F000000),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.insert_drive_file, color: Colors.red),
-              SizedBox(width: 10),
-              Text(message.media.value?.name ?? "Unknown file"),
-              SizedBox(width: 10),
+              Row(
+                children: [
+                  const Icon(Icons.insert_drive_file, color: Colors.red),
+                  const SizedBox(width: 10),
+                  IntrinsicWidth(
+                    child: Column(
+                      children: [
+                        Text(
+                          message.media.value?.name ?? "Unknown file",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // FutureBuilder to show file size
+                            if (message.media.value?.path != null)
+                              FutureBuilder<String>(
+                                future: Utils.getFileSize(
+                                  message.media.value!.path!,
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Text('Loading size...', style: subStyle,);
+                                  } else if (snapshot.hasError) {
+                                    return const Text('Size unknown', style: subStyle,);
+                                  } else {
+                                    return Text(snapshot.data ?? '', style: subStyle,);
+                                  }
+                                },
+                              ),
+                            
+                            Text(message.media.value?.extension.toUpperCase() ?? "", style: subStyle),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10)
+                ],
+              ),
             ],
           ),
         ),
-          Align(
-                alignment: Alignment.bottomRight,
-                child: Text(
-                  DateFormat.jm().format(message.time),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: ThemeConstants.subtitleLight,
-                  ),
-                ),
-              ),
+        
+              const SizedBox(height: 3),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Text(
+            DateFormat.jm().format(message.time),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              color: ThemeConstants.subtitleLight,
+            ),
+          ),
+        ),
       ],
     ),
-  );
+  );}
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/extensions/chat_extensions.dart';
+import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 
 class ChatListState {
@@ -17,8 +19,6 @@ class ChatListState {
   }
 }
 
-
-
 /// The provider
 final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>((ref) {
   return ChatListNotifier();
@@ -27,8 +27,8 @@ final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>(
 
 /// Notifier that controls a list of chats stored in Isar
 class ChatListNotifier extends StateNotifier<ChatListState> {
-  List<Chat> _allChats = []; // master list, source of truth
-
+  List<Chat> _allChats = [];// master list, source of truth
+  ChatlistFilter _currentFilter = ChatlistFilter.oldestCreated; // default
   ChatListNotifier() : super(const ChatListState()) {
     loadChats();
   }
@@ -144,5 +144,44 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
   /// Get chat by ID
   Chat getChatByID(String uuid) {
     return _allChats.firstWhere((chat) => chat.uuid == uuid);
+  }
+
+  /// Sort chats based on the current filter
+  void applyFilter(ChatlistFilter filter) {
+    _currentFilter = filter;
+
+    List<Chat> sortedChats = List.from(_allChats); // clone master list
+
+    switch (filter) {
+      case ChatlistFilter.alphabetical:
+        sortedChats.sort(
+          (a, b) => (a.title ?? "").toLowerCase().compareTo(
+            (b.title ?? "").toLowerCase(),
+          ),
+        );
+        break;
+
+      case ChatlistFilter.newestCreated:
+        sortedChats.sort((a, b) => b.date.compareTo(a.date));
+        break;
+
+      case ChatlistFilter.oldestCreated:
+        sortedChats.sort((a, b) => a.date.compareTo(b.date));
+        break;
+
+      case ChatlistFilter.newestModified:
+        sortedChats.sort(
+          (a, b) => b.loadLastMessageTime().compareTo(a.loadLastMessageTime()),
+        );
+        break;
+
+      case ChatlistFilter.oldestModified:
+        sortedChats.sort(
+          (a, b) => a.loadLastMessageTime().compareTo(b.loadLastMessageTime()),
+        );
+        break;
+    }
+
+    state = state.copyWith(chats: sortedChats);
   }
 }

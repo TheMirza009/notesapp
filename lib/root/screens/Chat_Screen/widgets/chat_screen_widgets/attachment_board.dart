@@ -11,7 +11,7 @@ import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Settings/widgets/bordered_container.dart';
-import 'package:notesapp/root/screens/Utils/camera_screen.dart';
+import 'package:notesapp/root/screens/Camera/camera_screen.dart';
 
 /// ===============================================================
 ///  ATTACHMENT BOARD (theme-aware + grid-like layout preserved)
@@ -51,6 +51,7 @@ class AttachmentBoard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const double iconSize = 22;
     const double rowSpacing = 35;
+    final notifier = ref.read(chatStateController.notifier);
 
     return BorderedContainer(
       margins: const EdgeInsets.only(top: 15),
@@ -71,7 +72,7 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.music_note, color: Colors.deepOrange, size: iconSize),
                 title: "Audio",
-                onPressed: onAudioPressed ?? () async => await ref.read(chatStateController.notifier).pickAudio(),
+                onPressed: onAudioPressed ?? () async => await notifier.pickAudio(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.photo, color: Color(0xFFF43665), size: iconSize),
@@ -81,7 +82,8 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.camera, color: Color(0xFFCE6789), size: iconSize),
                 title: "Camera",
-                onPressed: onCameraPressed ?? () async => await ref.read(chatStateController.notifier).pickImage(isCamera: true) // () => Navigator.push(context, MaterialPageRoute(builder: (_) => CameraScreen())),
+                onPressed: onCameraPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => CameraScreen())),
+                // () async => await notifier.pickImage(isCamera: true)
               ),
             ],
           ),
@@ -92,7 +94,7 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.edit_document, color: Color(0xFFAD76CE), size: iconSize),
                 title: "Document",
-                onPressed: onDocumentsPressed ?? () async => await ref.read(chatStateController.notifier).pickDocument(),
+                onPressed: onDocumentsPressed ?? () async => await notifier.pickDocument(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.list, color: Colors.amber, size: iconSize),

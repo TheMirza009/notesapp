@@ -105,28 +105,32 @@ class _CameraSidePanelState extends State<CameraSidePanel>
                           const SizedBox(height: 10),
 
                           // 🖼 Aspect ratio (placeholder action)
-                          IconButton(
-                            onPressed: () {
-                              // TODO: hook up to aspect ratio setter
-                              debugPrint('Aspect ratio toggle pressed');
-                            },
-                            icon: const Icon(
-                              Icons.aspect_ratio_outlined,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
+                          // IconButton(
+                          //   onPressed: () {
+                          //     // TODO: hook up to aspect ratio setter
+                          //     debugPrint('Aspect ratio toggle pressed');
+                          //   },
+                          //   icon: const Icon(
+                          //     Icons.aspect_ratio_outlined,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 10),
 
                           // 🧭 Grid overlay toggle (placeholder)
                           IconButton(
                             onPressed: () {
-                              // TODO: handle grid visibility toggle
-                              debugPrint('Grid toggle pressed');
+                              widget.cameraHandler.toggleGrid();
                             },
-                            icon: const Icon(
-                              Icons.grid_on,
-                              color: Colors.white,
-                            ),
+                            icon: ValueListenableBuilder(
+                              valueListenable: widget.cameraHandler.showGrid,
+                              builder: (context, value, child) {
+                                return Icon(
+                                  value ? Icons.grid_off : Icons.grid_on,
+                                  color: Colors.white,
+                                );
+                              },
+                            )
                           ),
                           const SizedBox(height: 14),
 

@@ -7,6 +7,7 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
@@ -19,6 +20,7 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   final FocusNode searchFocusNode = FocusNode();
   final TextEditingController searchController = TextEditingController();
   bool isSliding = false;
+  ChatlistFilter filter = ChatlistFilter.oldestCreated;
   DateTime? lastBackPress;
 
   @override
@@ -92,6 +94,10 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
         );
         break;
     }
+  }
+
+  void handleChatFilter(String value) {
+    
   }
 
   Widget circularAvatar(bool isLight) {

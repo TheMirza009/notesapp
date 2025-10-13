@@ -11,8 +11,9 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/camera_handler.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
-import 'package:notesapp/root/screens/Utils/camera_mode_selector.dart';
-import 'package:notesapp/root/screens/Utils/camera_tool_panel.dart';
+import 'package:notesapp/root/screens/Camera/camera_grid_overlay.dart';
+import 'package:notesapp/root/screens/Camera/camera_mode_selector.dart';
+import 'package:notesapp/root/screens/Camera/camera_tool_panel.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -60,11 +61,14 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
 
   Future<void> _capturePhoto() async {
     final Media? media = await _cameraHandler.takePhoto();
+    // _cameraHandler.dispose();
     if (media != null && mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => GalleryViewWrapper(galleryItems: [media]),
+          builder: (_) => GalleryViewWrapper(
+            galleryItems: [media], isCamera: true,
+            ),
         ),
       );
       // ScaffoldMessenger.of(context).showSnackBar(
@@ -96,10 +100,10 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                 valueListenable: _cameraHandler.rebuildNotifier,
                 builder: (_, __, ___) {
                   return SizedBox(
-  width: MediaQuery.of(context).size.width,
-  height: MediaQuery.of(context).size.height,
-  child: _cameraHandler.buildPreview()
-);
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    child: _cameraHandler.buildPreview(),
+                  );
                 },
               ),
           // Container(
@@ -107,6 +111,16 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
           //   height: 600,
           //   width: double.maxFinite,
           // ),
+          ValueListenableBuilder(
+            valueListenable: _cameraHandler.showGrid,
+            builder: (context, value, child) {
+              return AnimatedOpacity(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                opacity: value ? 1.0 : 0,
+                child: CameraGridOverlay());
+            },
+          ),
           CameraSidePanel(cameraHandler: _cameraHandler),
           Positioned(
             bottom: 30,

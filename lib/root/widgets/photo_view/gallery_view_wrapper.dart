@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
@@ -17,12 +19,17 @@ class GalleryViewWrapper extends StatefulWidget {
     this.initialIndex = 0,
     this.backgroundDecoration,
     this.chatTitle,
+    this.isCamera = false,
+    this.onSendImage,
   });
 
   final List<Media> galleryItems;
   final int initialIndex;
   final BoxDecoration? backgroundDecoration;
   final String? chatTitle;
+  final bool? isCamera;
+  final VoidCallback? onSendImage;
+
 
   @override
   State<GalleryViewWrapper> createState() => _GalleryViewWrapperState();
@@ -178,11 +185,50 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
             color: Colors.black26,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(currentFileName),
+              child: (widget.isCamera ?? false) ? 
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(currentFileName, style: TextStyle(color: Colors.white),),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              return IconButton.filled(
+                                onPressed: widget.onSendImage ?? () async => await _openPreviewAndRemoveCamera(context, widget.galleryItems[0], ref),
+                                icon: Icon(
+                                  Icons.send,
+                                  color: ThemeConstants.sinisterSeed,
+                                  size: 30,
+                                ),
+                              );
+                            }
+                          )
+                ],
+              )
+               : Text(currentFileName, style: TextStyle(color: Colors.white),),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+Future<void> _openPreviewAndRemoveCamera(BuildContext context, Media media, WidgetRef ref) async {
+
+  final route = ModalRoute.of(context);
+if (route != null && Navigator.of(context).canPop()) {
+  Navigator.of(context).removeRouteBelow(route); // remove camera
+}
+
+// Pop first, then add the image
+if (Navigator.of(context).canPop()) {
+  Navigator.of(context).pop(); // pop back to chat
+  // Schedule pickImage after popping completes
+  Future.microtask(() async {
+    await ref.read(chatStateController.notifier).pickImage(media: media);
+  });
+}
+
+
+  // Optional: pick image
 }

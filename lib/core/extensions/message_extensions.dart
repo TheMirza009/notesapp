@@ -9,4 +9,8 @@ extension MessageX on Message {
   bool get isDocument {
     return media.value?.type == Mediatype.document;
   }
+
+  bool get isAudio {
+    return media.value?.type == Mediatype.audio;
+  }
 }

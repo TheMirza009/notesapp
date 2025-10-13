@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
+import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -24,6 +25,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:typeset/typeset.dart';
+import 'package:uuid/uuid.dart';
 import 'chat_state.dart';
 
 
@@ -51,7 +53,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
     });
 
-    final selectedChat = ref.watch(chatListProvider).selectedChat;
+    final selectedChat = ref.watch(chatListProvider.select((s) => s.selectedChat));
     if (selectedChat == null) return ChatState();
 
     _chat = selectedChat;
@@ -127,10 +129,79 @@ class ChatStateNotifier extends Notifier<ChatState> {
     scrollToBottom();
   }
 
-  Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false}) async {
+  Future<void> forwardMessage({
+  required Message original,
+  required Chat targetChat,
+}) async {
+  // ✅ Step 1: preload before transaction
+  try {
+    await original.media.load();
+  } catch (_) {}
+  try {
+    await original.replyingTo.load();
+  } catch (_) {}
+
+  final newMessage = Message()
+    ..id = const Uuid().v7()
+    ..text = original.text
+    ..time = DateTime.now()
+    ..isSender = true;
+
+  // ✅ Prepare cloned media data if any
+  final originalMedia = original.media.value;
+  Media? clonedMedia;
+  if (originalMedia != null) {
+    clonedMedia = Media()
+      ..name = originalMedia.name
+      ..path = originalMedia.path
+      ..extension = originalMedia.extension
+      ..type = originalMedia.type
+      ..aspectRatio = originalMedia.aspectRatio;
+  }
+
+  final replyingTo = original.replyingTo.value;
+
+  await _isar.writeTxn(() async {
+    // ✅ Step 2: put media first if exists
+    if (clonedMedia != null) {
+      await _isar.medias.put(clonedMedia);
+    }
+
+    // ✅ Step 3: put message first (makes it managed)
+    await _isar.messages.put(newMessage);
+
+    // ✅ Step 4: now safely attach links
+    if (clonedMedia != null) {
+      newMessage.media.value = clonedMedia;
+      await newMessage.media.save();
+    }
+
+    if (replyingTo != null) {
+      newMessage.replyingTo.value = replyingTo;
+      await newMessage.replyingTo.save();
+    }
+
+    // ✅ Step 5: attach to chat
+    await targetChat.messages.load();
+    targetChat.messages.add(newMessage);
+    await targetChat.messages.save();
+
+    await _isar.chats.put(targetChat);
+  });
+
+  // ✅ Step 6: refresh UI if forwarding to current chat
+  final currentChat = _chat;
+  if (currentChat != null && currentChat.isarID == targetChat.isarID) {
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages]);
+  }
+}
+
+
+  Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false, Media? media}) async {
     final Media? pickedMedia =  imageBytes != null 
       ? await MediaHandler.fromImageBytes(imageBytes) 
-      : await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery );
+      : ( media ?? await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery));
 
     if (pickedMedia == null || _chat == null) return;
 
@@ -575,6 +646,10 @@ class ChatStateNotifier extends Notifier<ChatState> {
       case 'reply':
         unSelectAllMessages();
         setAnchorMessage(message);
+        break;
+      case 'forward':
+        unSelectAllMessages();
+        Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatForwardScreen(message: message)));
         break;
       case 'copy':
         Utils.copyToClipboard(message.text);

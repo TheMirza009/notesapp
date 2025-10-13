@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -43,5 +45,28 @@ class Utils {
   static Future<void> shareToApps(XFile file) async {
     // await Share.share(text);
     await Share.shareXFiles([file]);
+  }
+
+  static Future<String> getFileSize(String filePath) async {
+    final file = File(filePath);
+
+    if (!await file.exists()) {
+      throw Exception("File does not exist at path: $filePath");
+    }
+
+    int bytes = await file.length();
+
+    if (bytes < 1024) {
+      return '$bytes B';
+    } else if (bytes < 1024 * 1024) {
+      final kb = bytes / 1024;
+      return '${kb.toStringAsFixed(2)} KB';
+    } else if (bytes < 1024 * 1024 * 1024) {
+      final mb = bytes / (1024 * 1024);
+      return '${mb.toStringAsFixed(2)} MB';
+    } else {
+      final gb = bytes / (1024 * 1024 * 1024);
+      return '${gb.toStringAsFixed(2)} GB';
+    }
   }
 }

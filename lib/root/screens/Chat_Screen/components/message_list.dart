@@ -138,7 +138,7 @@ class _MessageItemBuilder extends ConsumerWidget {
               CustomContextMenu.showMenuAt(
                 context,
                 position: pos,
-                menuItems: messageHoldOptions(isImage: (message.isImage || message.isDocument) ),
+                menuItems: messageHoldOptions(isImage: (message.isImage || message.isDocument || message.isAudio) ),
                 triangleHorizontalOffset: message.isSender ? 120 : 40,
                 onSelected: (val) => notifier.handleMessageMenuAction(val, message),
               );

@@ -26,4 +26,13 @@ extension ChatX on Chat {
         .findFirstSync()!
         .text;
   }
+
+  DateTime loadLastMessageTime() {
+    return IsarDatabase.isar.messages
+        .filter()
+        .chat((q) => q.isarIDEqualTo(isarID)) // assuming chat has isarID
+        .sortByTimeDesc() // requires time indexed
+        .findFirstSync()!
+        .time;
+  }
 }

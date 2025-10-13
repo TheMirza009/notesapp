@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/lucide.dart';
@@ -88,6 +89,43 @@ List<PopupMenuItem<String>> get homeScreenOptions => [
   ),
 ];
 
+List<PopupMenuItem<String>> get chatFilterOptions {
+  return ChatlistFilter.values.map((filter) {
+    Icon icon;
+    String text;
+
+    switch (filter) {
+      case ChatlistFilter.alphabetical:
+        icon = const Icon(Icons.sort_by_alpha_outlined);
+        text = "Alphabetical order";
+        break;
+      case ChatlistFilter.newestCreated:
+        icon = const Icon(Icons.fiber_new);
+        text = "Newest created";
+        break;
+      case ChatlistFilter.oldestCreated:
+        icon = const Icon(Icons.history);
+        text = "Oldest created";
+        break;
+      case ChatlistFilter.newestModified:
+        icon = const Icon(Icons.update);
+        text = "Newest modified";
+        break;
+      case ChatlistFilter.oldestModified:
+        icon = const Icon(Icons.update_disabled);
+        text = "Oldest modified";
+        break;
+    }
+
+    return PopupMenuItem<String>(
+      value: filter.name, // ✅ Use .name instead of .toString()
+      child: buildOptionTile(icon: icon, text: text),
+    );
+  }).toList();
+}
+
+
+
 /// Options: Chat Screen
 List<PopupMenuItem<String>> get chatScreenOptions => [
   PopupMenuItem(
@@ -134,6 +172,13 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.messageReply),
       text: "Reply",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'forward',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.forward3),
+      text: "Forward",
     ),
   ),
   PopupMenuItem(

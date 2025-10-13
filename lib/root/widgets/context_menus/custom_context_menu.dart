@@ -70,6 +70,7 @@ class CustomContextMenu extends StatelessWidget {
     void Function(String)? onSelected,
     Color? backgroundColor,
     double? triangleHorizontalOffset,
+    bool? showTail,
   }) async {
     const lightBG = Color.fromARGB(255, 228, 239, 240);
     const darkBG = Color.fromARGB(255, 34, 52, 65);
@@ -94,8 +95,8 @@ class CustomContextMenu extends StatelessWidget {
       shape: TailedRRectBorder(
         borderRadius: BorderRadius.circular(15),
         side: BorderSide(color: dividerColor(), width: 1.5),
-        triangleHeight: 8,
-        triangleWidth: 14,
+        triangleHeight: (showTail ?? true) ? 8 : 0,
+        triangleWidth: (showTail ?? true) ? 14 : 0,
         triangleHorizontalOffset: triangleHorizontalOffset ?? 40, // adjust horizontal position
       ),
       items: _buildMenuItems(menuItems, dividerColor()),

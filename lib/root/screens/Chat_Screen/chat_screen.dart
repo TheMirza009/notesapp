@@ -21,6 +21,17 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/au
 //TODO: 9. Clear Chat does not delete all messages properly.
 //TODO: 10. Square images not being displayed properly.
 //TODO: 11. State problems ocurring again.
+//TODO: 12. Audio/Documents being replied to errors 
+//TODO: 13. Preferable to revamp the overall messagebar structure 
+//TODO: 14. If a media has duplicates, don't delete it
+//TODO: 14. Audio players need to be robusted
+//TODO: 14. Hero-Overlay needs implementation in ChatDetailScreen
+//TODO: 14. Media other than images need to be formatted inside ChatDetailScreen
+//TODO: 14. Search needs to be handled inside Forward screen
+//TODO: 14. Camera needs robustness
+//TODO: 14. GIF / Pasting needs robustness
+//TODO: 14. Reply wrapper needs to handle other media
+//TODO: 14. Audio record UI / overlay needs implementation
 
 final StateProvider<bool> isNewChat = StateProvider((_) => false);
 
