@@ -137,9 +137,29 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                   return Consumer(
                     builder: (context, ref, child) {
                       final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
-                      return IconButton(
-                        onPressed: widget.onMicTap,
-                        icon: Icon(Icons.mic, color: isRecording ? ThemeConstants.sinisterSeed : iconLight , ),
+                      return AnimatedScale(
+                        duration: Duration(milliseconds: 250),
+                        curve: Curves.easeInOutQuint,
+                        scale: isRecording ? 1.5 : 1.0,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            AnimatedContainer(
+                              height: isRecording ? 30 : 0,
+                              width: isRecording ? 30 : 0,
+                              duration: Duration(milliseconds: 250),
+                              curve: Curves.easeOut,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: (context.isLight ? ThemeConstants.sacredSeed : ThemeConstants.sinisterSeed).withValues(alpha: 0.5)
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: widget.onMicTap,
+                              icon: Icon(Icons.mic, color: isRecording ? (context.isLight ? const Color.fromARGB(255, 23, 132, 182) : ThemeConstants.sinisterSeed) : iconLight , ),
+                            ),
+                          ],
+                        ),
                       );
                     }
                   );

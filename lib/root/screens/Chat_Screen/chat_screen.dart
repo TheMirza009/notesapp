@@ -12,6 +12,7 @@ import 'package:notesapp/root/screens/Chat_screen/components/emoji_board_wrapper
 import 'package:notesapp/root/screens/Chat_screen/components/message_list.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/auto_hide_scroll_to_bottom.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/record_bar.dart';
 
 //TODO: 2. Notifier needs robustness and double checks
 //TODO: 5. Full-sized images being shown as thumbnails
@@ -97,6 +98,7 @@ class ChatScreen extends ConsumerWidget {
                 const ChatSearchBar(),
                 const MessageListWrapper(),
                 const AnchorWrapper(),
+                // const RecordBar(),
                 const BottomMessageBarWrapper(),
                 const EmojiBoardWrapper(),
               ],

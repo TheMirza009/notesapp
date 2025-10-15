@@ -450,6 +450,11 @@ class ChatStateNotifier extends Notifier<ChatState> {
     state = state.copyWith(isRecording: true);
   }
 
+  Future<void> cancelAudioRecording() async {
+    await recorder.cancelRecording();
+    state = state.copyWith(isRecording: false);
+  }
+
   void stopAudioRecording() async {
     final String? recordingPath = await recorder.stopRecording();
     if (recordingPath == null) return;
