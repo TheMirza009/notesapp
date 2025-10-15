@@ -97,7 +97,7 @@ class ChatScreen extends ConsumerWidget {
                 const ChatAppBarWrapper(),
                 const ChatSearchBar(),
                 const MessageListWrapper(),
-                const AnchorWrapper(),
+                // const AnchorWrapper(),
                 // const RecordBar(),
                 const BottomMessageBarWrapper(),
                 const EmojiBoardWrapper(),

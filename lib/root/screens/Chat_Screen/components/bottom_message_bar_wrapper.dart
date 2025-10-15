@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/attachment/attachment_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/components/emerging_overlay.dart';
@@ -37,6 +38,12 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             if (isRecording) {
               notifier.cancelAudioRecording();
             }
+
+            // ✅ Only clear anchor if we’re not recording
+            if (notifier.state.anchorMessage != null && !isRecording) {
+              notifier.clearAnchorMessage();
+            }
+
             ref.read(overlayControllerProvider.notifier).toggle();
             // final state = ref.read(openingProvider.notifier);
             // state.state = !state.state; // <======= Called here
@@ -63,15 +70,15 @@ class BottomMessageBarWrapper extends ConsumerWidget {
   }
 }
 
-OverlayEntry? _recordOverlay;
+OverlayEntry? recordOverlay;
 
 void _showRecordBar(BuildContext context, WidgetRef ref) {
-  if (_recordOverlay != null) return; // ✅ Prevent duplicates
+  if (recordOverlay != null) return; // ✅ Prevent duplicates
 
   final theme = Theme.of(context);
   final overlay = Overlay.of(context, rootOverlay: true);
 
-  _recordOverlay = OverlayEntry(
+  recordOverlay = OverlayEntry(
     builder: (_) => Positioned(
       left: 0,
       right: 0,
@@ -97,16 +104,21 @@ void _showRecordBar(BuildContext context, WidgetRef ref) {
     ),
   );
 
-  overlay.insert(_recordOverlay!);
+  if (replyOverlay != null) {
+    overlay.insert(recordOverlay!, above: replyOverlay);
+  } else {
+    overlay.insert(recordOverlay!);
+  }
 }
 
 Future<void> _hideRecordBar() async {
-  if (_recordOverlay == null) return;
+  if (recordOverlay == null) return;
 
   // ✅ Wait for RecordBar’s internal slide animation
   await Future.delayed(const Duration(milliseconds: 500));
 
   // ✅ Remove safely after delay
-  _recordOverlay?.remove();
-  _recordOverlay = null;
+  recordOverlay?.remove();
+  recordOverlay = null;
 }
+

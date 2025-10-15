@@ -1,8 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/widgets/voice_message/components/voice_controller.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+import 'package:siri_wave/siri_wave.dart';
 
 class RecordBar extends ConsumerStatefulWidget {
   const RecordBar({super.key});
@@ -11,8 +18,7 @@ class RecordBar extends ConsumerStatefulWidget {
   ConsumerState<RecordBar> createState() => _RecordBarState();
 }
 
-class _RecordBarState extends ConsumerState<RecordBar>
-    with TickerProviderStateMixin {
+class _RecordBarState extends ConsumerState<RecordBar> with TickerProviderStateMixin {
   // --- Animation Durations (timeline clarity) ---
   static const Duration kCrushDuration = Duration(milliseconds: 350); // Bar crushes into circle
   static const Duration kFadeDuration = Duration(milliseconds: 300);  // Timer fades away
@@ -36,7 +42,6 @@ class _RecordBarState extends ConsumerState<RecordBar>
 
   Future<void> _onDeletePressed() async {
   final controller = ref.read(chatStateController.notifier);
-  controller.cancelAudioRecording();
 
   // Start crush animation
   _isCrushed.value = true;
@@ -44,6 +49,9 @@ class _RecordBarState extends ConsumerState<RecordBar>
 
   // Wait for crush animation
   await Future.delayed(kCrushDuration);
+
+    // Cancel recording AFTER animation completes
+  await controller.cancelAudioRecording();
 
   // Slide down and hide
   if (mounted) setState(() => _shouldShow = false);
@@ -118,6 +126,8 @@ class _RecordBarState extends ConsumerState<RecordBar>
                   ),
                 ),
 
+                const SiriWaveMic(),
+
                 // --- DELETE BUTTON (left) --- <====== Bottom of the stack so appears on top
                 AnimatedAlign(
                   duration: kCrushDuration,
@@ -143,6 +153,55 @@ class _RecordBarState extends ConsumerState<RecordBar>
             ),
           );
         },
+      ),
+    );
+  }
+}
+class SiriWaveMic extends StatefulWidget {
+  const SiriWaveMic({super.key});
+
+  @override
+  State<SiriWaveMic> createState() => _SiriWaveMicState();
+}
+
+class _SiriWaveMicState extends State<SiriWaveMic> {
+  final controller = IOS7SiriWaveformController(
+    amplitude: 0.0,
+    color: Colors.red,
+    frequency: 4,
+    speed: 0.15,
+  );
+
+  StreamSubscription<Amplitude>? _ampSub;
+  double _smoothedAmp = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // listen to amplitude from global recorder
+    _ampSub = Recorder()
+        .onAmplitudeChanged(const Duration(milliseconds: 50))
+        .listen((amp) {
+      final target = (amp.current / 100).clamp(0.0, 1.0);
+      _smoothedAmp = _smoothedAmp * 0.7 + target * 0.3; // smooth it
+      controller.amplitude = _smoothedAmp;
+    });
+  }
+
+  @override
+  void dispose() {
+    _ampSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SiriWaveform.ios7(
+      controller: controller,
+      options: const IOS7SiriWaveformOptions(
+        height: 80,
+        width: 300,
       ),
     );
   }

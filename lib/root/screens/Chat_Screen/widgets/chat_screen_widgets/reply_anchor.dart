@@ -42,7 +42,7 @@ class ReplyAnchor extends StatelessWidget {
 
     return ClipRect(
       child: AnimatedSlide(
-        offset: _isVisible ? Offset.zero : const Offset(0, 1.5),
+        offset: _isVisible ? Offset.zero : const Offset(0, 1.0), // const Offset(0, 1.5),
         duration: animationDuration,
         curve: animationCurve,
         child: AnimatedContainer(
@@ -50,8 +50,8 @@ class ReplyAnchor extends StatelessWidget {
           curve: animationCurve,
           margin: EdgeInsets.only(bottom: _isVisible ? 8 : 0, left: 8, right: 8),
           padding: padding,
-          constraints: BoxConstraints(
-            maxHeight: _isVisible ? maxHeight : 0,
+          constraints: const BoxConstraints(
+            maxHeight: 100, // _isVisible ? maxHeight : 0,
             maxWidth: double.infinity,
           ),
           decoration: BoxDecoration(

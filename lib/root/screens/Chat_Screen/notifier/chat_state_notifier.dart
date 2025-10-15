@@ -9,6 +9,8 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -369,13 +371,18 @@ class ChatStateNotifier extends Notifier<ChatState> {
   // =====================================================
 
   void setAnchorMessage(Message message) {
+    final attachmentOverlay = ref.read(overlayControllerProvider.notifier);
     state = state.copyWith(anchorMessage: message);
     if (!keyboardFocusNode.hasFocus) keyboardFocusNode.requestFocus();
+    if (attachmentOverlay.state == true) {
+      attachmentOverlay.close();
+    }
   }
 
   void clearAnchorMessage() {
     final newState = state.copyWith(anchorMessage: null);
     state = newState;
+    hideReplyAnchor();
     keyboardFocusNode.unfocus();
   }
 
@@ -643,14 +650,18 @@ class ChatStateNotifier extends Notifier<ChatState> {
   
   
   /// Context menu actions
-  void handleMessageMenuAction(String action, Message message) async {
+  void handleMessageMenuAction(String action, Message message, BuildContext? context) async {
     switch (action) {
       case 'deleteMessage':
         deleteMessage(message);
         break;
       case 'reply':
         unSelectAllMessages();
-        setAnchorMessage(message);
+        // setAnchorMessage(message);
+        showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setAnchorMessage(message); // trigger slide
+          });
         break;
       case 'forward':
         unSelectAllMessages();

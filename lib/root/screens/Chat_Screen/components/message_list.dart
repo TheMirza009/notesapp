@@ -11,6 +11,7 @@ import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_bubble.dart';
@@ -107,7 +108,12 @@ class _MessageItemBuilder extends ConsumerWidget {
             topPadding: info.topPadding,
             bottomPadding: info.bottomPadding,
             // interactions
-            onSwipe: () => ref.read(chatStateController.notifier).setAnchorMessage(message),
+            onSwipe: () {
+              showReplyAnchor(context); // show hidden
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ref .read(chatStateController.notifier) .setAnchorMessage(message); // trigger slide
+              });
+            },
             onTapWhileSelecting: () => isSelected
                 ? ref.read(chatStateController.notifier).unselectMessage(message)
                 : ref.read(chatStateController.notifier).selectMessage(message),
@@ -140,7 +146,7 @@ class _MessageItemBuilder extends ConsumerWidget {
                 position: pos,
                 menuItems: messageHoldOptions(isImage: (message.isImage || message.isDocument || message.isAudio) ),
                 triangleHorizontalOffset: message.isSender ? 120 : 40,
-                onSelected: (val) => notifier.handleMessageMenuAction(val, message),
+                onSelected: (val) => notifier.handleMessageMenuAction(val, message, context),
               );
             },
             onReplyTap: () => ref.read(chatStateController.notifier).scrollToMessage(message.replyingTo.value!.isarId),

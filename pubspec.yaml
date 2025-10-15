@@ -80,6 +80,7 @@ dependencies:
   syncfusion_flutter_sliders: ^25.1.41 
   just_waveform: ^0.0.7
   open_file: ^3.5.10
+  siri_wave: ^2.3.0
 
 dev_dependencies:
   flutter_test:

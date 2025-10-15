@@ -10,6 +10,13 @@ class Recorder {
   final record = AudioRecorder();
   String? _recordedFile;
 
+  Stream<Amplitude> onAmplitudeChanged([
+    Duration interval = const Duration(milliseconds: 50),
+  ]) {
+    return record.onAmplitudeChanged(interval);
+  }
+
+
   Future<void> startRecording() async {
     if (await record.hasPermission()) {
       final tempDir = await getTemporaryDirectory();
