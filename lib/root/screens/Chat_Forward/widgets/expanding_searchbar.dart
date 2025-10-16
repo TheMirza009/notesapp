@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'dart:math' show lerpDouble;
 import 'package:flutter/material.dart';
@@ -109,7 +110,7 @@ class _ExpandingSearchbarState extends ConsumerState<ExpandingSearchbar>
 
 
         return Positioned(
-          top: topOffset,
+          top: Platform.isWindows ? topOffset : kToolbarHeight / 1.45, // topOffset,
           left: leftOffset,
           right: rightOffset,
           child: AnimatedOpacity(
