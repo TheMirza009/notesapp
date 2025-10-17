@@ -269,13 +269,15 @@ class MessageContentBuilder extends StatelessWidget {
                 children: [
                   const Icon(Icons.insert_drive_file, color: Colors.red),
                   const SizedBox(width: 10),
-                  IntrinsicWidth(
+                  Expanded(
                     child: Column(
                       children: [
                         Text(
                           message.media.value?.name ?? "Unknown file",
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                         ),
+                        SizedBox(height: 5),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [

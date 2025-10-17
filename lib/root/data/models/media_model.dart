@@ -68,7 +68,7 @@ class Media {
   static Mediatype _detectType(String ext) {
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(ext)) return Mediatype.image;
     if (['mp4', 'mov', 'mkv', 'avi'].contains(ext)) return Mediatype.video;
-    if (['mp3', 'wav', 'aac', 'ogg', 'flac'].contains(ext)) return Mediatype.audio;
+    if (['mp3', 'wav', 'aac', 'ogg', 'flac', 'opus', 'm4a', 'amr', 'wma'].contains(ext)) return Mediatype.audio;
     if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'].contains(ext)) return Mediatype.document;
     return Mediatype.unknown;
   }

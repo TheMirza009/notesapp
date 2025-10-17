@@ -183,6 +183,66 @@ class MediaHandler {
     }
   }
 
+  /// Handle a received shared file (from intent or another source).
+  /// Saves the file and returns a fully populated [Media] object.
+  /// If the file is an image, calculates its aspect ratio.
+  static Future<Media?> handleReceivedMedia(
+    String filePath, {
+    String baseFolder = 'Media',
+  }) async {
+    if (filePath.isEmpty) return null;
+
+    final file = File(filePath);
+    if (!await file.exists()) {
+      debugPrint("⚠️ Received file does not exist at path: $filePath");
+      return null;
+    }
+
+    // Determine subfolder by type (image/video/audio/document) automatically
+    final media = Media.fromFilePath(filePath);
+    String subfolder;
+    switch (media.type) {
+      case Mediatype.image:
+        subfolder = 'Photos';
+        break;
+      case Mediatype.video:
+        subfolder = 'Videos';
+        break;
+      case Mediatype.audio:
+        subfolder = 'Audio';
+        break;
+      case Mediatype.document:
+      case Mediatype.text:
+      case Mediatype.unknown:
+      default:
+        subfolder = 'Documents';
+    }
+
+    // Save file into storage
+    final savedFile = await saveToStorage(
+      file,
+      subfolder,
+      baseFolder: baseFolder,
+    );
+    media.path = savedFile.path;
+
+    // Decode aspect ratio only for still images (not GIFs)
+    if (media.type == Mediatype.image &&
+        !savedFile.path.toLowerCase().endsWith('.gif')) {
+      try {
+        final bytes = await savedFile.readAsBytes();
+        final decodedImage = await decodeImageFromList(bytes);
+        media.aspectRatio = decodedImage.width / decodedImage.height;
+      } catch (e) {
+        debugPrint("⚠️ Failed to decode image aspect ratio: $e");
+      }
+    }
+
+    debugPrint("✅ Received file handled: $media");
+    return media;
+  }
+
+
 
   /// ===== Helpers =====
 

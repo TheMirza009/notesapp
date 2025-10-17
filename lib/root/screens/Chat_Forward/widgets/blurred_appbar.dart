@@ -8,7 +8,8 @@ import 'package:notesapp/root/screens/Chat_Forward/notifier/selected_chat_notifi
 import 'package:notesapp/root/screens/Chat_Forward/widgets/expanding_searchbar.dart';
 
 class BlurredForwardAppBar extends ConsumerWidget implements PreferredSizeWidget {
-  const BlurredForwardAppBar({super.key});
+  final bool? isSend;
+  const BlurredForwardAppBar({this.isSend = false, super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -45,7 +46,7 @@ class BlurredForwardAppBar extends ConsumerWidget implements PreferredSizeWidget
               backgroundColor:
                   Theme.of(context).scaffoldBackgroundColor.withOpacity(0.05),
               surfaceTintColor: Colors.transparent,
-              title: const Text("Forward to..."),
+              title: Text(isSend == true ? "Send to..." : "Forward to..."),
               actions: [
                 if (!isSearching)
                   IconButton(

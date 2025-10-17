@@ -28,7 +28,6 @@ class ChatForwardScreen extends ConsumerWidget {
 
     final isLight = Theme.of(context).brightness == Brightness.light;
     final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
-
     return PopScope(
       canPop: notifier.isSearching == false,
       onPopInvokedWithResult: (didPop, result) {
@@ -37,7 +36,7 @@ class ChatForwardScreen extends ConsumerWidget {
       child: Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
-        appBar: const BlurredForwardAppBar(),
+        appBar: BlurredForwardAppBar(isSend: isSend),
         body: Container(
           decoration: BoxDecoration(gradient: backgroundGradient),
           child: SafeArea(

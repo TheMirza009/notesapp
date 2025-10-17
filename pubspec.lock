@@ -553,7 +553,7 @@ packages:
     source: hosted
     version: "2.3.2"
   http:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: http
       sha256: bb2ce4590bc2667c96f318d68cac1b5a7987ec819351d32b1c987239a815e007
@@ -707,9 +707,10 @@ packages:
   isar_flutter_libs:
     dependency: "direct dev"
     description:
-      path: "plugins/isar_flutter_libs"
-      relative: true
-    source: path
+      name: isar_flutter_libs
+      sha256: bc6768cc4b9c61aabff77152e7f33b4b17d2fc93134f7af1c3dd51500fe8d5e8
+      url: "https://pub.dev"
+    source: hosted
     version: "3.1.0+1"
   isar_generator:
     dependency: "direct dev"
@@ -1376,18 +1377,18 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: e17dcc7a1d0701e84d0a83c0040503cdcc6c72e44db0d733ab4c706dd5b8b9f8
+      sha256: "2d878bce96c4fd1092205a4f72b328f7f05d86b27c3bd55db7fd440e6017352a"
       url: "https://pub.dev"
     source: hosted
-    version: "25.2.7"
+    version: "31.1.19"
   syncfusion_flutter_sliders:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_sliders
-      sha256: "842a452fd73fd61fbebbff72d726ffea4cdaacf088ca2738aeaf7f4454b3861e"
+      sha256: "9fe380c17215296473a60f8d4dfe51bac1d141d76b931e93d758fe1e3ab23441"
       url: "https://pub.dev"
     source: hosted
-    version: "25.2.7"
+    version: "31.1.19"
   synchronized:
     dependency: transitive
     description:
