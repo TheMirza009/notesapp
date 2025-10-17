@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/bottom_message_bar_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/reply_anchor.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/reply_anchor.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/bottom_message_bar_wrapper.dart';
 
 class AnchorWrapper extends ConsumerWidget {
   const AnchorWrapper({super.key});

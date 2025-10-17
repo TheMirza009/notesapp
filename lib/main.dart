@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/controllers/share_intent_handler.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
@@ -38,7 +39,8 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsFlutterBinding.ensureInitialized();
+    WidgetsFlutterBinding.ensureInitialized(); 
+    ShareIntentHandler.initialize();
   }
 
   @override
@@ -46,6 +48,12 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.didChangeDependencies();
     ThemeConstants.screenWidth = MediaQuery.sizeOf(context).width;
     ThemeConstants.screenHeight = MediaQuery.sizeOf(context).height;
+  }
+
+  @override
+  void dispose() {
+    ShareIntentHandler.dispose();
+    super.dispose();
   }
 
   // This widget is the root of your application.

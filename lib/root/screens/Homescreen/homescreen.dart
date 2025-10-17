@@ -13,7 +13,7 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/message_list.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/parent_slide_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';

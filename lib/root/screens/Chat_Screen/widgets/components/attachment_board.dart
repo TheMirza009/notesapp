@@ -5,11 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/root/screens/Chat_Screen/components/bottom_message_bar_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/attachment/desaturator.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_screen_notifier_3.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Settings/widgets/bordered_container.dart';
 import 'package:notesapp/root/screens/Camera/camera_screen.dart';
 

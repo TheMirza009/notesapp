@@ -133,9 +133,9 @@ class MediaHandler {
   }
 
   /// Pick a document → saved in Media/Documents
-  static Future<Media?> pickDocument() async {
+  static Future<Media?> pickDocument({FileType? fileType}) async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
+      type: fileType ?? FileType.any,
     );
 
     if (result == null || result.files.single.path == null) return null;

@@ -3,15 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/bottom_message_bar_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/chat_appbar_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/chat_searchbar.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/emoji_board_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/message_list.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/auto_hide_scroll_to_bottom.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/bottom_message_bar_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_appbar_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_searchbar.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/auto_hide_scroll_to_bottom.dart';
 
 //TODO: 2. Notifier needs robustness and double checks
 //TODO: 5. Full-sized images being shown as thumbnails

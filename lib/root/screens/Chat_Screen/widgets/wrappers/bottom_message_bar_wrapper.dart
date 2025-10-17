@@ -1,14 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/attachment/attachment_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/emerging_overlay.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/attachment_board.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/bottom_message_bar.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/recording/record_bar.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/attachment_board.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/bottom_message_bar.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/record_bar.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/attachment_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 
 class BottomMessageBarWrapper extends ConsumerWidget {
   const BottomMessageBarWrapper({super.key});

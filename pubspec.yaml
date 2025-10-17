@@ -81,6 +81,7 @@ dependencies:
   just_waveform: ^0.0.7
   open_file: ^3.5.10
   siri_wave: ^2.3.0
+  receive_sharing_intent: 1.8.1
 
 dev_dependencies:
   flutter_test:

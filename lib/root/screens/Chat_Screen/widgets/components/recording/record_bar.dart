@@ -1,18 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
-import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/recording/elapsed_timer.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/recording/siri_waves/inline_live_wave.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/recording/siri_waves/overlay_siri_wave.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/recording/siri_waves/siri_wave.dart';
-import 'package:record/record.dart';
-import 'package:siri_wave/siri_wave.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/elapsed_timer.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/siri_waves/inline_live_wave.dart';
+
 
 class RecordBar extends ConsumerStatefulWidget {
   const RecordBar({super.key});
@@ -204,15 +199,15 @@ class _RecordBarState extends ConsumerState<RecordBar>
   }
 }
 
-class SiriWave extends StatelessWidget {
-  final double height;
-  SiriWave({super.key, required this.height});
+// class SiriWave extends StatelessWidget {
+//   final double height;
+//   SiriWave({super.key, required this.height});
 
-  final controller = IOS9SiriWaveformController(amplitude: 0.5, speed: 0.15);
+//   final controller = IOS9SiriWaveformController(amplitude: 0.5, speed: 0.15);
 
-  @override
-  Widget build(BuildContext context) => SiriWaveform.ios9(
-    controller: controller,
-    options: IOS9SiriWaveformOptions(height: height, width: 400),
-  );
-}
+//   @override
+//   Widget build(BuildContext context) => SiriWaveform.ios9(
+//     controller: controller,
+//     options: IOS9SiriWaveformOptions(height: height, width: 400),
+//   );
+// }

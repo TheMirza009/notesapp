@@ -17,7 +17,8 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
 class ChatForwardScreen extends ConsumerWidget {
   final Message message;
-  const ChatForwardScreen({super.key, required this.message});
+  final bool? isSend;
+  const ChatForwardScreen({super.key, required this.message, this.isSend = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

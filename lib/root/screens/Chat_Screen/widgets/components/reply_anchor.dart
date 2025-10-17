@@ -1,9 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 
 class ReplyAnchor extends StatelessWidget {
   final String? text;
@@ -103,7 +104,13 @@ class ReplyAnchor extends StatelessWidget {
                               height: 60,
                               width: 60,
                               clipBehavior: Clip.antiAlias,
-                              child: RepaintBoundary(child: Image.file(File(media!.path!), fit: BoxFit.cover,))),
+                              child: RepaintBoundary(
+                                  child: media!.isImage ? Image.file(
+                                    File(media!.path!),
+                                    fit: BoxFit.cover,
+                                  ) : SizedBox.shrink(), // (media!.isDocument ? Icon(Icons.insert_drive_file) : (media!.isAudio ? Icon(Icons.audio_file) : SizedBox.shrink())),
+                                ),
+                              ),
                           ),
                           Padding(
                             padding: EdgeInsets.only(right: 5),

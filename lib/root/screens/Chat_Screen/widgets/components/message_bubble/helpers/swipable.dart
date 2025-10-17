@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_bubble.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
 import 'package:svg_flutter/svg.dart';
 
 class Swipeable extends StatefulWidget {

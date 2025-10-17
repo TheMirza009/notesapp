@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
@@ -9,8 +10,8 @@ import 'package:isar/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/anchor_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/components/attachment/overlay_controller.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -543,7 +544,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   }
 
   Future<void> pickAudio() async {
-    final Media? pickedMedia = await MediaHandler.pickDocument();
+    final Media? pickedMedia = await MediaHandler.pickDocument(fileType: FileType.audio);
 
     if (pickedMedia == null || _chat == null) return;
     await deleteInitMessage();

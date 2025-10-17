@@ -6,7 +6,7 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_bubble.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/screens/Settings/widgets/emerging_circle.dart';
 import 'package:notesapp/root/screens/Settings/widgets/rounded_tile.dart';

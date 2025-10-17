@@ -6,10 +6,10 @@ import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/helpers/ripple_well.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/helpers/swipable.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/reply_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/message_bubble/message_content_builder.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/ripple_well.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/swipable.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_content_builder.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/reply_wrapper.dart';
 import 'package:notesapp/root/widgets/glass_container.dart';
 
 class MessageBubble extends StatefulWidget {

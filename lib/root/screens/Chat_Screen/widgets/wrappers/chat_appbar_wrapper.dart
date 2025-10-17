@@ -5,7 +5,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/chat_screen_widgets/chat_appbar.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/chat_appbar.dart';
 
 class ChatAppBarWrapper extends ConsumerWidget {
   const ChatAppBarWrapper({super.key});

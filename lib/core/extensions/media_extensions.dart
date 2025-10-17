@@ -22,6 +22,18 @@ extension MediaX on Media {
       return "Unknown time";
     }
   }
+
+  bool get isImage {
+    return type == Mediatype.image;
+  }
+
+  bool get isDocument {
+    return type == Mediatype.document;
+  }
+
+  bool get isAudio {
+    return type == Mediatype.audio;
+  }
 }
 
 extension MediaHelpers on List<Media> {
