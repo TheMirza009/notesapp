@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';

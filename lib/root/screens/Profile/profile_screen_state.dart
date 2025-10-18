@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
@@ -10,7 +11,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';

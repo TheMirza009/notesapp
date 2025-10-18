@@ -6,7 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
@@ -109,28 +109,45 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (_chat == null) return;
     await deleteInitMessage();
 
-    final newMessage = Message()
-      ..text = text
-      ..time = DateTime.now()
-      ..isSender = true;
+    final newMessage =
+        Message()
+          ..text = text
+          ..time = DateTime.now()
+          ..isSender = true;
 
     await _isar.writeTxn(() async {
-      if (state.anchorMessage != null) newMessage.replyingTo.value = state.anchorMessage;
+      // ✅ Save reply link first (if replying)
+      if (state.anchorMessage != null) {
+        newMessage.replyingTo.value = state.anchorMessage;
+      }
+
+      // ✅ Save the new message first (creates its ID)
       await _isar.messages.put(newMessage);
 
-      if (_chat != null) {
-        _chat!.messages.add(newMessage);
-        await _chat!.messages.save();
+      // ✅ Ensure chat exists in Isar and has a valid ID
+      if (_chat!.isarID == null) {
         await _isar.chats.put(_chat!);
       }
 
-      if (state.anchorMessage != null) await newMessage.replyingTo.save();
+      // ✅ Link the message to the chat
+      _chat!.messages.add(newMessage);
+      await _chat!.messages.save();
+
+      // ✅ Save reply link if needed
+      if (state.anchorMessage != null) {
+        await newMessage.replyingTo.save();
+      }
+
+      // ✅ Optionally update the chat object again (optional)
+      await _isar.chats.put(_chat!);
     });
 
+    // ✅ Update in-memory state
     allMessages.add(newMessage);
     state = state.copyWith(messages: [...allMessages], anchorMessage: null);
     scrollToBottom();
   }
+
 
   Future<void> forwardMessage({
   required Message original,

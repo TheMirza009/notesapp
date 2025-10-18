@@ -14,8 +14,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17" // JavaVersion.VERSION_17.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     // kotlin {
@@ -27,7 +29,7 @@ android {
         applicationId = "com.example.notesapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -38,6 +40,8 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
@@ -47,6 +51,21 @@ flutter {
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.6.1") 
-    implementation("com.github.yalantis:ucrop:2.2.8")
+    val core_version = "1.15.0"
+    
+    implementation("androidx.core:core:$core_version")      // Java language implementation
+    implementation("androidx.core:core-ktx:$core_version")  // Kotlin
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.github.Yalantis:ucrop:2.2.11") {
+        exclude(group = "com.github.Yalantis", module = "ucrop") // Exclude older versions from transitive dependencies
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        val core_version = "1.15.0"
+        force("androidx.core:core:$core_version")      // Java language implementation
+        force("androidx.core:core-ktx:$core_version")  // Kotlin
+        force("com.github.Yalantis:ucrop:2.2.11")
+    }
 }

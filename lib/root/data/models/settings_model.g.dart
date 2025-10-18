@@ -21,8 +21,9 @@ const SettingsSchema = CollectionSchema(
       id: 0,
       name: r'selectedBubbleStyleIndex',
       type: IsarType.long,
-    )
+    ),
   },
+
   estimateSize: _settingsEstimateSize,
   serialize: _settingsSerialize,
   deserialize: _settingsDeserialize,
@@ -31,10 +32,11 @@ const SettingsSchema = CollectionSchema(
   indexes: {},
   links: {},
   embeddedSchemas: {},
+
   getId: _settingsGetId,
   getLinks: _settingsGetLinks,
   attach: _settingsAttach,
-  version: '3.1.0+1',
+  version: '3.3.0-dev.3',
 );
 
 int _settingsEstimateSize(
@@ -104,10 +106,7 @@ extension SettingsQueryWhereSort on QueryBuilder<Settings, Settings, QWhere> {
 extension SettingsQueryWhere on QueryBuilder<Settings, Settings, QWhereClause> {
   QueryBuilder<Settings, Settings, QAfterWhereClause> idEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
-      ));
+      return query.addWhereClause(IdWhereClause.between(lower: id, upper: id));
     });
   }
 
@@ -133,8 +132,10 @@ extension SettingsQueryWhere on QueryBuilder<Settings, Settings, QWhereClause> {
     });
   }
 
-  QueryBuilder<Settings, Settings, QAfterWhereClause> idGreaterThan(Id id,
-      {bool include = false}) {
+  QueryBuilder<Settings, Settings, QAfterWhereClause> idGreaterThan(
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.greaterThan(lower: id, includeLower: include),
@@ -142,8 +143,10 @@ extension SettingsQueryWhere on QueryBuilder<Settings, Settings, QWhereClause> {
     });
   }
 
-  QueryBuilder<Settings, Settings, QAfterWhereClause> idLessThan(Id id,
-      {bool include = false}) {
+  QueryBuilder<Settings, Settings, QAfterWhereClause> idLessThan(
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.lessThan(upper: id, includeUpper: include),
@@ -158,12 +161,14 @@ extension SettingsQueryWhere on QueryBuilder<Settings, Settings, QWhereClause> {
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
-        includeLower: includeLower,
-        upper: upperId,
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IdWhereClause.between(
+          lower: lowerId,
+          includeLower: includeLower,
+          upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -172,10 +177,9 @@ extension SettingsQueryFilter
     on QueryBuilder<Settings, Settings, QFilterCondition> {
   QueryBuilder<Settings, Settings, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'id', value: value),
+      );
     });
   }
 
@@ -184,11 +188,13 @@ extension SettingsQueryFilter
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -197,11 +203,13 @@ extension SettingsQueryFilter
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
@@ -212,69 +220,73 @@ extension SettingsQueryFilter
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      selectedBubbleStyleIndexEqualTo(int value) {
+  selectedBubbleStyleIndexEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'selectedBubbleStyleIndex',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'selectedBubbleStyleIndex',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      selectedBubbleStyleIndexGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  selectedBubbleStyleIndexGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'selectedBubbleStyleIndex',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'selectedBubbleStyleIndex',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      selectedBubbleStyleIndexLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  selectedBubbleStyleIndexLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'selectedBubbleStyleIndex',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'selectedBubbleStyleIndex',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      selectedBubbleStyleIndexBetween(
+  selectedBubbleStyleIndexBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'selectedBubbleStyleIndex',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'selectedBubbleStyleIndex',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -287,14 +299,14 @@ extension SettingsQueryLinks
 
 extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
   QueryBuilder<Settings, Settings, QAfterSortBy>
-      sortBySelectedBubbleStyleIndex() {
+  sortBySelectedBubbleStyleIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'selectedBubbleStyleIndex', Sort.asc);
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterSortBy>
-      sortBySelectedBubbleStyleIndexDesc() {
+  sortBySelectedBubbleStyleIndexDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'selectedBubbleStyleIndex', Sort.desc);
     });
@@ -316,14 +328,14 @@ extension SettingsQuerySortThenBy
   }
 
   QueryBuilder<Settings, Settings, QAfterSortBy>
-      thenBySelectedBubbleStyleIndex() {
+  thenBySelectedBubbleStyleIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'selectedBubbleStyleIndex', Sort.asc);
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterSortBy>
-      thenBySelectedBubbleStyleIndexDesc() {
+  thenBySelectedBubbleStyleIndexDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'selectedBubbleStyleIndex', Sort.desc);
     });
@@ -333,7 +345,7 @@ extension SettingsQuerySortThenBy
 extension SettingsQueryWhereDistinct
     on QueryBuilder<Settings, Settings, QDistinct> {
   QueryBuilder<Settings, Settings, QDistinct>
-      distinctBySelectedBubbleStyleIndex() {
+  distinctBySelectedBubbleStyleIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'selectedBubbleStyleIndex');
     });
@@ -349,7 +361,7 @@ extension SettingsQueryProperty
   }
 
   QueryBuilder<Settings, int, QQueryOperations>
-      selectedBubbleStyleIndexProperty() {
+  selectedBubbleStyleIndexProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'selectedBubbleStyleIndex');
     });

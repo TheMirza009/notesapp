@@ -1,6 +1,5 @@
 import 'dart:typed_data';
-
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'message_model.dart';
 import '../enums/media_type.dart';
 

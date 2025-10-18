@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/message_list_extensions.dart';
@@ -18,7 +19,6 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:isar/isar.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 /// Provider for the notifier

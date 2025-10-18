@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 
 part 'settings_model.g.dart';

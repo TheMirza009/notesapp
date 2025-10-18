@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
@@ -12,10 +13,25 @@ import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/core/extensions/media_extensions.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:uuid/uuid.dart';
 
 class ShareIntentHandler {
   static StreamSubscription? _mediaSub;
   static bool _initialized = false;
+  static bool _handling = false; // ✅ prevents double-handling
 
   /// Initialize listener for incoming shares
   static void initialize() {
@@ -24,14 +40,15 @@ class ShareIntentHandler {
 
     final intent = ReceiveSharingIntent.instance;
 
-    // Listen while app is open
+    // Stream for new shares while app is open
     _mediaSub = intent.getMediaStream().listen((files) {
-      if (files.isNotEmpty) handleIncomingFiles(files);
+      if (files.isNotEmpty) _handleIncomingFilesSafely(files);
     }, onError: (err) => debugPrint('Media stream error: $err'));
 
-    // Handle initial share when app launches
+    // Handle share when app is launched
     intent.getInitialMedia().then((files) {
-      if (files.isNotEmpty) handleIncomingFiles(files);
+      debugPrint("➡️✅ Recieved file: ${files[0].path}");
+      if (files.isNotEmpty) _handleIncomingFilesSafely(files);
       intent.reset();
     });
   }
@@ -41,46 +58,67 @@ class ShareIntentHandler {
     _initialized = false;
   }
 
-  /// Handle incoming shared files safely and smoothly
-  static void handleIncomingFiles(List<SharedMediaFile> files) {
-    if (files.isEmpty) return;
+  /// Handle shared files with debounce and safe navigation
+  static void _handleIncomingFilesSafely(List<SharedMediaFile> files) async {
+    if (_handling) return; // ✅ prevent multiple triggers
+    _handling = true;
 
-    final first = files.first;
-    if (first.path.isEmpty) return;
+    try {
+      final first = files.first;
+      if (first.path.isEmpty) return;
 
-    // Offload media processing to a background isolate
-    compute(_processMediaFile, first.path).then((mediaFile) {
+      final mediaFile = await _processMediaFile(first.path); // compute(_processMediaFile, first.path);
       if (mediaFile == null) return;
 
-      // Navigation must happen on the main thread after UI is ready
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ✅ Wait until the UI and Navigator are ready
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 10));
+
         final ctx = navigatorKey.currentContext;
         if (ctx == null || !ctx.mounted) return;
 
         final message = Message()
           ..id = const Uuid().v7()
-          ..text = getTypeString(mediaFile)
+          ..text = _getTypeString(mediaFile)
           ..time = DateTime.now()
           ..isSender = true
           ..media.value = mediaFile;
 
-        Navigator.pushReplacement(
-          ctx,
-          CupertinoPageRoute(
-            builder: (_) => ChatForwardScreen(message: message, isSend: true),
-          ),
-        );
+        // ✅ Only push if we're not already on the ChatForwardScreen
+        if (ModalRoute.of(ctx)?.settings.name != 'chat_forward') {
+          Navigator.push(
+            ctx,
+            CupertinoPageRoute(
+              builder: (_) => ChatForwardScreen(message: message, isSend: true),
+              settings: const RouteSettings(name: 'chat_forward'),
+            ),
+          );
+        }
       });
-    });
+    } finally {
+      // ✅ Allow future shares after a short delay
+      await Future.delayed(const Duration(seconds: 1));
+      _handling = false;
+    }
   }
 }
 
-/// Top-level function to process a file into a Media object
+/// Background media processing
 Future<Media?> _processMediaFile(String path) async {
-  // Heavy work: save file, calculate aspect ratio, detect type
-  final media = await MediaHandler.handleReceivedMedia(path);
-  return media;
+  // BackgroundIsolateBinaryMessenger.ensureInitialized();
+  return await MediaHandler.handleReceivedMedia(path);
 }
+
+String _getTypeString(Media mediaFile) {
+  return mediaFile.isImage
+      ? '📷 Image'
+      : mediaFile.isAudio
+          ? '🎧 Audio'
+          : mediaFile.isDocument
+              ? '📃 Document'
+              : '❓ Unknown';
+}
+
 
 
 /// A lightweight preview screen shown when files are shared into the app.

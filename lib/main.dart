@@ -39,9 +39,11 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsFlutterBinding.ensureInitialized(); 
-    ShareIntentHandler.initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ShareIntentHandler.initialize();
+    });
   }
+
 
   @override
   void didChangeDependencies() {

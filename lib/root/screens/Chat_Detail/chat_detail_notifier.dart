@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';

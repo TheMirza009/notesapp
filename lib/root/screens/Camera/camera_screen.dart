@@ -1,11 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/icon_park_outline.dart';
-import 'package:iconify_flutter/icons/icon_park_solid.dart';
-import 'package:iconify_flutter/icons/icon_park_twotone.dart';
-import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/camera_handler.dart';
