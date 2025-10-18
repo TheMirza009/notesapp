@@ -26,55 +26,55 @@ class AnchorWrapper extends ConsumerWidget {
 }
 
 
-OverlayEntry? replyOverlay;
+// OverlayEntry? replyOverlay;
 
-/// Reply Anchor
-void showReplyAnchor(BuildContext context) {
-  if (replyOverlay != null) return; // prevent duplicates
+// /// Reply Anchor
+// void showReplyAnchor(BuildContext context) {
+//   if (replyOverlay != null) return; // prevent duplicates
 
-  final theme = Theme.of(context);
-  final overlay = Overlay.of(context, rootOverlay: true);
+//   final theme = Theme.of(context);
+//   final overlay = Overlay.of(context, rootOverlay: true);
 
-  replyOverlay = OverlayEntry(
-    builder: (_) => Positioned(
-      left: 0,
-      right: 0,
-      bottom: 65, // just above BottomMessageBar (same as RecordBar)
-      child: Material(
-        type: MaterialType.transparency,
-        child: Theme(
-          data: theme,
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: ClipRect(
-              child: SizedBox(
-                height: 100,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: AnchorWrapper(), // ✅ uses your ReplyAnchor wrapper
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
+//   replyOverlay = OverlayEntry(
+//     builder: (_) => Positioned(
+//       left: 0,
+//       right: 0,
+//       bottom: 65, // just above BottomMessageBar (same as RecordBar)
+//       child: Material(
+//         type: MaterialType.transparency,
+//         child: Theme(
+//           data: theme,
+//           child: Align(
+//             alignment: Alignment.bottomCenter,
+//             child: ClipRect(
+//               child: SizedBox(
+//                 height: 100,
+//                 child: Align(
+//                   alignment: Alignment.bottomCenter,
+//                   child: AnchorWrapper(), // ✅ uses your ReplyAnchor wrapper
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
 
-  if (recordOverlay != null) {
-    overlay.insert(replyOverlay!, above: recordOverlay);
-  } else {
-    overlay.insert(replyOverlay!);
-  }
-}
+//   if (recordOverlay != null) {
+//     overlay.insert(replyOverlay!, above: recordOverlay);
+//   } else {
+//     overlay.insert(replyOverlay!);
+//   }
+// }
 
-Future<void> hideReplyAnchor() async {
-  if (replyOverlay == null) return;
+// Future<void> hideReplyAnchor() async {
+//   if (replyOverlay == null) return;
 
-  // wait for slide animation to finish
-  await Future.delayed(const Duration(milliseconds: 300));
+//   // wait for slide animation to finish
+//   await Future.delayed(const Duration(milliseconds: 300));
 
-  replyOverlay?.remove();
-  replyOverlay = null;
-}
+//   replyOverlay?.remove();
+//   replyOverlay = null;
+// }
 

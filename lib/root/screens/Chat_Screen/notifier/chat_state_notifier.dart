@@ -12,6 +12,7 @@ import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -36,8 +37,7 @@ import 'chat_state.dart';
 final chatStateController =  NotifierProvider<ChatStateNotifier, ChatState>(() => ChatStateNotifier());
 
 class ChatStateNotifier extends Notifier<ChatState> {
-  /// Master references & controllers (not part of state)
-  final _isar = IsarDatabase.isar;
+  final _isar = IsarDatabase.isar;  /// Master references & controllers (not part of state)
   List<Message> allMessages = [];
   final TextEditingController searchController = TextEditingController();
   final TypeSetEditingController keyboardController = TypeSetEditingController();
@@ -116,30 +116,23 @@ class ChatStateNotifier extends Notifier<ChatState> {
           ..isSender = true;
 
     await _isar.writeTxn(() async {
-      // ✅ Save reply link first (if replying)
-      if (state.anchorMessage != null) {
+      if (state.anchorMessage != null) {    // ✅ Save reply link first (if replying)
         newMessage.replyingTo.value = state.anchorMessage;
       }
 
-      // ✅ Save the new message first (creates its ID)
-      await _isar.messages.put(newMessage);
+      await _isar.messages.put(newMessage); // ✅ Save the new message first (creates its ID)
 
-      // ✅ Ensure chat exists in Isar and has a valid ID
-      if (_chat!.isarID == null) {
+      if (_chat!.isarID == null) {          // ✅ Ensure chat exists in Isar and has a valid ID
         await _isar.chats.put(_chat!);
       }
+      _chat!.messages.add(newMessage);       // ✅ Link the message to the chat
 
-      // ✅ Link the message to the chat
-      _chat!.messages.add(newMessage);
       await _chat!.messages.save();
 
-      // ✅ Save reply link if needed
-      if (state.anchorMessage != null) {
+      if (state.anchorMessage != null) {     // ✅ Save reply link if needed
         await newMessage.replyingTo.save();
       }
-
-      // ✅ Optionally update the chat object again (optional)
-      await _isar.chats.put(_chat!);
+      await _isar.chats.put(_chat!);         // ✅ Optionally update the chat object again
     });
 
     // ✅ Update in-memory state
@@ -388,19 +381,21 @@ class ChatStateNotifier extends Notifier<ChatState> {
   // Section: Chat bar / emoji / anchor
   // =====================================================
 
-  void setAnchorMessage(Message message) {
+  void setAnchorMessage(Message message, BuildContext context) {
+    final overlayHandler = ref.read(overlayHandlerProvider);
     final attachmentOverlay = ref.read(overlayControllerProvider.notifier);
+
     state = state.copyWith(anchorMessage: message);
     if (!keyboardFocusNode.hasFocus) keyboardFocusNode.requestFocus();
-    if (attachmentOverlay.state == true) {
-      attachmentOverlay.close();
-    }
+    if (attachmentOverlay.state == true) attachmentOverlay.close();
+
+    overlayHandler.showReplyAnchor(context);
   }
 
   void clearAnchorMessage() {
     final newState = state.copyWith(anchorMessage: null);
     state = newState;
-    hideReplyAnchor();
+    ref.read(overlayHandlerProvider).hideRecordBar();
     keyboardFocusNode.unfocus();
   }
 
@@ -462,6 +457,11 @@ class ChatStateNotifier extends Notifier<ChatState> {
     hideEmojiPicker();
   }
 
+  void closeKeyboard() {
+    keyboardFocusNode.unfocus();
+    hideEmojiPicker();
+  }
+
   void stopSearching() {
     state = state.copyWith(isSearching: false);
   }
@@ -477,6 +477,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   Future<void> cancelAudioRecording() async {
     await recorder.cancelRecording();
+    ref.read(overlayHandlerProvider).hideRecordBar();
     state = state.copyWith(isRecording: false);
   }
 
@@ -676,9 +677,9 @@ class ChatStateNotifier extends Notifier<ChatState> {
       case 'reply':
         unSelectAllMessages();
         // setAnchorMessage(message);
-        showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden
+        ref.read(overlayHandlerProvider).showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            setAnchorMessage(message); // trigger slide
+            setAnchorMessage(message, context!); // trigger slide
           });
         break;
       case 'forward':

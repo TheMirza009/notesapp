@@ -8,6 +8,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/r
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/attachment_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 
 class BottomMessageBarWrapper extends ConsumerWidget {
   const BottomMessageBarWrapper({super.key});
@@ -16,6 +17,9 @@ class BottomMessageBarWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatStateController.notifier);
     final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
+
+    final overlayHandler = ref.read(overlayHandlerProvider);
+    // overlayHandler.updateKeyboardInset();
 
     return RepaintBoundary(
       child: AttachmentWrapper(
@@ -37,12 +41,16 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             if (isRecording) {
               notifier.cancelAudioRecording();
             }
-
+        
             // ✅ Only clear anchor if we’re not recording
             if (notifier.state.anchorMessage != null && !isRecording) {
               notifier.clearAnchorMessage();
             }
 
+            if (notifier.state.showEmojis) {
+              notifier.hideEmojiPicker();
+            }
+        
             ref.read(overlayControllerProvider.notifier).toggle();
             // final state = ref.read(openingProvider.notifier);
             // state.state = !state.state; // <======= Called here
@@ -51,15 +59,16 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             // Navigator.push(context, CupertinoPageRoute(builder: (_) => MicPage()));
             if (isRecording) {
               notifier.stopAudioRecording();
-              await _hideRecordBar();
+              await overlayHandler.hideRecordBar();
               print("🎙️Recording stopped");
             } else {
               if (ref.read(overlayControllerProvider.notifier).state == true) {
                 ref.read(overlayControllerProvider.notifier).close();
               }
+              notifier.closeSearchAndKeyboard();
               notifier.startAudioRecording();
-              _showRecordBar(context, ref);
-              print("🎙️Recordting started");
+              overlayHandler.showRecordBar(context, ref);
+              print("🎙️Recording started");
             }
           },
           onSend: notifier.sendMessage,
@@ -70,53 +79,53 @@ class BottomMessageBarWrapper extends ConsumerWidget {
   }
 }
 
-OverlayEntry? recordOverlay;
+// OverlayEntry? recordOverlay;
 
-void _showRecordBar(BuildContext context, WidgetRef ref) {
-  if (recordOverlay != null) return; // ✅ Prevent duplicates
+// void _showRecordBar(BuildContext context, WidgetRef ref) {
+//   if (recordOverlay != null) return; // ✅ Prevent duplicates
 
-  final overlay = Overlay.of(context, rootOverlay: true);
+//   final overlay = Overlay.of(context, rootOverlay: true);
 
-  recordOverlay = OverlayEntry(
-    builder:
-        (overlayContext) => Consumer(
-          builder: (context, ref, _) {
-            final theme = Theme.of(context);
-            return Positioned(
-              left: 0,
-              right: 0,
-              bottom: 70,
-              child: Material(
-                type: MaterialType.transparency,
-                child: Theme(
-                  data: theme,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: ClipRect(
-                      child: SizedBox(height: 85, child: const RecordBar()),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-  );
+//   recordOverlay = OverlayEntry(
+//     builder:
+//         (overlayContext) => Consumer(
+//           builder: (context, ref, _) {
+//             final theme = Theme.of(context);
+//             return Positioned(
+//               left: 0,
+//               right: 0,
+//               bottom: 70,
+//               child: Material(
+//                 type: MaterialType.transparency,
+//                 child: Theme(
+//                   data: theme,
+//                   child: Align(
+//                     alignment: Alignment.bottomCenter,
+//                     child: ClipRect(
+//                       child: SizedBox(height: 85, child: const RecordBar()),
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             );
+//           },
+//         ),
+//   );
 
-  if (replyOverlay != null) {
-    overlay.insert(recordOverlay!, above: replyOverlay);
-  } else {
-    overlay.insert(recordOverlay!);
-  }
-}
+//   if (replyOverlay != null) {
+//     overlay.insert(recordOverlay!, above: replyOverlay);
+//   } else {
+//     overlay.insert(recordOverlay!);
+//   }
+// }
 
-Future<void> _hideRecordBar() async {
-  if (recordOverlay == null) return;
+// Future<void> _hideRecordBar() async {
+//   if (recordOverlay == null) return;
 
-  // ✅ Wait for RecordBar’s internal slide animation
-  await Future.delayed(const Duration(milliseconds: 500));
+//   // ✅ Wait for RecordBar’s internal slide animation
+//   await Future.delayed(const Duration(milliseconds: 500));
 
-  // ✅ Remove safely after delay
-  recordOverlay?.remove();
-  recordOverlay = null;
-}
+//   // ✅ Remove safely after delay
+//   recordOverlay?.remove();
+//   recordOverlay = null;
+// }

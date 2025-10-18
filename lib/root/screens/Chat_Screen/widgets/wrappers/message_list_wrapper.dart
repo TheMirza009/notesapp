@@ -15,6 +15,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/components/date_chip.d
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
@@ -109,9 +110,9 @@ class _MessageItemBuilder extends ConsumerWidget {
             bottomPadding: info.bottomPadding,
             // interactions
             onSwipe: () {
-              showReplyAnchor(context); // show hidden
+              ref.read(overlayHandlerProvider).showReplyAnchor(context); // show hidden
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                ref .read(chatStateController.notifier) .setAnchorMessage(message); // trigger slide
+                ref.read(chatStateController.notifier).setAnchorMessage(message, context); // trigger slide
               });
             },
             onTapWhileSelecting: () => isSelected

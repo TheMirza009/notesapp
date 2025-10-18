@@ -12,6 +12,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_searchba
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 
 //TODO: 2. Notifier needs robustness and double checks
 //TODO: 5. Full-sized images being shown as thumbnails
@@ -77,6 +78,9 @@ class ChatScreen extends ConsumerWidget {
         notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
         ref.read(overlayControllerProvider.notifier).close();
+        ref.read(overlayHandlerProvider).hideRecordBar(instant: true);
+        ref.read(overlayHandlerProvider).hideReplyAnchor(instant: true);
+        notifier.cancelAudioRecording();
       },
       child: GestureDetector(
         onTap: () {
