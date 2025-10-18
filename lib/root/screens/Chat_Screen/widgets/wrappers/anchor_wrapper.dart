@@ -13,12 +13,14 @@ class AnchorWrapper extends ConsumerWidget {
 
     final notifier = ref.read(chatStateController.notifier);
     final anchorMessage = ref.watch(chatStateController.select((s) => s.anchorMessage));
+    final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
 
     // if (anchorMessage == null) return const SizedBox.shrink();
 
     return ReplyAnchor(
       text: anchorMessage?.text,
       media: anchorMessage?.media.value,
+      isRecording: isRecording,
       onClear: () {
         notifier.clearAnchorMessage();},
     );

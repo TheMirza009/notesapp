@@ -395,7 +395,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   void clearAnchorMessage() {
     final newState = state.copyWith(anchorMessage: null);
     state = newState;
-    ref.read(overlayHandlerProvider).hideRecordBar();
+    // ref.read(overlayHandlerProvider).hideRecordBar();
     keyboardFocusNode.unfocus();
   }
 
@@ -472,13 +472,13 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   Future<void> startAudioRecording() async {
     await recorder.startRecording();
-    state = state.copyWith(isRecording: true);
+    state = state.copyWith(isRecording: true, anchorMessage: state.anchorMessage);
   }
 
   Future<void> cancelAudioRecording() async {
+    ref.read(overlayHandlerProvider).hideRecordBar(instant: false);
     await recorder.cancelRecording();
-    ref.read(overlayHandlerProvider).hideRecordBar();
-    state = state.copyWith(isRecording: false);
+    state = state.copyWith(isRecording: false, anchorMessage: state.anchorMessage);
   }
 
   void stopAudioRecording() async {
@@ -504,8 +504,14 @@ class ChatStateNotifier extends Notifier<ChatState> {
       ..media.value = persistedMedia;
 
     await _isar.writeTxn(() async {
+      if (state.anchorMessage != null) {    // ✅ Save reply link first (if replying)
+        newMessage.replyingTo.value = state.anchorMessage;
+      }
       await _isar.messages.put(newMessage);
       await newMessage.media.save();
+      if (state.anchorMessage != null) {
+        await newMessage.replyingTo.save();
+      }
 
       final managedChat = await _isar.chats.get(_chat!.isarID);
       if (managedChat != null) {

@@ -71,6 +71,9 @@ class _RecordBarState extends ConsumerState<RecordBar>
     final isRecording = ref.watch(
       chatStateController.select((s) => s.isRecording),
     );
+    final isReplying = ref.watch(
+      chatStateController.select((s) => s.anchorMessage),
+    ) != null;
 
     // Bring bar back when recording starts again
     if (isRecording && !_shouldShow) {
@@ -94,7 +97,7 @@ class _RecordBarState extends ConsumerState<RecordBar>
           return AnimatedContainer(
             duration: kCrushDuration,
             curve: kCrushCurve,
-            margin: const EdgeInsets.all(12),
+            margin: isReplying ? const EdgeInsets.symmetric(horizontal: 15, vertical: 12) : const EdgeInsets.all(12),
             height: 60,
             width: crushed ? 60 : context.screenWidth,
             decoration: BoxDecoration(

@@ -34,7 +34,10 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             notifier.hideEmojiPicker();
             ref.read(overlayControllerProvider.notifier).close();
           },
-          onEmojiTap: () => notifier.toggleEmojiPicker(),
+          onEmojiTap: () {
+            notifier.toggleEmojiPicker();
+            ref.read(overlayControllerProvider.notifier).close();
+            },
           onAttachmentTap: () {
             // notifier.pickImage();
             notifier.keyboardFocusNode.unfocus();
@@ -64,6 +67,10 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             } else {
               if (ref.read(overlayControllerProvider.notifier).state == true) {
                 ref.read(overlayControllerProvider.notifier).close();
+              }
+
+              if (notifier.isReplying == true) {
+                print("⬅️ isReplying: $isRecording");
               }
               notifier.closeSearchAndKeyboard();
               notifier.startAudioRecording();

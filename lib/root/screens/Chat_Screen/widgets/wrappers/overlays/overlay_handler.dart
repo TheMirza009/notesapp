@@ -99,46 +99,56 @@ void updateKeyboardInset() {
   // --------------------------------------------------------------------------
   // 💬 REPLY ANCHOR
   // --------------------------------------------------------------------------
+void showReplyAnchor(BuildContext context) {
+  if (_replyOverlay != null) return;
 
-  void showReplyAnchor(BuildContext context) {
-    // updateKeyboardInset();
-    if (_replyOverlay != null) return;
+  final overlay = Overlay.of(context, rootOverlay: true);
+  final theme = Theme.of(context);
 
-    final overlay = Overlay.of(context, rootOverlay: true);
-    final theme = Theme.of(context);
+  _replyOverlay = OverlayEntry(
+    builder: (_) {
+      return ValueListenableBuilder<double>(
+        valueListenable: _keyboardInset,
+        builder: (context, bottomInset, _) {
+          return Consumer(
+            builder: (context, ref, _) {
+              final anchorMessage = ref.watch(chatStateController).anchorMessage;
+              final isReplying = anchorMessage != null;
+              final isRecording = ref.watch(chatStateController).isRecording;
 
-    _replyOverlay = OverlayEntry(
-      builder: (_) {
-        return ValueListenableBuilder<double>(
-          valueListenable: _keyboardInset,
-          builder: (context, bottomInset, _) {
-            return AnimatedPositioned(
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
-              left: 0,
-              right: 0,
-              bottom: bottomInset + 65,
-              child: Material(
-                type: MaterialType.transparency,
-                child: Theme(
-                  data: theme,
-                  child: const Align(
-                    alignment: Alignment.bottomCenter,
-                    child: SizedBox(
-                      height: 70,
-                      child: AnchorWrapper(),
+              // Determine dynamic height
+              double targetHeight = 70;
+              if (anchorMessage != null && isRecording) {
+                // Replace requiresExpansion with your actual condition
+                targetHeight = 130;
+              }
+
+              return AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                left: 0,
+                right: 0,
+                bottom: bottomInset + (65),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Theme(
+                    data: theme,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: const AnchorWrapper(),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
+              );
+            },
+          );
+        },
+      );
+    },
+  );
 
-    overlay.insert(_replyOverlay!);
-  }
+  overlay.insert(_replyOverlay!);
+}
 
   Future<void> hideReplyAnchor({bool? instant = false}) async {
     if (_replyOverlay == null) return;

@@ -13,6 +13,7 @@ class ReplyAnchor extends StatelessWidget {
   final double maxHeight;
   final Duration animationDuration;
   final Curve animationCurve;
+  final bool? isRecording;
 
   const ReplyAnchor({
     super.key,
@@ -22,6 +23,7 @@ class ReplyAnchor extends StatelessWidget {
     this.maxHeight = 100,
     this.animationDuration = const Duration(milliseconds: 300),
     this.animationCurve = Curves.easeInOutQuint,
+    this.isRecording = false,
   });
 
   bool get _isVisible => text != null && text!.isNotEmpty;
@@ -39,7 +41,15 @@ class ReplyAnchor extends StatelessWidget {
                 : ThemeConstants.senderBlueDark)
             : Colors.transparent;
 
-    final padding = _isVisible ? const EdgeInsets.all(5) : EdgeInsets.zero;
+    final padding =
+        _isVisible
+            ? EdgeInsets.only(
+              top: 5,
+              bottom: ((isRecording ?? false) ? 80 : 5),
+              left: 5,
+              right: 5,
+            )
+            : EdgeInsets.zero;
 
     return ClipRect(
       child: AnimatedSlide(
@@ -51,16 +61,26 @@ class ReplyAnchor extends StatelessWidget {
           curve: animationCurve,
           margin: EdgeInsets.only(bottom: _isVisible ? 8 : 0, left: 8, right: 8),
           padding: padding,
-          constraints: const BoxConstraints(
-            maxHeight: 100, // _isVisible ? maxHeight : 0,
+          constraints: BoxConstraints(
+            maxHeight: (isRecording ?? false) ? 175 : 100, // _isVisible ? maxHeight : 0,
             maxWidth: double.infinity,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius:
+                (isRecording ?? false)
+                    ? BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                      bottomLeft: Radius.circular(33),
+                      bottomRight: Radius.circular(33),
+                    )
+                    : BorderRadius.circular(15),
             color: backgroundColor,
           ),
           child: RepaintBoundary(
-            child: Container(
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 color: context.isLight ? const Color(0x13002D6C) : Colors.black12,
@@ -76,7 +96,7 @@ class ReplyAnchor extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: (isRecording ?? false) ? MainAxisAlignment.start : MainAxisAlignment.center ,
                         children: [
                           SizedBox(height: 5),
                           Text("replying to", style: TextStyle(color: Colors.blueGrey, fontSize: 12)),
