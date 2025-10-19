@@ -209,6 +209,7 @@ Widget nameBuilderSimple() {
                     border: InputBorder.none,
                     isCollapsed: true,
                   ),
+                  onSubmitted: (value) => setState(() => finishEditing()),
                   style: const TextStyle(
                     fontSize: 21.5,
                     fontWeight: FontWeight.w300,
