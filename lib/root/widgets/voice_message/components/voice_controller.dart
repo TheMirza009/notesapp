@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -16,24 +15,15 @@ import 'package:notesapp/root/widgets/voice_message/components/helpers/utils.dar
 /// The [VoiceController] class provides functionality for playing, pausing, stopping, and seeking voice playback.
 /// It uses the [just_audio](https://pub.dev/packages/just_audio) package for audio playback.
 /// The controller also supports changing the playback speed and provides UI updates through a [ValueNotifier].
-///
-/// Example usage:
-/// ```dart
-/// VoiceController voiceController = VoiceController(
-///   audioSrc: 'path/to/audio.mp3',
-///   maxDuration: Duration(minutes: 5),
-///   isFile: true,
-///   onComplete: () {
-///   },
-///   onPause: () {
-///   },
-///   onPlaying: () {
-///   },
-/// );
-///
 class VoiceController extends MyTicker {
-  static final Map<String, List<double>> _waveformCache = {}; // 🧠 keep waveform memory cache
-  static final Map<String, String> _remainingTimeCache = {}; // 🧠 keep remaining time memory cache
+  // 🧠 keep waveform memory cache (shared across instances)
+  static final Map<String, List<double>> _waveformCache = {};
+
+  // 🧠 keep remaining time cache so new controllers can show it immediately
+  static final Map<String, String> _remainingTimeCache = {};
+
+  // Registry of active controllers (useful for global stopAll etc.)
+  static final Set<VoiceController> _activeControllers = <VoiceController>{};
 
   final String audioSrc;
   late Duration maxDuration;
@@ -55,8 +45,12 @@ class VoiceController extends MyTicker {
   StreamSubscription? playerStateStream;
   double? downloadProgress = 0;
   final int noiseCount;
+  StreamSubscription<FileResponse>? downloadStreamSubscription;
 
-  /// Gets the current playback position of the voice.
+  // Internal prepared flag: true after setFilePath/setUrl and listeners attached
+  bool _isPrepared = false;
+
+  /// Gets the current playback position of the voice in milliseconds (clamped).
   double get currentMillSeconds {
     final c = currentDuration.inMilliseconds.toDouble();
     if (c >= maxMillSeconds) {
@@ -81,9 +75,12 @@ class VoiceController extends MyTicker {
 
   double get maxMillSeconds => maxDuration.inMilliseconds.toDouble();
 
-  StreamSubscription<FileResponse>? downloadStreamSubscription;
-
   /// Creates a new [VoiceController] instance.
+  ///
+  /// Note: This constructor registers the controller in a lightweight registry but
+  /// does NOT prepare the audio resource. Preparation (calling setFilePath / setUrl)
+  /// is deferred until play() is called to avoid creating native AudioTrack resources
+  /// for every message eagerly.
   VoiceController({
     required this.audioSrc,
     required this.maxDuration,
@@ -96,50 +93,89 @@ class VoiceController extends MyTicker {
     this.randoms,
     this.cacheKey,
   }) {
-    if (randoms == null || randoms!.isEmpty) {
-  // Check if we already have cached waveform in memory
-  if (_waveformCache.containsKey(audioSrc)) {
-    randoms = _waveformCache[audioSrc]!;
-  } else {
-    setSilent(); // placeholders only once
-    if (isFile) {
-      getWaveform().then((wave) {
-        if (wave.isNotEmpty) {
-          randoms = wave;
-          _waveformCache[audioSrc] = wave; // 💾 cache waveform in memory
-          _updateUi();
-        }
-      });
+    // Debug
+    if (kDebugMode) {
+      debugPrint('VoiceController: created for $audioSrc');
     }
-  }
-}
 
+    // register for global tracking
+    _activeControllers.add(this);
+
+    // Waveform initialization (keep placeholder behaviour)
+    if (randoms == null || randoms!.isEmpty) {
+      if (_waveformCache.containsKey(audioSrc)) {
+        randoms = _waveformCache[audioSrc]!;
+      } else {
+        setSilent(); // placeholders only once
+        if (isFile) {
+          // extract waveform asynchronously but DO NOT prepare audio player here
+          getWaveform().then((wave) {
+            if (wave.isNotEmpty) {
+              randoms = wave;
+              _waveformCache[audioSrc] = wave; // cache waveform in memory
+              _updateUi();
+            }
+          });
+        }
+      }
+    }
 
     animController = AnimationController(
       vsync: this,
       upperBound: noiseWidth,
       duration: maxDuration,
     );
-    init();
-    _listenToRemainingTime();
-    _listenToPlayerState();
+
+    // IMPORTANT: do NOT call init() here. Preparation of the AudioPlayer is deferred
+    // until the user actually plays to avoid allocating AudioTrack resources prematurely.
+    // init();
+    // _listenToRemainingTime();
+    // _listenToPlayerState();
   }
 
-  /// Initializes the voice controller.
+  /// Initializes the voice controller (kept for compatibility; no longer called automatically).
   Future init() async {
     await setMaxDuration(audioSrc);
     _updateUi();
   }
 
+  /// Play the audio.
+  ///
+  /// This method lazily prepares the audio resource on first call (via setMaxDuration),
+  /// attaches listeners, and then starts playback. This avoids pre-allocating platform
+  /// audio resources for every message on screen.
   Future play() async {
+    if (kDebugMode) {
+      debugPrint('VoiceController: play() called for $audioSrc, prepared=$_isPrepared');
+    }
+
     try {
       playStatus = PlayStatus.downloading;
       _updateUi();
+
+      // Prepare audio resource and attach listeners only once
+      if (!_isPrepared) {
+        try {
+          await setMaxDuration(audioSrc); // calls _player.setFilePath / setUrl
+          _isPrepared = true;
+
+          // attach listeners after we've prepared the player
+          _listenToRemainingTime();
+          _listenToPlayerState();
+        } catch (e) {
+          playStatus = PlayStatus.downloadError;
+          _updateUi();
+          if (onError != null) onError!(e);
+          return;
+        }
+      }
+
       if (isFile) {
         final path = await _getFileFromCache();
         await startPlaying(path);
         onPlaying();
       } else {
+        // For remote sources we still use the cache-with-progress path.
         downloadStreamSubscription = _getFileFromCacheWithProgress()
             .listen((FileResponse fileResponse) async {
           if (fileResponse is FileInfo) {
@@ -147,7 +183,6 @@ class VoiceController extends MyTicker {
             onPlaying();
           } else if (fileResponse is DownloadProgress) {
             _updateUi();
-            // print(downloadProgress);
             downloadProgress = fileResponse.progress;
           }
         });
@@ -164,21 +199,28 @@ class VoiceController extends MyTicker {
   }
 
   void _listenToRemainingTime() {
-    positionStream = _player.positionStream.listen((Duration p) async {
+    // Attach only once
+    positionStream ??= _player.positionStream.listen((Duration p) async {
       if (!isDownloading) currentDuration = p;
 
       // keep a cached display string so new controller instances can show it immediately
       _remainingTimeCache[audioSrc] = currentDuration.formattedTime;
 
       final value = (noiseWidth * currentMillSeconds) / maxMillSeconds;
-      animController.value = value;
+      try {
+        animController.value = value;
+      } catch (_) {
+        // ignore if controller disposed
+      }
       _updateUi();
 
       if (p.inMilliseconds >= maxMillSeconds) {
         await _player.stop();
         currentDuration = Duration.zero;
         playStatus = PlayStatus.init;
-        animController.reset();
+        try {
+          animController.reset();
+        } catch (_) {}
         // clear cached position/time when audio completes
         _remainingTimeCache.remove(audioSrc);
         _updateUi();
@@ -189,31 +231,84 @@ class VoiceController extends MyTicker {
 
   void _updateUi() {
     // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
-    updater.notifyListeners();
+    try {
+      updater.notifyListeners();
+    } catch (_) {}
   }
 
   /// Stops playing the voice.
   Future stopPlaying() async {
-    _player.pause();
+    try {
+      await _player.pause();
+    } catch (_) {}
     playStatus = PlayStatus.stop;
   }
 
-  /// Starts playing the voice.
+  /// Starts playing the voice from the given path.
   Future startPlaying(String path) async {
-    // Uri audioUri = isFile ? Uri.file(audioSrc) : Uri.parse(audioSrc);
+    if (kDebugMode) {
+      debugPrint('VoiceController: startPlaying path=$path for $audioSrc');
+    }
+
+    // Use file Uri for local files
     await _player.setAudioSource(
       AudioSource.uri(Uri.file(path)),
       initialPosition: currentDuration,
     );
-    _player.play();
-    _player.setSpeed(speed.getSpeed);
+    await _player.play();
+    await _player.setSpeed(speed.getSpeed);
   }
 
+  /// Dispose the controller and free native resources.
+  ///
+  /// This is defensive: we attempt to stop first, then dispose the player, cancel streams,
+  /// unregister from the registry and dispose UI-related controllers.
   Future<void> dispose() async {
-    await _player.dispose();
-    positionStream?.cancel();
-    playerStateStream?.cancel();
-    animController.dispose();
+    if (kDebugMode) {
+      debugPrint('VoiceController: dispose() for $audioSrc');
+    }
+
+    // unregister from registry early to avoid races
+    _activeControllers.remove(this);
+
+    // stop player first (best-effort)
+    try {
+      await _player.stop();
+    } catch (e) {
+      if (kDebugMode) debugPrint('VoiceController: stop error $e');
+    }
+
+    // then dispose the platform player
+    try {
+      await _player.dispose();
+    } catch (e) {
+      if (kDebugMode) debugPrint('VoiceController: dispose player error $e');
+    }
+
+    // cancel streams and any download subscription
+    try {
+      await positionStream?.cancel();
+    } catch (_) {}
+    try {
+      await playerStateStream?.cancel();
+    } catch (_) {}
+    try {
+      await downloadStreamSubscription?.cancel();
+    } catch (_) {}
+
+    // dispose ui animation controller
+    try {
+      animController.dispose();
+    } catch (_) {}
+
+    // dispose updater
+    try {
+      updater.dispose();
+    } catch (_) {}
+
+    // reset basic state
+    currentDuration = Duration.zero;
+    playStatus = PlayStatus.init;
   }
 
   /// Seeks to the given [duration].
@@ -226,7 +321,9 @@ class VoiceController extends MyTicker {
 
   /// Pauses the voice playback.
   void pausePlaying() {
-    _player.pause();
+    try {
+      _player.pause();
+    } catch (_) {}
     playStatus = PlayStatus.pause;
     _updateUi();
     onPause();
@@ -250,21 +347,18 @@ class VoiceController extends MyTicker {
   }
 
   void cancelDownload() {
-    downloadStreamSubscription?.cancel();
+    try {
+      downloadStreamSubscription?.cancel();
+    } catch (_) {}
     playStatus = PlayStatus.init;
     _updateUi();
   }
 
-  /// Resumes the voice playback.
+  /// Listen to player state (attach once).
   void _listenToPlayerState() {
-    playerStateStream = _player.playerStateStream.listen((event) async {
+    playerStateStream ??= _player.playerStateStream.listen((event) async {
       if (event.processingState == ProcessingState.completed) {
-        // await _player.stop();
-        // currentDuration = Duration.zero;
-        // playStatus = PlayStatus.init;
-        // animController.reset();
-        // _updateUi();
-        // onComplete(id);
+        // handled by position stream / completion logic
       } else if (event.playing) {
         playStatus = PlayStatus.playing;
         _updateUi();
@@ -274,7 +368,6 @@ class VoiceController extends MyTicker {
 
   /// Changes the speed of the voice playback.
   void changeSpeed() {
-    // Function implementation goes here
     switch (speed) {
       case PlaySpeed.x1:
         speed = PlaySpeed.x1_25;
@@ -299,11 +392,10 @@ class VoiceController extends MyTicker {
     _updateUi();
   }
 
-  /// Changes the speed of the voice playback.
+  /// Called when user starts dragging the slider.
   void onChangeSliderStart(double value) {
     isSeeking = true;
-
-    /// pause the voice
+    // pause the voice
     pausePlaying();
   }
 
@@ -372,13 +464,13 @@ class VoiceController extends MyTicker {
     return scaled;
   }
 
-
-
-  /// Changes the speed of the voice playback.
+  /// Called when user moves the slider (updates UI but does not seek immediately).
   void onChanging(double d) {
     currentDuration = Duration(milliseconds: d.toInt());
     final value = (noiseWidth * d) / maxMillSeconds;
-    animController.value = value;
+    try {
+      animController.value = value;
+    } catch (_) {}
     _updateUi();
   }
 
@@ -396,10 +488,10 @@ class VoiceController extends MyTicker {
     return currentDuration.formattedTime;
   }
 
-  /// Sets the maximum duration of the voice.
+  /// Sets the maximum duration of the voice (prepares the player by setting the source).
   Future setMaxDuration(String path) async {
     try {
-      /// get the max duration from the path or cloud
+      // get the max duration from the path or cloud
       final maxDuration =
           isFile ? await _player.setFilePath(path) : await _player.setUrl(path);
       if (maxDuration != null) {
@@ -408,36 +500,50 @@ class VoiceController extends MyTicker {
       }
     } catch (err) {
       if (kDebugMode) {
-        ///
-        debugPrint("cant get the max duration from the path $path");
+        debugPrint("VoiceController: can't get the max duration from the path $path - $err");
       }
       if (onError != null) {
         onError!(err);
       }
     }
   }
+
+  /// Global helper to stop and dispose any active controllers (useful for emergency cleanup).
+  static Future<void> stopAll() async {
+    final copy = List<VoiceController>.from(_activeControllers);
+    for (final c in copy) {
+      try {
+        await c._player.stop();
+      } catch (_) {}
+      try {
+        await c._player.dispose();
+      } catch (_) {}
+      try {
+        await c.positionStream?.cancel();
+      } catch (_) {}
+      try {
+        await c.playerStateStream?.cancel();
+      } catch (_) {}
+      try {
+        await c.downloadStreamSubscription?.cancel();
+      } catch (_) {}
+      try {
+        c.animController.dispose();
+      } catch (_) {}
+      _activeControllers.remove(c);
+      c.playStatus = PlayStatus.init;
+    }
+  }
 }
 
+///
 /// A custom [TickerProvider] implementation for the voice controller.
 ///
 /// This class provides the necessary functionality for controlling the voice playback.
 /// It implements the [TickerProvider] interface, allowing it to create [Ticker] objects
 /// that can be used to schedule animations or other periodic tasks.
-///
-/// Example usage:
-/// ```dart
-/// VoiceController voiceController = VoiceController();
-/// voiceController.start();
-/// voiceController.stop();
-/// ```
-
-///
-/// This class extends [TickerProvider] and provides a custom ticker for the voice controller.
-/// It can be used to create animations or perform actions at regular intervals.
 class MyTicker extends TickerProvider {
   @override
-
-  /// Creates a new ticker.
   Ticker createTicker(TickerCallback onTick) {
     return Ticker(onTick);
   }

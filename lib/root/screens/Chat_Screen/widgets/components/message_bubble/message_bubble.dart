@@ -82,7 +82,7 @@ class MessageBubble extends StatefulWidget {
 
 class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive  => true;
+  bool get wantKeepAlive => (widget.message.media?.value?.type != Mediatype.audio) ?? true;
   @override
   Widget build(BuildContext context) {
     super.build(context);

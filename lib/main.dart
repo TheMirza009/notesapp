@@ -44,7 +44,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     });
   }
 
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();

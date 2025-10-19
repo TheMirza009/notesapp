@@ -44,7 +44,8 @@ class ChatScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // final notifier = ref.read(chatMessagesController.notifier);
     final notifier = ref.read(chatStateController.notifier);
-    final canPop = ref.watch( chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && !ref.watch(overlayControllerProvider);
+    final overlayHandler = ref.read(overlayHandlerProvider);
+    final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     final newChat = ref.read(isNewChat);
     debugPrint("🔃 ChatScreen rebuilt");
@@ -77,9 +78,9 @@ class ChatScreen extends ConsumerWidget {
         notifier.unSelectAllMessages();
         notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
-        ref.read(overlayHandlerProvider).closeAttachmentBoard();
-        ref.read(overlayHandlerProvider).hideRecordBar(instant: true);
-        ref.read(overlayHandlerProvider).hideReplyAnchor(instant: true);
+        overlayHandler.closeAttachmentBoard(instant: true);
+        overlayHandler.hideRecordBar(instant: true);
+        overlayHandler.hideReplyAnchor(instant: true);
         notifier.cancelAudioRecording();
       },
       child: GestureDetector(

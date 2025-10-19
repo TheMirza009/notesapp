@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:notesapp/root/widgets/voice_message/components/voice_controller.dart';
 import 'package:notesapp/root/widgets/voice_message/components/widgets/loading_widget.dart';
 
-/// A widget representing a play/pause button.
-///
-/// This button can be used to control the playback of a media player.
+/// PlayPauseButton: fixed ripple/clipping by using Material + InkWell with CircleBorder
 class PlayPauseButton extends StatelessWidget {
   const PlayPauseButton(
       {super.key,
@@ -13,75 +11,63 @@ class PlayPauseButton extends StatelessWidget {
       required this.size,
       required this.playIcon,
       required this.pauseIcon,
-      required this.refreshIcon , 
-      required this.stopDownloadingIcon ,
-      required this.loadingColor ,
-      this.buttonDecoration ,
+      required this.refreshIcon,
+      required this.stopDownloadingIcon,
+      required this.loadingColor,
+      this.buttonDecoration,
       });
 
-  /// The size of the button.
   final double size;
-
-  /// The controller for the voice message view.
   final VoiceController controller;
-
-  /// The color of the button.
   final Color color;
-
-  /// The button Play Icon
   final Widget playIcon;
-
-  /// The button pause Icon
   final Widget pauseIcon;
-
-  /// The button pause Icon
   final Widget refreshIcon;
-
-  /// The button stop Downloading Icon
   final Widget stopDownloadingIcon;
-
-  /// The button Loading Color 
-  final Color loadingColor ;
-
-  
-  /// The button (container) decoration
-  final Decoration ? buttonDecoration ;
+  final Color loadingColor;
+  final Decoration? buttonDecoration;
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) {
+    // Use Material as ancestor for InkWell splash to render correctly.
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
         onTap: controller.isDownloadError
-
-            /// faild loading audio
             ? controller.play
             : controller.isPlaying
-
-                /// playing or pause
                 ? controller.pausePlaying
                 : controller.play,
+        customBorder: const CircleBorder(),
         child: Container(
-            height: size,
-            width: size,
-            decoration: buttonDecoration ?? BoxDecoration(color: color, shape: BoxShape.circle) ,
-            child: controller.isDownloading
-                ? LoadingWidget(
-                    progress: controller.downloadProgress,
-                    loadingColor: loadingColor,
-                    onClose: () {
-                      controller.cancelDownload();
-                    },
-                    stopDownloadingIcon: stopDownloadingIcon,
-                  )
-                :
+          height: size,
+          width: size,
+          alignment: Alignment.center,
+          decoration: buttonDecoration ?? BoxDecoration(color: color, shape: BoxShape.circle),
+          // child content
+          child: _buildInner(),
+        ),
+      ),
+    );
+  }
 
-                /// faild to load audio
-                controller.isDownloadError
-
-                    /// show refresh icon
-                    ?  refreshIcon
-                    : controller.isPlaying
-                        ? pauseIcon
-                        : playIcon
-
-            ),
+  Widget _buildInner() {
+    if (controller.isDownloading) {
+      return LoadingWidget(
+        progress: controller.downloadProgress,
+        loadingColor: loadingColor,
+        onClose: () {
+          controller.cancelDownload();
+        },
+        stopDownloadingIcon: stopDownloadingIcon,
       );
+    }
+
+    if (controller.isDownloadError) {
+      return refreshIcon;
+    }
+
+    return controller.isPlaying ? pauseIcon : playIcon;
+  }
 }

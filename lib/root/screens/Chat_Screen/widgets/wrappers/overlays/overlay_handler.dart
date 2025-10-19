@@ -1,14 +1,15 @@
-
-/// Centralized OverlayHandler: now controls RecordBar, ReplyAnchor and AttachmentBoard
-/// (circular reveal) without needing a separate overlayControllerProvider.
-/// The attachment overlay is toggled using toggleAttachmentBoard / openAttachmentBoard / closeAttachmentBoard
-/// and no longer listens to keyboard inset (we unfocus keyboard before opening).
+/// Centralized OverlayHandler: now exposes open/closed state for record, reply and attachment
+/// overlays, and provides convenience getters (anyOpen/anyClosed/allOpen/allClosed) plus
+/// closeAllOverlays / openAllOverlays helpers.
 ///
-/// NOTE: this file replaces previous OverlayHandler that depended on overlayControllerProvider.
-library;
+/// This file is an updated version of the handler you already had. It keeps the same
+/// overlay insertion / animation semantics while exposing both synchronous bool getters
+/// and ValueListenables you can use where you need reactive updates.
 
+library;
 import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
@@ -35,6 +36,10 @@ class OverlayHandler with WidgetsBindingObserver {
   OverlayEntry? _attachmentOverlay;
   final ValueNotifier<bool> _isAttachmentOpen = ValueNotifier<bool>(false);
 
+  // Exposed notifiers so other widgets can listen reactively if needed.
+  final ValueNotifier<bool> _isRecordOpen = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isReplyOpen = ValueNotifier<bool>(false);
+
   final ValueNotifier<double> _keyboardInset = ValueNotifier(0);
 
   // Attachment params (matching previous AttachmentWrapper defaults)
@@ -56,22 +61,22 @@ class OverlayHandler with WidgetsBindingObserver {
 
     _keyboardInset.dispose();
     _isAttachmentOpen.dispose();
+    _isRecordOpen.dispose();
+    _isReplyOpen.dispose();
   }
 
   @override
   void didChangeMetrics() {
-    final double bottomInsets = WidgetsBinding.instance.window.viewInsets.bottom;
-    final double pixelRatio = WidgetsBinding.instance.window.devicePixelRatio;
-    final inset = bottomInsets / pixelRatio;
+    final inset = WidgetsBinding.instance.window.viewInsets.bottom /
+        WidgetsBinding.instance.window.devicePixelRatio;
     if (_keyboardInset.value != inset) {
       _keyboardInset.value = inset;
     }
   }
 
   void updateKeyboardInset() {
-    final double bottomInsets = WidgetsBinding.instance.window.viewInsets.bottom;
-    final double pixelRatio = WidgetsBinding.instance.window.devicePixelRatio;
-    final inset = bottomInsets / pixelRatio;
+    final inset = WidgetsBinding.instance.window.viewInsets.bottom /
+        WidgetsBinding.instance.window.devicePixelRatio;
     if (_keyboardInset.value != inset) {
       _keyboardInset.value = inset;
     }
@@ -119,6 +124,7 @@ class OverlayHandler with WidgetsBindingObserver {
     );
 
     overlay.insert(_recordOverlay!);
+    _isRecordOpen.value = true;
   }
 
   Future<void> hideRecordBar({bool? instant = false}) async {
@@ -126,6 +132,7 @@ class OverlayHandler with WidgetsBindingObserver {
     if (instant == false) await Future.delayed(const Duration(milliseconds: 400));
     _recordOverlay?.remove();
     _recordOverlay = null;
+    _isRecordOpen.value = false;
   }
 
   // --------------------------------------------------------------------------
@@ -178,6 +185,7 @@ class OverlayHandler with WidgetsBindingObserver {
     );
 
     overlay.insert(_replyOverlay!);
+    _isReplyOpen.value = true;
   }
 
   Future<void> hideReplyAnchor({bool? instant = false}) async {
@@ -185,6 +193,7 @@ class OverlayHandler with WidgetsBindingObserver {
     if (instant == false) await Future.delayed(const Duration(milliseconds: 300));
     _replyOverlay?.remove();
     _replyOverlay = null;
+    _isReplyOpen.value = false;
   }
 
   // --------------------------------------------------------------------------
@@ -220,24 +229,22 @@ class OverlayHandler with WidgetsBindingObserver {
   }
 
   /// Closes the attachment board overlay gracefully (plays animation then removes).
-  Future<void> closeAttachmentBoard() async {
+   Future<void> closeAttachmentBoard({bool instant = false}) async {
     if (_attachmentOverlay == null) return;
 
-    // set to closed (animation will shrink)
-    _isAttachmentOpen.value = false;
+    if (instant) {
+      // immediate removal (no animation)
+      _attachmentOverlay?.remove();
+      _attachmentOverlay = null;
+      _isAttachmentOpen.value = false;
+      return;
+    }
 
-    // Wait the animation duration then remove the overlay entry.
+    // play closing animation then remove
+    _isAttachmentOpen.value = false;
     await Future.delayed(_attachmentAnimationDuration);
     _attachmentOverlay?.remove();
     _attachmentOverlay = null;
-  }
-
-  /// Immediately hide attachment overlay without animation.
-  Future<void> hideAttachmentOverlayInstant() async {
-    if (_attachmentOverlay == null) return;
-    _attachmentOverlay?.remove();
-    _attachmentOverlay = null;
-    _isAttachmentOpen.value = false;
   }
 
   void _createAndInsertAttachmentOverlay(BuildContext context) {
@@ -284,6 +291,54 @@ class OverlayHandler with WidgetsBindingObserver {
     });
 
     overlay.insert(_attachmentOverlay!);
+  }
+
+  // --------------------------------------------------------------------------
+  // Exposed state getters & listenables
+  // --------------------------------------------------------------------------
+
+  // Synchronous boolean getters
+  bool get isRecordBarOpen => _recordOverlay != null || _isRecordOpen.value;
+  bool get isReplyAnchorOpen => _replyOverlay != null || _isReplyOpen.value;
+  bool get isAttachmentOpen => _attachmentOverlay != null && _isAttachmentOpen.value;
+
+  bool get anyOpen => isRecordBarOpen || isReplyAnchorOpen || isAttachmentOpen;
+  bool get anyClosed => !allOpen; // true if at least one overlay is closed
+  bool get allOpen => isRecordBarOpen && isReplyAnchorOpen && isAttachmentOpen;
+  bool get allClosed => !anyOpen; // true when none are open
+
+  // Reactive listenables (ValueListenable) if other widgets prefer to listen.
+  ValueListenable<bool> get recordOpenListenable => _isRecordOpen;
+  ValueListenable<bool> get replyOpenListenable => _isReplyOpen;
+  ValueListenable<bool> get attachmentOpenListenable => _isAttachmentOpen;
+
+  // --------------------------------------------------------------------------
+  // Convenience helpers to open/close all overlays
+  // --------------------------------------------------------------------------
+
+  /// Close all overlays gracefully (runs close animations where applicable).
+  Future<void> closeAllOverlays() async {
+    // Close attachment -> play closing animation
+    await closeAttachmentBoard();
+
+    // Hide reply anchor
+    await hideReplyAnchor();
+
+    // Hide record bar
+    await hideRecordBar();
+  }
+
+  /// Try to open all overlays. Some overlays (reply) depend on existing state (e.g. anchorMessage),
+  /// so we call their show* methods which will only show if they can.
+  Future<void> openAllOverlays(BuildContext context, WidgetRef ref) async {
+    // show reply anchor if there's an anchor message
+    showReplyAnchor(context);
+
+    // open attachment board and record bar (record bar takes ref)
+    await openAttachmentBoard(context);
+
+    // show record bar (this will be visible above reply/attachment)
+    showRecordBar(context, ref);
   }
 }
 

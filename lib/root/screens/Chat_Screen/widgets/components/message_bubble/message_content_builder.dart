@@ -220,21 +220,23 @@ class MessageContentBuilder extends StatelessWidget {
                 ? ThemeConstants.hometoolbarLight3
                 : ThemeConstants.darkIconBorder);
 
-    VoiceController controller = VoiceController(
-        audioSrc: message.media.value!.path!,
-        maxDuration: Duration(minutes: 1),
-        noiseCount: 35,
-        isFile: true,
-        onComplete: () {},
-        onPause: () {},
-        onPlaying: () {},
-      );
+    // VoiceController controller = VoiceController(
+    //     audioSrc: message.media.value!.path!,
+    //     maxDuration: Duration(minutes: 1),
+    //     noiseCount: 35,
+    //     isFile: true,
+    //     onComplete: () {},
+    //     onPause: () {},
+    //     onPlaying: () {},
+    //   );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         VoiceMessageView(
-          controller: controller,
+          // controller: controller,
+          audioSrc: message.media.value!.path!,
+          isFile: true,
           innerPadding: 0,
           backgroundColor: Colors.transparent, // bgColor,
           circlesColor: ThemeConstants.sinisterSeed,
