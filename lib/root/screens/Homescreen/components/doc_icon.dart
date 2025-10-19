@@ -24,26 +24,29 @@ class DocumentIcon extends StatelessWidget {
     Color borderColor = isLight ? ThemeConstants.circleIconBorderLight : ThemeConstants.darkIconBorder;
     Color bgColor = isLight ? ThemeConstants.circleIconBackgroundLight : ThemeConstants.darkIconbackground;
     Color iconColor = isLight ? ThemeConstants.circleIconLight : ThemeConstants.darkIconforeground;
-    return Ink(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bgColor, // Background color
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: borderColor, // Border color
-          width: borderWidth ?? 3, // Border width
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: bgColor, // Background color
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: borderColor, // Border color
+            width: borderWidth ?? 3, // Border width
+          ),
         ),
+        child: Padding(
+          padding: iconPadding ?? const EdgeInsets.all(5.0),
+          child: SvgPicture.string(IconPaths.roundedDoc, color: iconColor),
+        )
+        // Icon(
+        //   CupertinoIcons.doc_text_fill, // Document icon
+        //   color: ThemeConstants.circleIconLight, // Icon color
+        //   size: size * 0.6, // Icon size relative to the container size
+        // ),
       ),
-      child: Padding(
-        padding: iconPadding ?? const EdgeInsets.all(5.0),
-        child: SvgPicture.string(IconPaths.roundedDoc, color: iconColor),
-      )
-      // Icon(
-      //   CupertinoIcons.doc_text_fill, // Document icon
-      //   color: ThemeConstants.circleIconLight, // Icon color
-      //   size: size * 0.6, // Icon size relative to the container size
-      // ),
     );
   }
 }

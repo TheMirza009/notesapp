@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
@@ -13,6 +14,7 @@ import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/widgets/tile_container.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
@@ -91,7 +93,7 @@ class ProfileScreenState extends ProfileScreenBaseState {
                         ),
                         TextButton.icon(
                           icon: vectorBuild(IconPaths.shareIcon, color:  shareColor),
-                          onPressed: () {print(Theme.of(context).colorScheme.primary);}, // () => Navigator.pop(context),
+                          onPressed: () => Utils.shareToApps(XFile(user!.profilePhotoPath!)), // () => Navigator.pop(context),
                           label: Text("Share", style: TextStyle(color: shareColor),),
                         ),
                       ],
