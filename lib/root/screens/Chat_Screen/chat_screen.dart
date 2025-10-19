@@ -77,7 +77,7 @@ class ChatScreen extends ConsumerWidget {
         notifier.unSelectAllMessages();
         notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
-        ref.read(overlayControllerProvider.notifier).close();
+        ref.read(overlayHandlerProvider).closeAttachmentBoard();
         ref.read(overlayHandlerProvider).hideRecordBar(instant: true);
         ref.read(overlayHandlerProvider).hideReplyAnchor(instant: true);
         notifier.cancelAudioRecording();
@@ -89,7 +89,7 @@ class ChatScreen extends ConsumerWidget {
           notifier.keyboardFocusNode.unfocus();
           notifier.hideEmojiPicker();
           notifier.unSelectAllMessages();
-          ref.read(overlayControllerProvider.notifier).close();
+          ref.read(overlayHandlerProvider).closeAttachmentBoard();
         },
         child: Scaffold(
           backgroundColor: Colors.transparent,

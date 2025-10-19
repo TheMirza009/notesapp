@@ -381,14 +381,15 @@ class ChatStateNotifier extends Notifier<ChatState> {
   // Section: Chat bar / emoji / anchor
   // =====================================================
 
-  void setAnchorMessage(Message message, BuildContext context) {
+  Future<void> setAnchorMessage(Message message, BuildContext context) async {
     final overlayHandler = ref.read(overlayHandlerProvider);
-    final attachmentOverlay = ref.read(overlayControllerProvider.notifier);
-
     state = state.copyWith(anchorMessage: message);
-    if (!keyboardFocusNode.hasFocus) keyboardFocusNode.requestFocus();
-    if (attachmentOverlay.state == true) attachmentOverlay.close();
+    if (!keyboardFocusNode.hasFocus) {
+      keyboardFocusNode.requestFocus();
+    }
 
+    // Ensure the attachment board is closed via the centralized handler
+    await overlayHandler.closeAttachmentBoard();
     overlayHandler.showReplyAnchor(context);
   }
 

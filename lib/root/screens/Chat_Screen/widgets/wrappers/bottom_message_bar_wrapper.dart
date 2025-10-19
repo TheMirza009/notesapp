@@ -22,65 +22,57 @@ class BottomMessageBarWrapper extends ConsumerWidget {
     // overlayHandler.updateKeyboardInset();
 
     return RepaintBoundary(
-      child: AttachmentWrapper(
-        overlay: AttachmentBoard(
-          isOpen: !ref.watch(overlayControllerProvider),
-          onGalleryPressed: notifier.pickImage,
-          ),
-        child: BottomMessageBar(
-          focusNode: notifier.keyboardFocusNode,
-          keyboardController: notifier.keyboardController,
-          onFieldTap: () {
+      child: BottomMessageBar(
+        focusNode: notifier.keyboardFocusNode,
+        keyboardController: notifier.keyboardController,
+        onFieldTap: () {
+          notifier.hideEmojiPicker();
+          overlayHandler.closeAttachmentBoard();
+        },
+        onEmojiTap: () {
+          notifier.toggleEmojiPicker();
+          overlayHandler.closeAttachmentBoard();
+          },
+        onAttachmentTap: () {
+          // notifier.pickImage();
+          notifier.keyboardFocusNode.unfocus();
+          if (isRecording) {
+            notifier.cancelAudioRecording();
+          }
+      
+          // ✅ Only clear anchor if we’re not recording
+          if (notifier.state.anchorMessage != null && !isRecording) {
+            notifier.clearAnchorMessage();
+          }
+      
+          if (notifier.state.showEmojis) {
             notifier.hideEmojiPicker();
-            ref.read(overlayControllerProvider.notifier).close();
-          },
-          onEmojiTap: () {
-            notifier.toggleEmojiPicker();
-            ref.read(overlayControllerProvider.notifier).close();
-            },
-          onAttachmentTap: () {
-            // notifier.pickImage();
-            notifier.keyboardFocusNode.unfocus();
-            if (isRecording) {
-              notifier.cancelAudioRecording();
+          }
+      
+           overlayHandler.toggleAttachmentBoard(context);
+          // final state = ref.read(openingProvider.notifier);
+          // state.state = !state.state; // <======= Called here
+        },
+        onMicTap: () async {
+          // Navigator.push(context, CupertinoPageRoute(builder: (_) => MicPage()));
+          if (isRecording) {
+            notifier.stopAudioRecording();
+            await overlayHandler.hideRecordBar();
+            print("🎙️Recording stopped");
+          } else {
+            await overlayHandler.closeAttachmentBoard();
+      
+            if (notifier.isReplying == true) {
+              print("⬅️ isReplying: $isRecording");
             }
-        
-            // ✅ Only clear anchor if we’re not recording
-            if (notifier.state.anchorMessage != null && !isRecording) {
-              notifier.clearAnchorMessage();
-            }
-
-            if (notifier.state.showEmojis) {
-              notifier.hideEmojiPicker();
-            }
-        
-            ref.read(overlayControllerProvider.notifier).toggle();
-            // final state = ref.read(openingProvider.notifier);
-            // state.state = !state.state; // <======= Called here
-          },
-          onMicTap: () async {
-            // Navigator.push(context, CupertinoPageRoute(builder: (_) => MicPage()));
-            if (isRecording) {
-              notifier.stopAudioRecording();
-              await overlayHandler.hideRecordBar();
-              print("🎙️Recording stopped");
-            } else {
-              if (ref.read(overlayControllerProvider.notifier).state == true) {
-                ref.read(overlayControllerProvider.notifier).close();
-              }
-
-              if (notifier.isReplying == true) {
-                print("⬅️ isReplying: $isRecording");
-              }
-              notifier.closeSearchAndKeyboard();
-              notifier.startAudioRecording();
-              overlayHandler.showRecordBar(context, ref);
-              print("🎙️Recording started");
-            }
-          },
-          onSend: notifier.sendMessage,
-          onImagePasted: (bytes) => notifier.pickImage(imageBytes: bytes),
-        ),
+            notifier.closeSearchAndKeyboard();
+            notifier.startAudioRecording();
+            overlayHandler.showRecordBar(context, ref);
+            print("🎙️Recording started");
+          }
+        },
+        onSend: notifier.sendMessage,
+        onImagePasted: (bytes) => notifier.pickImage(imageBytes: bytes),
       ),
     );
   }

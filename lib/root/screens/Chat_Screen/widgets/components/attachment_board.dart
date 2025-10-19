@@ -7,6 +7,7 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:notesapp/root/screens/Settings/widgets/bordered_container.dart';
 import 'package:notesapp/root/screens/Camera/camera_screen.dart';
 
@@ -74,7 +75,7 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.photo, color: Color(0xFFF43665), size: iconSize),
                 title: "Gallery",
-                onPressed: onGalleryPressed,
+                onPressed: onGalleryPressed ?? () async => await notifier.pickImage(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.camera, color: Color(0xFFCE6789), size: iconSize),
@@ -308,7 +309,7 @@ class IconTile extends ConsumerWidget {
               child: InkWell(
                 onTap: () {
                   onPressed?.call();
-                  ref.read(overlayControllerProvider.notifier).close();
+                  ref.read(overlayHandlerProvider).closeAttachmentBoard();
                   // ref.read(openingProvider.notifier).state = false;
                 },
                 borderRadius: borderRadius,
