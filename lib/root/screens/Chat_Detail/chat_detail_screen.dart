@@ -2,6 +2,11 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
+import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+import 'package:notesapp/root/screens/Chat_Forward/notifier/selected_chat_notifier.dart';
+import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -41,138 +46,6 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
 }
 
 /// ---------------------------------------------------------------------------
-/// ChatDetailBase
-///
-/// This class contains the instance fields and methods for the state so it can
-/// be moved into a separate file (e.g. `chat_detail_base.dart`) if you wish.
-/// Simply move this class to another file and import it; then keep
-/// `_ChatDetailScreenState extends ChatDetailBase`.
-/// ---------------------------------------------------------------------------
-abstract class ChatDetailBase extends ConsumerState<ChatDetailScreen> {
-  late final TextEditingController titleController;
-  final ScrollController scrollController = ScrollController();
-  bool isEditing = false;
-  static const TextStyle subStyle = TextStyle(color: ThemeConstants.iconColorNeutral, fontSize: 13);
-
-  @override
-  void initState() {
-    super.initState();
-    titleController = TextEditingController(text: widget.chat.title ?? "New Chat");
-
-    if (widget.scrollToMedia == true) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollHeaderToTop();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    titleController.dispose();
-    scrollController.dispose();
-    super.dispose();
-  }
-
-  void scrollHeaderToTop() {
-    // Animate until the header is pinned (guard for scrollable extents)
-    final maxExtent = scrollController.hasClients ? scrollController.position.maxScrollExtent : 0.0;
-    scrollController.animateTo(
-      maxExtent,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOutQuad,
-    );
-  }
-
-  void startEditing() {
-    setState(() => isEditing = true);
-    // move caret to end
-    Future.delayed(Duration.zero, () {
-      titleController.selection = TextSelection.fromPosition(
-        TextPosition(offset: titleController.text.length),
-      );
-    });
-  }
-
-  void finishEditing(ChatDetailNotifier notifier) {
-    final newText = titleController.text.trim();
-    notifier.updateTitle(newText);
-    setState(() => isEditing = false);
-  }
-
-  /// Build profile image for hero wrapper. `path` can be null.
-  Widget buildProfileImage(BuildContext context, String? path, {bool expanded = false}) {
-  final isLight = context.isLight;
-
-  if (expanded) {
-    final double availableHeight = context.screenHeight - 200;
-
-    // ✅ If no photo is selected, show the DocumentIcon in PhotoView
-    if (path == null || path.isEmpty) {
-      return SizedBox(
-        height: availableHeight,
-        width: context.screenWidth,
-        child: Center(
-          child: Material(
-            color: Colors.transparent,
-            clipBehavior: Clip.antiAlias,
-            child: DocumentIcon(
-              size: availableHeight / 2,
-              borderWidth: 6,
-              iconPadding: const EdgeInsets.all(24),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // ✅ Otherwise, show the selected image
-    final ImageProvider provider = FileImage(File(path));
-
-    return SizedBox(
-      height: availableHeight,
-      width: context.screenWidth,
-      child: PhotoView(
-        gestureDetectorBehavior: HitTestBehavior.opaque,
-        imageProvider: provider,
-        minScale: PhotoViewComputedScale.contained,
-        initialScale: PhotoViewComputedScale.contained,
-        maxScale: PhotoViewComputedScale.covered * 3,
-        tightMode: true,
-        backgroundDecoration: const BoxDecoration(color: Colors.transparent),
-      ),
-    );
-  }
-
-  // Compact version (non-expanded)
-  final double size = context.screenHeight / 4;
-
-  final Widget image = (path != null && path.isNotEmpty)
-      ? ExtendedImage.file(
-          File(path),
-          key: ValueKey<String>(path),
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          cacheRawData: true,
-        )
-      : DocumentIcon(
-          size: context.screenHeight / 3,
-          borderWidth: 12,
-          iconPadding: const EdgeInsets.all(26),
-        );
-
-  return Container(
-    height: size,
-    width: size,
-    decoration: const BoxDecoration(shape: BoxShape.circle),
-    clipBehavior: Clip.antiAlias,
-    child: image,
-  );
-}
-
-}
-
-/// ---------------------------------------------------------------------------
 /// Private state class: extends ChatDetailBase so all stateful logic can be
 /// moved into ChatDetailBase (which can be moved into a separate file).
 /// ---------------------------------------------------------------------------
@@ -204,6 +77,7 @@ class _ChatDetailScreenState extends ChatDetailBase {
         appBar: AppBar(
           elevation: 0,
           forceMaterialTransparency: true,
+          leading: IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back_ios_new_rounded)),
           title: isEditing
               ? TextField(
                   controller: titleController,
@@ -328,17 +202,18 @@ class _ChatDetailScreenState extends ChatDetailBase {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => GalleryViewWrapper(
-                                  chatTitle: chat.title ?? '',
-                                  galleryItems: photoMessages,
-                                  initialIndex: index,
+                                builder:
+                                  (_) => GalleryViewWrapper(
+                                    chatTitle: chat.title ?? '',
+                                    galleryItems: photoMessages,
+                                    initialIndex: index,
+                                    showOptions: true,
+                                    options: galleryOptions,
+                                    onOptionSelect: (value) => handleGalleryOptions(context, ref, value, photoMessages[index]),
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: FadeInDynamic.filePath(
-                              path,
-                              index: index,
-                            ),
+                          child: FadeInDynamic.filePath(path, index: index, ),
                           ),
                         );
                       },

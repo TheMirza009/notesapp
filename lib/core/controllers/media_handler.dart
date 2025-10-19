@@ -245,6 +245,48 @@ class MediaHandler {
 
 
   /// ===== Helpers =====
+  /// 
+  /// Crop existing photo
+  static Future<Media?> cropAndSavePhoto(
+    String filePath, {
+    bool isProfilePicture = true,
+  }) async {
+    try {
+      final File file = File(filePath);
+      if (!await file.exists()) {
+        print("❌ cropAndSavePhoto: File not found at $filePath");
+        return null;
+      }
+
+      print("✂️ Starting crop for: $filePath");
+      final croppedFile = await _cropImage(file);
+      if (croppedFile == null) {
+        print("⚠️ cropAndSavePhoto: Cropper returned null");
+        return null;
+      }
+
+      print("✅ Cropped file: ${croppedFile.path}");
+      final savedFile = await saveToStorage(
+        croppedFile,
+        isProfilePicture ? 'Profile Pictures' : 'Photos',
+      );
+
+      print("💾 Saved cropped file: ${savedFile.path}");
+      final bytes = await savedFile.readAsBytes();
+      final decodedImage = await decodeImageFromList(bytes);
+      final aspectRatio = decodedImage.width / decodedImage.height;
+
+      final media = Media.fromFilePath(savedFile.path);
+      media.aspectRatio = aspectRatio;
+
+      print("🎉 Returning cropped media with path: ${media.path}");
+      return media;
+    } catch (e, st) {
+      print("🔥 cropAndSavePhoto error: $e\n$st");
+      return null;
+    }
+  }
+
 
   /// Cropping logic
   static Future<File?> _cropImage(File imageFile) async {

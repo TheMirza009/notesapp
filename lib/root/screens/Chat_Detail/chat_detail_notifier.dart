@@ -60,6 +60,47 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
     state = state.copyWith(chat: freshChat, photos: photos, documents: documents);
   }
 
+  Future<void> saveAndUpdateChatPhoto(Media media) async {
+    if (state.chat == null) {
+      print("⚠️ saveAndUpdateChatPhoto: No chat in state");
+      return;
+    }
+
+    // Check if media already exists in Isar
+    final existingMedia =
+        await isar.medias.filter().pathEqualTo(media.path).findFirst();
+    final mediaToUse = existingMedia ?? media;
+
+    // Save media to Isar if new
+    if (existingMedia == null) {
+      await isar.writeTxn(() async {
+        await isar.medias.put(mediaToUse);
+      });
+      print("💾 Media saved to Isar: ${mediaToUse.path}");
+    } else {
+      print("📂 Media already exists in Isar: ${mediaToUse.path}");
+    }
+
+    // Fetch managed chat from Isar
+    final managedChat = await isar.chats.get(state.chat!.isarID);
+    if (managedChat == null) {
+      print("❌ saveAndUpdateChatPhoto: Chat not found in Isar");
+      return;
+    }
+
+    // Update chat photo path
+    await isar.writeTxn(() async {
+      managedChat.chatPhotoPath = mediaToUse.path;
+      await isar.chats.put(managedChat);
+    });
+
+    // Notify list provider & update local state
+    ref.read(chatListProvider.notifier).refreshChat(managedChat.isarID);
+    state = state.copyWith(chat: managedChat);
+
+    print("🎉 Chat photo updated for ${managedChat.title}");
+  }
+
   Future<void> updateChatPhoto() async {
     final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
     if (pickedMedia == null || state.chat == null) return;

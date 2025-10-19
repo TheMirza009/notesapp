@@ -14,6 +14,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 Widget buildOptionTile({
   required Widget icon,
   required String text,
+  Color? textColor,
 }) {
   return Row(
     spacing: 10,
@@ -24,9 +25,10 @@ Widget buildOptionTile({
       ),
       Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w400,
           fontSize: 16,
+          color: textColor
         ),
       ),
     ],
@@ -157,6 +159,50 @@ List<PopupMenuItem<String>> get chatScreenOptions => [
     child: buildOptionTile(
       icon: clearIcon(),
       text: "Clear Chat",
+    ),
+  ),
+];
+
+/// Options: Chat Screen
+List<PopupMenuItem<String>> get galleryOptions => [
+  PopupMenuItem(
+    value: 'shareImage',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.shareIcon2),
+      text: "Share Image",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
+    value: 'forwardimage',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.forward2),
+      text: "Forward Image",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
+    value: 'setChatPhoto',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.mediaGallery),
+      text: "Set as Chat Photo",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
+    value: 'setProfilePhoto',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.messageSearch),
+      text: "Set as Profile Photo",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
+    value: 'deleteImage',
+    child: buildOptionTile(
+      icon: clearIcon(),
+      text: "Delete from Chat",
+      textColor: ThemeConstants.textDark2
     ),
   ),
 ];

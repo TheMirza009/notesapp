@@ -39,10 +39,8 @@ class _CameraModeSelectorState extends State<CameraModeSelector> {
                   style: TextStyle(
                     fontFamily: "Poppins",
                     fontSize: isActive ? 18 : 16,
-                    fontWeight:
-                        isActive ? FontWeight.normal : FontWeight.normal,
-                    color:
-                        isActive ? Colors.white : Colors.white.withOpacity(0.5),
+                    fontWeight: isActive ? FontWeight.normal : FontWeight.normal,
+                    color: isActive ? (index == 0 ? Colors.white : Colors.white.withOpacity(0.5)) : Colors.white.withOpacity(0.5),
                   ),
                   child: Center(child: Text(modes[index])),
                 ),

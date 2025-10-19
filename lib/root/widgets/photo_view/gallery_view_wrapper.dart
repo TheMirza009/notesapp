@@ -5,10 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
@@ -21,6 +24,9 @@ class GalleryViewWrapper extends StatefulWidget {
     this.chatTitle,
     this.isCamera = false,
     this.onSendImage,
+    this.showOptions = true,
+    this.options,
+    this.onOptionSelect,
   });
 
   final List<Media> galleryItems;
@@ -29,6 +35,9 @@ class GalleryViewWrapper extends StatefulWidget {
   final String? chatTitle;
   final bool? isCamera;
   final VoidCallback? onSendImage;
+  final bool? showOptions;
+  final List<PopupMenuEntry<String>>? options;
+  final Function(String value)? onOptionSelect;
 
 
   @override
@@ -103,37 +112,54 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
         extendBody: true,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: showOverlay ? 1.0 : 0.0,
-            child: AppBar(
-              backgroundColor: overlayBase,
-              leading: IconButton(
-                onPressed: () {
-                  if (showOverlay) Navigator.pop(context);
-                },
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
+          child: IgnorePointer(
+            ignoring: !showOverlay,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: showOverlay ? 1.0 : 0.0,
+              child: AppBar(
+                backgroundColor: overlayBase,
+                leading: IconButton(
+                  onPressed: () {
+                    if (showOverlay) Navigator.pop(context);
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (currentChatTitle != null)
-                    Text(
-                      currentChatTitle!,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  if (currentImageTime != null)
-                    Text(
-                      TimeFormat.imageTime(currentImageTime!),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (currentChatTitle != null)
+                      Text(
+                        currentChatTitle!,
+                        style: const TextStyle(color: Colors.white),
                       ),
-                    ),
-                ],
+                    if (currentImageTime != null)
+                      Text(
+                        TimeFormat.imageTime(currentImageTime!),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+                actions:
+                    widget.showOptions == true
+                        ? [
+                          CustomContextMenu(
+                            backgroundColor: const Color.fromARGB(255, 13, 24, 30),
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                            ),
+                            menuItems: widget.options ?? galleryOptions,
+                            onSelected: widget.onOptionSelect ?? (value) =>  debugPrint(value),
+                          ),
+                        ]
+                        : [],
               ),
             ),
           ),

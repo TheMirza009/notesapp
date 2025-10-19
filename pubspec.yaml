@@ -60,6 +60,8 @@ dependencies:
   open_file: ^3.5.10
   siri_wave: ^2.3.0
   receive_sharing_intent: ^1.8.1
+  flutter_native_splash: ^2.4.7
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -85,3 +87,4 @@ flutter:
   assets:
     - assets/
     - assets/icons/
+    - assets/launcher/

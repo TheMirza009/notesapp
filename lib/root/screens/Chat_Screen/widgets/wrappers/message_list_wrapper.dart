@@ -11,6 +11,8 @@ import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
+import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
@@ -128,6 +130,9 @@ class _MessageItemBuilder extends ConsumerWidget {
                     builder: (_) => GalleryViewWrapper(
                       galleryItems: allImages,
                       initialIndex: initialIndex,
+                      showOptions: true,
+                      options: galleryOptions,
+                      onOptionSelect: (value) => handleGalleryOptions(context, ref, value, allImages[initialIndex]),
                     ),
                   ),
                 );

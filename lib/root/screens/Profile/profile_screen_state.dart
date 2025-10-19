@@ -81,58 +81,59 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
   }
   
 Future<void> pickNewProfilePhoto() async {
-  final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
-  if (pickedMedia == null) {
-    print("❌ No media selected");
-    return;
-  }
+    final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
+    if (pickedMedia == null) {
+      print("❌ No media selected");
+      return;
+    }
 
-  print("📷 Picked media: ${pickedMedia.path}");
+    print("📷 Picked media: ${pickedMedia.path}");
 
-  final currentUser = ref.read(userController);
-  print("💳 Current User: ${currentUser.toString()}");
-  if (currentUser == null) return;
+    final currentUser = ref.read(userController);
+    print("💳 Current User: ${currentUser.toString()}");
+    if (currentUser == null) return;
 
-  // Check if this media already exists in DB by path
-  final existingMedia = await IsarDatabase.isar.medias
-      .filter()
-      .pathEqualTo(pickedMedia.path)
-      .findFirst();
-  final mediaToUse = existingMedia ?? pickedMedia;
+    // Check if this media already exists in DB by path
+    final existingMedia =
+        await IsarDatabase.isar.medias
+            .filter()
+            .pathEqualTo(pickedMedia.path)
+            .findFirst();
+    final mediaToUse = existingMedia ?? pickedMedia;
 
-  // Persist only if it's new
-  if (existingMedia == null) {
+    // Persist only if it's new
+    if (existingMedia == null) {
+      await IsarDatabase.isar.writeTxn(() async {
+        await IsarDatabase.isar.medias.put(mediaToUse);
+      });
+    }
+
+    // Always re-fetch the managed User from Isar
+    final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
+    print("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
+
+    if (managedUser == null) return;
+
+    // Update user with new profile photo
     await IsarDatabase.isar.writeTxn(() async {
-      await IsarDatabase.isar.medias.put(mediaToUse);
+      managedUser.profilePhotoPath = mediaToUse.path;
+      await IsarDatabase.isar.users.put(managedUser);
     });
+
+    // Update state in provider
+    await ref.read(userController.notifier).updateUser(managedUser);
+
+    // Precache image
+    _precacheProfileImage(mediaToUse.path);
+
+    // Close the sheet/dialog
+    if (context.mounted) {
+      Navigator.pop(context);
+    } else {
+      final navCtx = navigatorKey.currentContext;
+      if (navCtx != null) Navigator.pop(navCtx);
+    }
   }
-
-  // Always re-fetch the managed User from Isar
-  final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
-  print("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
-
-  if (managedUser == null) return;
-
-  // Update user with new profile photo
-  await IsarDatabase.isar.writeTxn(() async {
-    managedUser.profilePhotoPath = mediaToUse.path;
-    await IsarDatabase.isar.users.put(managedUser);
-  });
-
-  // Update state in provider
-  await ref.read(userController.notifier).updateUser(managedUser);
-
-  // Precache image
-  _precacheProfileImage(mediaToUse.path);
-
-  // Close the sheet/dialog
-  if (context.mounted) {
-    Navigator.pop(context);
-  } else {
-    final navCtx = navigatorKey.currentContext;
-    if (navCtx != null) Navigator.pop(navCtx);
-  }
-}
 
 
   void _precacheProfileImage(String? path) {
@@ -303,3 +304,50 @@ Widget nameBuilderBordered(){
   );
 }
 }
+
+
+
+Future<void> saveNewProfilePhoto(WidgetRef ref, Media media) async {
+    final pickedMedia = media;
+    if (pickedMedia == null) {
+      print("❌ No media selected");
+      return;
+    }
+
+    print("📷 Picked media: ${pickedMedia.path}");
+
+    final currentUser = ref.read(userController);
+    print("💳 Current User: ${currentUser.toString()}");
+    if (currentUser == null) return;
+
+    // Check if this media already exists in DB by path
+    final existingMedia =
+        await IsarDatabase.isar.medias
+            .filter()
+            .pathEqualTo(pickedMedia.path)
+            .findFirst();
+    final mediaToUse = existingMedia ?? pickedMedia;
+
+    // Persist only if it's new
+    if (existingMedia == null) {
+      await IsarDatabase.isar.writeTxn(() async {
+        await IsarDatabase.isar.medias.put(mediaToUse);
+      });
+    }
+
+    // Always re-fetch the managed User from Isar
+    final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
+    print("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
+
+    if (managedUser == null) return;
+
+    // Update user with new profile photo
+    await IsarDatabase.isar.writeTxn(() async {
+      managedUser.profilePhotoPath = mediaToUse.path;
+      await IsarDatabase.isar.users.put(managedUser);
+    });
+
+    // Update state in provider
+    await ref.read(userController.notifier).updateUser(managedUser);
+  }
+
