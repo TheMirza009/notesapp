@@ -47,8 +47,12 @@ class ShareIntentHandler {
 
     // Handle share when app is launched
     intent.getInitialMedia().then((files) {
-      debugPrint("➡️✅ Recieved file: ${files[0].path}");
-      if (files.isNotEmpty) _handleIncomingFilesSafely(files);
+      if (files.isNotEmpty) {
+        debugPrint("➡️✅ Received file: ${files.first.path}");
+        _handleIncomingFilesSafely(files);
+      } else {
+        debugPrint("ℹ️ No shared files on startup");
+      }
       intent.reset();
     });
   }

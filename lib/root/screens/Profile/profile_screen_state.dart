@@ -164,27 +164,59 @@ Future<void> pickNewProfilePhoto() async {
   }
 
   Future<void> contactUs() async {
-  final Uri emailUri = Uri(
-    scheme: 'mailto',
-    path: 'themirza009@outlook.com',
-    query: Uri.encodeFull('subject=Greetings&body=Good Day, Mirza AbdulMoeed'),
-  );
+    final String subject = Uri.encodeComponent('Greetings');
+    final String body = Uri.encodeComponent('Good Day, Mirza AbdulMoeed');
+    final Uri emailUri = Uri.parse(
+      'mailto:themirza009@outlook.com?subject=$subject&body=$body',
+    );
 
-  if (await canLaunchUrl(emailUri)) {
-    await launchUrl(emailUri);
-  } else {
+
+    try {
+      // Try default mail app
+      if (await canLaunchUrl(emailUri)) {
+        final launched = await launchUrl(
+          emailUri,
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (launched) return; // ✅ success, stop here
+      }
+
+      // Fallback to Outlook Web compose
+      final fallback = Uri.parse(
+        'https://outlook.live.com/mail/0/deeplink/compose'
+        '?to=themirza009@outlook.com'
+        '&subject=Greetings'
+        '&body=Good%20Day%2C%20Mirza%20AbdulMoeed',
+      );
+
+      if (await canLaunchUrl(fallback)) {
+        await launchUrl(fallback, mode: LaunchMode.externalApplication);
+        return;
+      }
+
+      // ❌ If neither method works, show dialog
+      _showMailErrorDialog();
+    } catch (e) {
+      debugPrint('❌ contactUs error: $e');
+      _showMailErrorDialog();
+    }
+  }
+
+  void _showMailErrorDialog() {
     showCupertinoDialog(
       context: navigatorKey.currentContext!,
-      builder: (_) => CustomAlertDialog(
-        title: "Error",
-        content: "Failed to open email app.",
-        iconColor: Colors.redAccent,
-        iconData: Mdi.error,
-        iconSize: 25,
-      ),
+      builder:
+          (_) => CustomAlertDialog(
+            title: "Error",
+            content: "Failed to open email app.",
+            iconColor: Colors.redAccent,
+            iconData: Mdi.error,
+            iconSize: 25,
+          ),
     );
   }
-  }
+
 
   
 Widget nameBuilderSimple() {
