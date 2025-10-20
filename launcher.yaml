@@ -22,7 +22,7 @@ flutter_launcher_icons:
   # =====================================================
   windows:
     generate: true
-    image_path: "assets/launcher/app_logo.png"
+    image_path: "assets/launcher/windows_logo_04.png"
     icon_size: 48 # min:48, max:256, default: 48
 
   # =====================================================
