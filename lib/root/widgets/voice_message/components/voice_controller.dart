@@ -16,16 +16,21 @@ import 'package:notesapp/root/widgets/voice_message/components/helpers/utils.dar
 /// It uses the [just_audio](https://pub.dev/packages/just_audio) package for audio playback.
 /// The controller also supports changing the playback speed and provides UI updates through a [ValueNotifier].
 class VoiceController extends MyTicker {
+
+  /// ========================================================== //
+  /// Memoization Section                                        //
+  /// ========================================================== //
+
   // 🧠 keep waveform memory cache (shared across instances)
   static final Map<String, List<double>> _waveformCache = {};
 
   // 🧠 keep remaining time cache so new controllers can show it immediately
   static final Map<String, String> _remainingTimeCache = {};
 
-  // Registry of active controllers (useful for global stopAll etc.)
+  // 🧠 Registry of active controllers (useful for global stopAll etc.)
   static final Set<VoiceController> _activeControllers = <VoiceController>{};
 
-  // Max Duration of an audio note cache
+  // 🧠 Max Duration of an audio note cache
   static final Map<String, Duration> _durationCache = {}; 
 
   final String audioSrc;
