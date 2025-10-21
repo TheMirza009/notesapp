@@ -12,7 +12,7 @@ class ChatAppBarWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print("🔃 Chat App Bar rebuilt");
+    debugPrint("🔃 Chat App Bar rebuilt");
 
     final chatController = ref.watch(chatStateController.notifier);
 

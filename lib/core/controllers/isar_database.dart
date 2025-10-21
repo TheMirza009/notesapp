@@ -64,32 +64,27 @@ static Future<Chat> addNewChat() async {
   late Chat savedChat;
 
   await isar.writeTxn(() async {
+    // 1️⃣ Create chat
     final newChat = Chat()
       ..title = "New Note"
       ..date = DateTime.now()
       ..messages = IsarLinks<Message>();
 
+    // 2️⃣ Create and persist init message (so it gets a real Isar ID)
     final newMessage = Message()
       ..id = "0000"
       ..text = "This is a new chat. Start typing to create your first note."
       ..isSender = false
       ..time = DateTime.now();
 
-    // Save both
-    await isar.chats.put(newChat);
-    await isar.messages.put(newMessage);
-
-    // Link message
-    newChat.messages.add(newMessage);
-    await newChat.messages.save();
-
-    // Update preview & date
-    newChat.preview = newMessage.text;
+    await isar.messages.put(newMessage);      // assign isarId
+    await isar.chats.put(newChat);            // 3️⃣ Persist chat
+    newChat.messages.add(newMessage);         // 4️⃣ Link init message safely
+    await newChat.messages.save();            // Save the linked message to chat
+    newChat.preview = newMessage.text;        // 5️⃣ Update preview and date
     newChat.date = newMessage.time;
     await isar.chats.put(newChat);
-
-    // ✅ Re-fetch fully managed chat
-    savedChat = (await isar.chats.get(newChat.isarID))!;
+    savedChat = (await isar.chats.get(newChat.isarID))!; // 6️⃣ Re-fetch the fully managed chat and preload links
     await savedChat.messages.load();
   });
 

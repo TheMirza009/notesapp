@@ -82,7 +82,7 @@ class MessageBubble extends StatefulWidget {
 
 class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => (widget.message.media?.value?.type != Mediatype.audio) ?? true;
+  bool get wantKeepAlive => (widget.message.media?.value?.type == Mediatype.image) ?? true;
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -132,10 +132,10 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
                       backgroundColor: Colors.blueGrey.withOpacity(context.isLight ? 0.1 : 0.07),
                       iconColor: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark,
                       onTap: widget.onReplyTap ?? () {
-                        print("Reply tapped");
+                        debugPrint("Reply tapped");
                         final media = widget.message.replyingTo.value!.media.value;
                         if (media != null) {
-                          print("Media path: ${media.path}");
+                          debugPrint("Media path: ${media.path}");
                         }
                       },
                     ),

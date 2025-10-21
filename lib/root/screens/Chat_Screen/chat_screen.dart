@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/auto_hide_scroll_to_bottom.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/bottom_message_bar_wrapper.dart';
@@ -11,7 +12,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_appbar_w
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_searchbar.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 
 //TODO: 2. Notifier needs robustness and double checks
@@ -37,8 +38,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/over
 final StateProvider<bool> isNewChat = StateProvider((_) => false);
 
 class ChatScreen extends ConsumerWidget {
-  final Chat chat;
-  const ChatScreen({super.key, required this.chat});
+  const ChatScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,6 +71,7 @@ class ChatScreen extends ConsumerWidget {
 
         if (state.isSearching) {
           notifier.stopSearching();
+          notifier.closeSearchAndKeyboard();
           return; // prevent popping
         }
 
@@ -101,8 +102,6 @@ class ChatScreen extends ConsumerWidget {
                 const ChatAppBarWrapper(),
                 const ChatSearchBar(),
                 const MessageListWrapper(),
-                // const AnchorWrapper(),
-                // const RecordBar(),
                 const BottomMessageBarWrapper(),
                 const EmojiBoardWrapper(),
               ],

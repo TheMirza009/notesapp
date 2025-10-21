@@ -83,14 +83,14 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
 Future<void> pickNewProfilePhoto() async {
     final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
     if (pickedMedia == null) {
-      print("❌ No media selected");
+      debugPrint("❌ No media selected");
       return;
     }
 
-    print("📷 Picked media: ${pickedMedia.path}");
+    debugPrint("📷 Picked media: ${pickedMedia.path}");
 
     final currentUser = ref.read(userController);
-    print("💳 Current User: ${currentUser.toString()}");
+    debugPrint("💳 Current User: ${currentUser.toString()}");
     if (currentUser == null) return;
 
     // Check if this media already exists in DB by path
@@ -110,7 +110,7 @@ Future<void> pickNewProfilePhoto() async {
 
     // Always re-fetch the managed User from Isar
     final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
-    print("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
+    debugPrint("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
 
     if (managedUser == null) return;
 
@@ -342,14 +342,14 @@ Widget nameBuilderBordered(){
 Future<void> saveNewProfilePhoto(WidgetRef ref, Media media) async {
     final pickedMedia = media;
     if (pickedMedia == null) {
-      print("❌ No media selected");
+      debugPrint("❌ No media selected");
       return;
     }
 
-    print("📷 Picked media: ${pickedMedia.path}");
+    debugPrint("📷 Picked media: ${pickedMedia.path}");
 
     final currentUser = ref.read(userController);
-    print("💳 Current User: ${currentUser.toString()}");
+    debugPrint("💳 Current User: ${currentUser.toString()}");
     if (currentUser == null) return;
 
     // Check if this media already exists in DB by path
@@ -369,7 +369,7 @@ Future<void> saveNewProfilePhoto(WidgetRef ref, Media media) async {
 
     // Always re-fetch the managed User from Isar
     final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
-    print("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
+    debugPrint("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
 
     if (managedUser == null) return;
 

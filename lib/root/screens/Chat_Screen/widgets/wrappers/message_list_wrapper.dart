@@ -13,9 +13,10 @@ import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/date_chip.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
@@ -96,7 +97,7 @@ class _MessageItemBuilder extends ConsumerWidget {
     final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == message.isarId)), );
     final isSelecting = ref.watch( chatStateController.select((s) => s.isSelecting), );
 
-    print("🔃 Built message: ${message.text}");
+    debugPrint("🔃 Built message: ${message.text}");
 
     return Column(
       children: [

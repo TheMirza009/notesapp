@@ -9,7 +9,7 @@ class EmojiBoardWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print("🔄 Emoji board rebuilt");
+    debugPrint("🔄 Emoji board rebuilt");
 
     final notifier = ref.read(chatStateController.notifier);
     final showEmojis = ref.watch(chatStateController.select((s) => s.showEmojis));

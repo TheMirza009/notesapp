@@ -240,7 +240,7 @@ Future<String> getAudioDuration(String filePath) async {
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     return "$minutes:$seconds";
   } catch (e) {
-    print("Error getting duration: $e");
+    debugPrint("Error getting duration: $e");
     return "00:00";
   } finally {
     await player.dispose(); // always dispose to avoid phantom AudioTracks

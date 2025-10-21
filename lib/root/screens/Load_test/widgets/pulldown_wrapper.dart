@@ -79,7 +79,7 @@ class _PullDownWrapperState extends State<PullDownWrapper> with SingleTickerProv
         // Foreground child
         GestureDetector(
           onVerticalDragUpdate: (details) {
-            print(_dragOffset);
+            debugPrint(_dragOffset.toString());
             setState(() {
               // Apply drag factor: resistance increases with dragOffset
               double dragFactor = 1.0 - (_dragOffset / widget.maxRevealHeight) * 0.9;

@@ -111,53 +111,55 @@ class MessageContentBuilder extends StatelessWidget {
     // Use stored aspect ratio, fallback to 1 if null
     final aspectRatio = media.aspectRatio ?? 1.0;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-          maxWidth: maxWidth,
-          ),
-        child: AspectRatio(
-          aspectRatio: aspectRatio,
-          child: Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              // Image.file(file, fit: BoxFit.cover),
-              ExtendedImage.file(
-                file,
-                fit: BoxFit.cover,
-                cacheHeight: maxHeight.toInt(), // 🔑 downsample at decode
-                cacheWidth: maxWidth.toInt(), // 🔑 downsample at decode
-                clearMemoryCacheIfFailed: true,
-                gaplessPlayback: true,
-                cacheRawData: true, // 🔥 memory + disk caching
-                clearMemoryCacheWhenDispose: false,
-                compressionRatio: 0.5,
-              ),
-              Container(
-                height: 50,
-                alignment: Alignment.bottomRight,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withAlpha(0),
-                      Colors.black.withAlpha(255),
-                    ],
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+            maxWidth: maxWidth,
+            ),
+          child: AspectRatio(
+            aspectRatio: aspectRatio,
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                // Image.file(file, fit: BoxFit.cover),
+                ExtendedImage.file(
+                  file,
+                  fit: BoxFit.cover,
+                  cacheHeight: maxHeight.toInt(), // 🔑 downsample at decode
+                  cacheWidth: maxWidth.toInt(), // 🔑 downsample at decode
+                  clearMemoryCacheIfFailed: true,
+                  gaplessPlayback: true,
+                  cacheRawData: true, // 🔥 memory + disk caching
+                  clearMemoryCacheWhenDispose: false,
+                  compressionRatio: 0.5,
+                ),
+                Container(
+                  height: 50,
+                  alignment: Alignment.bottomRight,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withAlpha(0),
+                        Colors.black.withAlpha(255),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    DateFormat.jm().format(message.time),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ThemeConstants.subtitleLight,
+                    ),
                   ),
                 ),
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  DateFormat.jm().format(message.time),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: ThemeConstants.subtitleLight,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -208,7 +210,7 @@ class MessageContentBuilder extends StatelessWidget {
   }
 
   Widget _buildAudioMessage() {
-    print("Voice message built");
+    debugPrint("Voice message built");
     final bool isLight = navigatorKey.currentContext!.isLight;
     final bool isSender = message.isSender;
     final Color bgColor =
@@ -233,18 +235,20 @@ class MessageContentBuilder extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        VoiceMessageView(
-          // controller: controller,
-          audioSrc: message.media.value!.path!,
-          isFile: true,
-          innerPadding: 0,
-          backgroundColor: Colors.transparent, // bgColor,
-          circlesColor: ThemeConstants.sinisterSeed,
-          activeWaveColor: ThemeConstants.sinisterSeed,
-          inactiveWaveColor: ThemeConstants.iconColorNeutral,
-          showDuration: true,
-          showSentTime: true,
-          sentTime: message.time,
+        RepaintBoundary(
+          child: VoiceMessageView(
+            // controller: controller,
+            audioSrc: message.media.value!.path!,
+            isFile: true,
+            innerPadding: 0,
+            backgroundColor: Colors.transparent, // bgColor,
+            circlesColor: ThemeConstants.sinisterSeed,
+            activeWaveColor: ThemeConstants.sinisterSeed,
+            inactiveWaveColor: ThemeConstants.iconColorNeutral,
+            showDuration: true,
+            showSentTime: true,
+            sentTime: message.time,
+          ),
         ),
         
       ],

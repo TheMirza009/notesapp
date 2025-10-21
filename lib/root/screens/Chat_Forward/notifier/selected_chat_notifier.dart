@@ -6,6 +6,7 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 
 final forwardingController =
     NotifierProvider<ForwardNotifier, Set<String>>(() {

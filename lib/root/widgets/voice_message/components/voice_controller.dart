@@ -25,6 +25,9 @@ class VoiceController extends MyTicker {
   // Registry of active controllers (useful for global stopAll etc.)
   static final Set<VoiceController> _activeControllers = <VoiceController>{};
 
+  // Max Duration of an audio note cache
+  static final Map<String, Duration> _durationCache = {}; 
+
   final String audioSrc;
   late Duration maxDuration;
   Duration currentDuration = Duration.zero;
@@ -126,6 +129,8 @@ class VoiceController extends MyTicker {
       duration: maxDuration,
     );
 
+    _initDuration(); // Get initial / max duration right away
+
     // IMPORTANT: do NOT call init() here. Preparation of the AudioPlayer is deferred
     // until the user actually plays to avoid allocating AudioTrack resources prematurely.
     // init();
@@ -138,6 +143,26 @@ class VoiceController extends MyTicker {
     await setMaxDuration(audioSrc);
     _updateUi();
   }
+
+
+  Future<void> _initDuration() async {
+  // Skip if already cached
+  if (_durationCache.containsKey(audioSrc)) {
+    maxDuration = _durationCache[audioSrc]!;
+    animController.duration = maxDuration;
+    _updateUi();
+    return;
+  }
+
+  // Otherwise, get and cache it
+  final duration = await _getAudioDuration(audioSrc);
+  if (duration != null) {
+    maxDuration = duration;
+    _durationCache[audioSrc] = duration;
+    animController.duration = duration;
+    _updateUi();
+  }
+}
 
   /// Play the audio.
   ///
@@ -439,6 +464,13 @@ class VoiceController extends MyTicker {
 
     if (waveform == null) return [];
 
+    // 💡 Try to get the actual duration without interfering with the main player
+final duration = await _getAudioDuration(audioSrc);
+if (duration != null) {
+  maxDuration = duration;
+  animController.duration = duration;
+  _updateUi(); // ✅ force UI update
+}
     return _convertWaveformToBars(waveform, maxHeight ?? 40);
   }
 
@@ -463,6 +495,23 @@ class VoiceController extends MyTicker {
 
     return scaled;
   }
+
+  Future<Duration?> _getAudioDuration(String path) async {
+  try {
+    final tmpPlayer = AudioPlayer();
+    Duration? duration;
+    if (isFile) {
+      duration = await tmpPlayer.setFilePath(path);
+    } else {
+      duration = await tmpPlayer.setUrl(path);
+    }
+    await tmpPlayer.dispose();
+    return duration;
+  } catch (e) {
+    debugPrint('VoiceController: failed to get audio duration: $e');
+    return null;
+  }
+}
 
   /// Called when user moves the slider (updates UI but does not seek immediately).
   void onChanging(double d) {
@@ -491,22 +540,26 @@ class VoiceController extends MyTicker {
   /// Sets the maximum duration of the voice (prepares the player by setting the source).
   Future setMaxDuration(String path) async {
     try {
-      // get the max duration from the path or cloud
-      final maxDuration =
-          isFile ? await _player.setFilePath(path) : await _player.setUrl(path);
-      if (maxDuration != null) {
-        this.maxDuration = maxDuration;
+      if (_durationCache.containsKey(audioSrc)) {
+        maxDuration = _durationCache[audioSrc]!;
         animController.duration = maxDuration;
+        return;
+      }
+
+      final duration =
+          isFile ? await _player.setFilePath(path) : await _player.setUrl(path);
+
+      if (duration != null) {
+        maxDuration = duration;
+        _durationCache[audioSrc] = duration;
+        animController.duration = duration;
       }
     } catch (err) {
-      if (kDebugMode) {
-        debugPrint("VoiceController: can't get the max duration from the path $path - $err");
-      }
-      if (onError != null) {
-        onError!(err);
-      }
+      debugPrint("VoiceController: can't get duration from $path - $err");
+      if (onError != null) onError!(err);
     }
   }
+
 
   /// Global helper to stop and dispose any active controllers (useful for emergency cleanup).
   static Future<void> stopAll() async {

@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen_state.dart';
 import 'package:photo_view/photo_view.dart';

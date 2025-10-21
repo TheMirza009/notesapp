@@ -49,7 +49,7 @@
 //       await Future.wait(freshChat.messages.map((m) => m.media.load()));
 
 //       state = freshChat; // notify listeners with hydrated version
-//       print("Loaded from Isar: $freshChat");
+//       debugPrint("Loaded from Isar: $freshChat");
 //     }
 
 //     isLoading = false;
@@ -71,7 +71,7 @@
 
 //       _chat = freshChat; // keep in-memory version updated
 //       state = freshChat; // notify listeners immediately
-//       print("Hydrated (sync) from Isar: ${freshChat.title}");
+//       debugPrint("Hydrated (sync) from Isar: ${freshChat.title}");
 //     }
 
 //     isLoading = false;
@@ -178,7 +178,7 @@
 //   /// Delete Message
 //   Future<void> deleteMessage(Message message) async {
 //     await _isar.writeTxn(() async {
-//       print("Deleting: ${message.text}");
+//       debugPrint("Deleting: ${message.text}");
 //       await _isar.messages.delete(message.isarId);
 
 //       _chat!.messages.remove(message);
@@ -214,7 +214,7 @@
 //         isSelecting = false;
 //         break;
 //       case 'reply':
-//         print("Reply to `${message.text}`");
+//         debugPrint("Reply to `${message.text}`");
 //         break;
 //       case 'copy':
 //         Utils.copyToClipboard(message.text);
@@ -231,7 +231,7 @@
 //     isSelecting = true;
 //     message.isSelected = true;
 //     await updateMessage(message);
-//     print("Selected: ${message.text}");
+//     debugPrint("Selected: ${message.text}");
 //   }
 
 //   void unselectMessage(Message message) async {
@@ -270,19 +270,19 @@
 
 //   Future<void> deleteSelected() async {
 //     if (_chat == null) {
-//       print("No chat loaded");
+//       debugPrint("No chat loaded");
 //       return;
 //     }
 
 //     for (final m in _chat!.messages) {
-//       print("Message ${m.text} selected? ${m.isSelected}");
+//       debugPrint("Message ${m.text} selected? ${m.isSelected}");
 //     }
 
 //     final selected = _chat!.messages.where((m) => m.isSelected).toList();
-//     print("Total selected: ${selected.length}");
+//     debugPrint("Total selected: ${selected.length}");
 
 //     if (selected.isEmpty) {
-//       print("Early returned");
+//       debugPrint("Early returned");
 //       return;
 //     }
 

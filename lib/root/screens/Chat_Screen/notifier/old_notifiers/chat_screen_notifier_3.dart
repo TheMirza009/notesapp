@@ -222,7 +222,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
         message.media.value != null &&
         message.media.value!.type != Mediatype.text;
     bool isUsedByMultiple = allMessages.hasDuplicateMediaPath(message);
-    print(
+    debugPrint(
       "Deleting media? ${message.media.value?.path} → used by multiple: $isUsedByMultiple",
     );
     if (isMedia == true && isUsedByMultiple == false) {
@@ -287,7 +287,7 @@ class ChatMessagesNotifier extends Notifier<List<Message>> {
 
   void setAnchorMessage(Message message) {
     anchorMessage = message;
-    print(anchorMessage!.text);
+    debugPrint(anchorMessage!.text);
     if (!keyboardFocusNode.hasFocus) {keyboardFocusNode.requestFocus();}
     showEmojis = false;
     state = [...state];

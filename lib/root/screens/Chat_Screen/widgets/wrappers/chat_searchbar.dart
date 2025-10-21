@@ -9,7 +9,7 @@ class ChatSearchBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print("🔄 Searchbar rebuilt");
+    debugPrint("🔄 Searchbar rebuilt");
     final notifier = ref.read(chatStateController.notifier);
     final isSearching = ref.watch(chatStateController.select((s) => s.isSearching));
     final headerColor = context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;

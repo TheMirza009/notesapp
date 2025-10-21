@@ -44,7 +44,7 @@
 //       await freshChat.messages.load();
 //       await Future.wait(freshChat.messages.map((m) => m.media.load()));
 //       state = freshChat; // new instance from Isar → Riverpod sees update
-//       print("Loaded : $freshChat");
+//       debugPrint("Loaded : $freshChat");
 //     }
 //   }
 
@@ -208,7 +208,7 @@
 //         deleteMessage(message);
 //         break;
 //       case 'reply':
-//         print("Reply to `${message.text}`");
+//         debugPrint("Reply to `${message.text}`");
 //         break;
 //       case 'copy':
 //         Utils.copyToClipboard(message.text);
@@ -229,8 +229,8 @@
 //     ref.read(chatListProvider.notifier).updateChat(updated);
 //     // initialChat = updated;
 //     state = updated;
-//     print("Init title: ${initialChat.title}");
-//     print("State title: ${state.title}");
+//     debugPrint("Init title: ${initialChat.title}");
+//     debugPrint("State title: ${state.title}");
 //   }
 
 

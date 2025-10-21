@@ -43,22 +43,27 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
     ref.read(chatListProvider.notifier).clearSearch();
   }
 
-  void navigateToChatScreen(Chat chat) {
+  Future<void> navigateToChatScreen(Chat chat) async {
     ref.read(chatListProvider.notifier).selectChat(chat);
+    await chat.messages.load(); // preload before push
+    await Future.wait(chat.messages.map((m) => m.media.load()));
+    if (mounted) {
     Navigator.push(
       context,
-      CupertinoPageRoute(builder: (_) => ChatScreen(chat: chat)),
+      CupertinoPageRoute(builder: (_) => const ChatScreen()),
     );
+  }
   }
 
   Future<void> createNewChat() async {
     final newChat = await ref.read(chatListProvider.notifier).addChat();
     await newChat.messages.load();
     ref.read(chatListProvider.notifier).selectChat(newChat);
+    await newChat.messages.load();
     ref.read(isNewChat.notifier).state = true;
     Navigator.push(
       context,
-      CupertinoPageRoute(builder: (_) => ChatScreen(chat: newChat)),
+      CupertinoPageRoute(builder: (_) => const ChatScreen()),
     );
   }
 

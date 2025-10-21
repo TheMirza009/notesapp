@@ -9,7 +9,7 @@ class AnchorWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print("🔄 Anchor Wrapper rebuilt");
+    debugPrint("🔄 Anchor Wrapper rebuilt");
 
     final notifier = ref.read(chatStateController.notifier);
     final anchorMessage = ref.watch(chatStateController.select((s) => s.anchorMessage));

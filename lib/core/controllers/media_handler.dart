@@ -26,20 +26,21 @@ class MediaHandler {
       source: source ?? ImageSource.gallery,
     );
     if (pickedFile == null) {
-      print("⚠️ No image picked");
+      debugPrint("⚠️ No image picked");
       return null;
     }
 
     File file = File(pickedFile.path);
-    print("✅ Picked file: ${file.path}");
+    debugPrint("✅ Picked file: ${file.path}");
 
     if (isProfilePicture && !kisWindows) {
       final croppedFile = await _cropImage(file);
       if (croppedFile != null) {
-        print("✂️ Cropped file: ${croppedFile.path}");
+        debugPrint("✂️ Cropped file: ${croppedFile.path}");
         file = croppedFile;
       } else {
-        print("❌ Cropper returned null");
+        debugPrint("❌ Cropper returned null");
+        return null;
       }
     }
 
@@ -47,7 +48,7 @@ class MediaHandler {
       file,
       isProfilePicture ? 'Profile Pictures' : 'Photos',
     );
-    print("💾 Saved file: ${savedFile.path}");
+    debugPrint("💾 Saved file: ${savedFile.path}");
 
     final bytes = await savedFile.readAsBytes();
     final decodedImage = await decodeImageFromList(bytes);
@@ -56,7 +57,7 @@ class MediaHandler {
     final media = Media.fromFilePath(savedFile.path);
     media.aspectRatio = aspectRatio;
 
-    print("🎉 Returning media with path: ${media.path}");
+    debugPrint("🎉 Returning media with path: ${media.path}");
     return media;
   }
 
@@ -176,7 +177,7 @@ class MediaHandler {
     if (await file.exists()) {
       try {
         await file.delete();
-        print("Deleted file: ${media.name}");
+        debugPrint("Deleted file: ${media.name}");
       } catch (e) {
         debugPrint("Failed to delete media file at $filePath: $e");
       }
@@ -254,24 +255,24 @@ class MediaHandler {
     try {
       final File file = File(filePath);
       if (!await file.exists()) {
-        print("❌ cropAndSavePhoto: File not found at $filePath");
+        debugPrint("❌ cropAndSavePhoto: File not found at $filePath");
         return null;
       }
 
-      print("✂️ Starting crop for: $filePath");
+      debugPrint("✂️ Starting crop for: $filePath");
       final croppedFile = await _cropImage(file);
       if (croppedFile == null) {
-        print("⚠️ cropAndSavePhoto: Cropper returned null");
+        debugPrint("⚠️ cropAndSavePhoto: Cropper returned null");
         return null;
       }
 
-      print("✅ Cropped file: ${croppedFile.path}");
+      debugPrint("✅ Cropped file: ${croppedFile.path}");
       final savedFile = await saveToStorage(
         croppedFile,
         isProfilePicture ? 'Profile Pictures' : 'Photos',
       );
 
-      print("💾 Saved cropped file: ${savedFile.path}");
+      debugPrint("💾 Saved cropped file: ${savedFile.path}");
       final bytes = await savedFile.readAsBytes();
       final decodedImage = await decodeImageFromList(bytes);
       final aspectRatio = decodedImage.width / decodedImage.height;
@@ -279,10 +280,10 @@ class MediaHandler {
       final media = Media.fromFilePath(savedFile.path);
       media.aspectRatio = aspectRatio;
 
-      print("🎉 Returning cropped media with path: ${media.path}");
+      debugPrint("🎉 Returning cropped media with path: ${media.path}");
       return media;
     } catch (e, st) {
-      print("🔥 cropAndSavePhoto error: $e\n$st");
+      debugPrint("🔥 cropAndSavePhoto error: $e\n$st");
       return null;
     }
   }

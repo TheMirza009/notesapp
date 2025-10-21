@@ -12,7 +12,7 @@ class RebuildCounter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("🔄 $name rebuilt");
+    debugPrint("🔄 $name rebuilt");
     return child;
   }
 }

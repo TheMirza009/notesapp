@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
@@ -62,7 +63,7 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
 
   Future<void> saveAndUpdateChatPhoto(Media media) async {
     if (state.chat == null) {
-      print("⚠️ saveAndUpdateChatPhoto: No chat in state");
+      debugPrint("⚠️ saveAndUpdateChatPhoto: No chat in state");
       return;
     }
 
@@ -76,15 +77,15 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
       await isar.writeTxn(() async {
         await isar.medias.put(mediaToUse);
       });
-      print("💾 Media saved to Isar: ${mediaToUse.path}");
+      debugPrint("💾 Media saved to Isar: ${mediaToUse.path}");
     } else {
-      print("📂 Media already exists in Isar: ${mediaToUse.path}");
+      debugPrint("📂 Media already exists in Isar: ${mediaToUse.path}");
     }
 
     // Fetch managed chat from Isar
     final managedChat = await isar.chats.get(state.chat!.isarID);
     if (managedChat == null) {
-      print("❌ saveAndUpdateChatPhoto: Chat not found in Isar");
+      debugPrint("❌ saveAndUpdateChatPhoto: Chat not found in Isar");
       return;
     }
 
@@ -98,7 +99,7 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
     ref.read(chatListProvider.notifier).refreshChat(managedChat.isarID);
     state = state.copyWith(chat: managedChat);
 
-    print("🎉 Chat photo updated for ${managedChat.title}");
+    debugPrint("🎉 Chat photo updated for ${managedChat.title}");
   }
 
   Future<void> updateChatPhoto() async {

@@ -58,17 +58,17 @@ class BottomMessageBarWrapper extends ConsumerWidget {
           if (isRecording) {
             notifier.stopAudioRecording();
             await overlayHandler.hideRecordBar();
-            print("🎙️Recording stopped");
+            debugPrint("🎙️Recording stopped");
           } else {
             await overlayHandler.closeAttachmentBoard();
       
             if (notifier.isReplying == true) {
-              print("⬅️ isReplying: $isRecording");
+              debugPrint("⬅️ isReplying: $isRecording");
             }
             notifier.closeSearchAndKeyboard();
             notifier.startAudioRecording();
             overlayHandler.showRecordBar(context, ref);
-            print("🎙️Recording started");
+            debugPrint("🎙️Recording started");
           }
         },
         onSend: notifier.sendMessage,

@@ -104,19 +104,51 @@ extension MessageListLayout on List<Message> {
   }
 }
 
-
-extension BoolChecks on List<Message> {
+extension MediaChecks on List<Message> {
   bool hasDuplicateMediaPath(Message target) {
     final targetPath = target.media.value?.path;
-    if (targetPath == null) return false;
+    if (targetPath == null || targetPath.isEmpty) return false;
 
-    // Collect all messages with the same path
-    final matches = where((m) => m.media.value?.path == targetPath).toList();
+    int count = 0;
 
-    // true if more than 1 message shares this path
-    return matches.length > 1;
+    for (final msg in this) {
+      final path = msg.media.value?.path;
+      if (path == null || path.isEmpty) continue;
+
+      if (path == targetPath) {
+        count++;
+        if (count > 1) return true; // early exit for performance
+      }
+    }
+
+    return false;
+  }
+
+  bool hasDuplicateMediaPathByPath(
+    String? targetPath, {
+    int? excludingIsarId,
+  }) {
+    if (targetPath == null || targetPath.isEmpty) return false;
+
+    int count = 0;
+
+    for (final msg in this) {
+      // Skip excluded message (to avoid counting the same message twice)
+      if (excludingIsarId != null && msg.isarId == excludingIsarId) continue;
+
+      final path = msg.media.value?.path;
+      if (path == null || path.isEmpty) continue;
+
+      if (path == targetPath) {
+        count++;
+        if (count > 0) return true; // ✅ only need to find 1 other match
+      }
+    }
+
+    return false;
   }
 }
+
 
 extension MessageGalleryExtensions on List<Message> {
   List<String> imagePaths() {

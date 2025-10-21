@@ -190,7 +190,7 @@ class HomescreenState extends HomeScreenBaseState {
                                 chatPhotoPath: chat.chatPhotoPath,
                                 time: TimeFormat.formatChatTime(chat.date),
                                 onDismissed: (_) => chatNotifier.removeChat(chat),
-                                onTap: () => navigateToChatScreen(chat),
+                                onTap: () async => await navigateToChatScreen(chat),
                               ),
                             );
                           },

@@ -42,7 +42,7 @@ class ProfileScreenState extends ProfileScreenBaseState {
     final Color shareColor = user?.profilePhotoPath == null ? ThemeConstants.iconColorNeutral : darkPrimary;
 
     titleController.text = ref.watch(userController)?.name ?? "Name"; 
-    print("Profile Screen built");
+    debugPrint("Profile Screen built");
     return PullDownWrapper(
       child: Scaffold(
         extendBodyBehindAppBar: true,
@@ -225,7 +225,7 @@ Widget buildOptionsColumn() {
         _buildTile(
           title: "Settings",
           icon: Icons.settings,
-          onTap: () => print("Tapped Settings 1"),
+          onTap: () => debugPrint("Tapped Settings 1"),
         ),
         Divider(
           height: 1,
@@ -237,7 +237,7 @@ Widget buildOptionsColumn() {
         _buildTile(
           title: "Refer a friend",
           icon: Icons.tune_rounded,
-          onTap: () => print("Tapped Settings 2"),
+          onTap: () => debugPrint("Tapped Settings 2"),
         ),
         Divider(
           height: 1,
@@ -249,7 +249,7 @@ Widget buildOptionsColumn() {
         _buildTile(
           title: "Contact us",
           icon: Icons.mail_outline_outlined,
-          onTap: () => print("Tapped Settings 3"),
+          onTap: () => debugPrint("Tapped Settings 3"),
         ),
       ],
     ),
