@@ -13,6 +13,7 @@ class ChatAppBar extends StatelessWidget {
   final VoidCallback onTitleTap;
   final Widget? leading;
   final bool? isSelecting;
+  final bool? isEditing;
   final void Function(String value)? onOptionsPressed;
   final void Function()? onSearchTap;
   final List<Widget>? actions;
@@ -28,6 +29,7 @@ class ChatAppBar extends StatelessWidget {
     this.leading,
     this.onOptionsPressed, 
     this.isSelecting = false,
+    this.isEditing = false,
     this.actions,
     this.chatPhotoPath,
     this.showActionsIcon = true,

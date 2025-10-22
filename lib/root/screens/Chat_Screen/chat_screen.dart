@@ -82,6 +82,7 @@ class ChatScreen extends ConsumerWidget {
 
         // ✅ nothing to intercept → allow pop
         notifier.unSelectAllMessages();
+        notifier.cancelEditing();
         notifier.clearAnchorMessage();
         notifier.removeChatIfEmpty();
         overlayHandler.closeAttachmentBoard(instant: true);
@@ -102,13 +103,14 @@ class _ChatScreenBody extends ConsumerWidget {
     final notifier = ref.read(chatStateController.notifier);
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     final backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
+    final bool isEditing = ref.watch(chatStateController.select((s) => s.isEditing));
     return GestureDetector(
         onTap: () {
           notifier.stopSearching();
           notifier.searchFocusNode.unfocus();
           notifier.keyboardFocusNode.unfocus();
           notifier.hideEmojiPicker();
-          notifier.unSelectAllMessages();
+          if (!isEditing) {notifier.unSelectAllMessages();}
           ref.read(overlayHandlerProvider).closeAttachmentBoard();
         },
         child: Scaffold(

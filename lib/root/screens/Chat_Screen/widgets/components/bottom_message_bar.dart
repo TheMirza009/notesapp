@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:typeset/typeset.dart';
 
-class BottomMessageBar extends StatefulWidget {
+class BottomMessageBar extends ConsumerStatefulWidget {
   final VoidCallback onEmojiTap;
   final VoidCallback onAttachmentTap;
   final VoidCallback onMicTap;
@@ -35,10 +36,11 @@ class BottomMessageBar extends StatefulWidget {
   });
 
   @override
-  State<BottomMessageBar> createState() => _BottomMessageBarState();
+  ConsumerState<BottomMessageBar> createState() => _BottomMessageBarState();
 }
 
-class _BottomMessageBarState extends State<BottomMessageBar> {
+class _BottomMessageBarState extends ConsumerState<BottomMessageBar>
+    with SingleTickerProviderStateMixin {
   late final TypeSetEditingController _internalController;
   late final TypeSetEditingController messageController;
 
@@ -46,13 +48,11 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
   void initState() {
     super.initState();
     _internalController = TypeSetEditingController();
-    // If parent provided controller, use that; else use internal
     messageController = widget.keyboardController ?? _internalController;
   }
 
   @override
   void dispose() {
-    // Only dispose internal controller (don’t dispose external one passed in)
     if (widget.keyboardController == null) {
       _internalController.dispose();
     }
@@ -61,9 +61,14 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
 
   @override
   Widget build(BuildContext context) {
+    final notifier = ref.read(chatStateController.notifier);
+    final state = ref.watch(chatStateController);
+
+    final isEditing = state.isEditing;
+    final isRecording = state.isRecording;
+
     const iconLight = Color(0xFF54666F);
-    const iconPadding =
-        EdgeInsets.only(left: 5.0, right: 5.0, top: 0, bottom: 5);
+    const iconPadding = EdgeInsets.only(left: 5, right: 5, bottom: 5);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -82,13 +87,36 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          // === EMOJI / CLEAR ICON SWITCHER ===
           Padding(
             padding: iconPadding,
-            child: IconButton(
-              onPressed: widget.onEmojiTap,
-              icon: const Icon(Icons.emoji_emotions_outlined, color: iconLight),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: FadeTransition(opacity: anim, child: child),
+              ),
+              child: isEditing
+                  ? IconButton(
+                      key: const ValueKey("clearButton"),
+                      icon: Icon(CupertinoIcons.clear, color: context.isLight ? iconLight : ThemeConstants.textDark ),
+                      onPressed: () {
+                        notifier.cancelEditing();
+                        messageController.clear();
+                      },
+                    )
+                  : IconButton(
+                      key: const ValueKey("emojiButton"),
+                      icon: const Icon(Icons.emoji_emotions_outlined,
+                          color: iconLight),
+                      onPressed: widget.onEmojiTap,
+                    ),
             ),
           ),
+
+          // === MESSAGE INPUT FIELD ===
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 5),
@@ -108,14 +136,9 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                 onSubmitted: widget.onSubmitted,
                 contentInsertionConfiguration: ContentInsertionConfiguration(
                   onContentInserted: (KeyboardInsertedContent content) {
-                    debugPrint(
-                      "Keyboard inserted content: ${content.mimeType}",
-                    );
-
                     if (content.mimeType.startsWith('image/')) {
                       widget.onImagePasted?.call(content.data!);
                     } else if (content.mimeType == 'text/plain') {
-                      // Append pasted plain text
                       messageController.text +=
                           String.fromCharCodes(content.data!);
                     }
@@ -124,71 +147,83 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
               ),
             ),
           ),
+
+          // === ATTACHMENT ICON ===
           Padding(
             padding: iconPadding,
-            child: IconButton(
-              onPressed: widget.onAttachmentTap,
-              icon: const Icon(Icons.attach_file, color: iconLight),
+            child: AnimatedSlide(
+              duration: Duration(milliseconds: 200),
+              curve: Curves.easeIn,
+              offset: Offset(isEditing ? 0.5 : 0, 0),
+              child: AnimatedOpacity(
+                duration: Duration(milliseconds: 200),
+                opacity: isEditing ? 0 : 1,
+                child: IconButton(
+                  onPressed: widget.onAttachmentTap,
+                  icon: const Icon(Icons.attach_file, color: iconLight),
+                ),
+              ),
             ),
           ),
+
+          // === SEND / MIC ICON ===
           Padding(
             padding: iconPadding,
             child: ValueListenableBuilder<TextEditingValue>(
               valueListenable: messageController,
-              builder: (context, value, child) {
+              builder: (context, value, _) {
                 final text = value.text.trim();
                 if (text.isEmpty) {
-                  return Consumer(
-                    builder: (context, ref, child) {
-                      final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
-                      return AnimatedScale(
-                        duration: Duration(milliseconds: 250),
-                        curve: Curves.easeInOutQuint,
-                        scale: isRecording ? 1.5 : 1.0,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedContainer(
-                              height: isRecording ? 30 : 0,
-                              width: isRecording ? 30 : 0,
-                              duration: Duration(milliseconds: 250),
-                              curve: Curves.easeOut,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: (context.isLight ? ThemeConstants.sacredSeed : ThemeConstants.sinisterSeed).withValues(alpha: 0.5)
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: widget.onMicTap,
-                              icon: Icon(
-                                Icons.mic,
-                                color: isRecording
-                                        ? (context.isLight ? const Color(0xFF1784B6) : ThemeConstants.sinisterSeed)
-                                        : iconLight,
-                              ),
-                            ),
-                          ],
+                  // === MIC ICON ===
+                  return AnimatedScale(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOutQuint,
+                    scale: isRecording ? 1.5 : 1.0,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedContainer(
+                          height: isRecording ? 30 : 0,
+                          width: isRecording ? 30 : 0,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOut,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: (context.isLight
+                                    ? ThemeConstants.sacredSeed
+                                    : ThemeConstants.sinisterSeed)
+                                .withValues(alpha: 0.5),
+                          ),
                         ),
-                      );
-                    }
+                        IconButton(
+                          onPressed: widget.onMicTap,
+                          icon: Icon(
+                            Icons.mic,
+                            color: isRecording
+                                ? (context.isLight
+                                    ? const Color(0xFF1784B6)
+                                    : ThemeConstants.sinisterSeed)
+                                : iconLight,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 } else {
-                  return Consumer(
-                    builder: (context, ref, child) {
-                      final isEditing = ref.watch(chatStateController.select((s) => s.isEditing));
-                      return IconButton(
-                        onPressed: () {
-                          isEditing ? widget.onEdit(text) : widget.onSend(text);
-                          messageController.clear();
-                        },
-                        icon: Icon(
-                          isEditing ? CupertinoIcons.check_mark : Icons.send,
-                          color: context.isLight
-                              ? ThemeConstants.sinisterSeed
-                              : ThemeConstants.sinisterSeed,
-                        ),
-                      );
-                    }
+                  // === SEND / EDIT (CHECKMARK) ICON ===
+                  return IconButton(
+                    onPressed: () {
+                      isEditing
+                          ? widget.onEdit(text)
+                          : widget.onSend(text);
+                      messageController.clear();
+                    },
+                    icon: Icon(
+                      isEditing
+                          ? CupertinoIcons.check_mark
+                          : Icons.send_rounded,
+                      color: ThemeConstants.sinisterSeed,
+                    ),
                   );
                 }
               },

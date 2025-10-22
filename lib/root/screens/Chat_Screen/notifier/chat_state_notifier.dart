@@ -10,10 +10,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -305,9 +307,21 @@ class ChatStateNotifier extends Notifier<ChatState> {
   }
 
   void startEditingTextMessage(Message message) {
+    cancelAudioRecording();
+    ref.read(overlayHandlerProvider).closeAllOverlays();
     keyboardFocusNode.requestFocus();
     keyboardController.text = message.text;
     state = state.copyWith(highlightedMessage: message, isEditing: true);
+  }
+
+  void cancelEditing() {
+    keyboardFocusNode.requestFocus();
+    keyboardController.clear();
+    state = state.copyWith(
+      isEditing: false,
+      highlightedMessage: null,
+      selectedMessages: [],
+    );
   }
 
   Future<void> editTextMessage(Message message, String newText) async {
@@ -526,7 +540,9 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   /// Unselects all messages and exits selection mode
   void unSelectAllMessages() {
-    state = state.clearSelection();
+    if (state.isEditing == false) {
+      state = state.clearSelection();
+    }
   }
 
   /// Selects all messages while in selection mode
@@ -635,7 +651,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   }
 
   void stopSearching() {
-    state = state.copyWith(isSearching: false, anchorMessage: state.anchorMessage);
+    state = state.copyWith(isSearching: false, anchorMessage: state.anchorMessage, highlightedMessage: state.highlightedMessage);
   }
 
   // =====================================================
@@ -644,13 +660,13 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   Future<void> startAudioRecording() async {
     await recorder.startRecording();
-    state = state.copyWith(isRecording: true, anchorMessage: state.anchorMessage);
+    state = state.copyWith(isRecording: true, anchorMessage: state.anchorMessage, selectedMessages: []);
   }
 
   Future<void> cancelAudioRecording() async {
     ref.read(overlayHandlerProvider).hideRecordBar(instant: false);
     await recorder.cancelRecording();
-    state = state.copyWith(isRecording: false, anchorMessage: state.anchorMessage);
+    state = state.copyWith(isRecording: false, anchorMessage: state.anchorMessage, highlightedMessage: state.highlightedMessage);
   }
 
   void stopAudioRecording() async {
@@ -814,7 +830,11 @@ class ChatStateNotifier extends Notifier<ChatState> {
         Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatForwardScreen(message: message)));
         break;
       case 'copy':
-        Utils.copyToClipboard(message.text);
+        if (message.isImage) {
+          Utils.copyImageFromPath(message.media.value!.path);
+        } else {
+          Utils.copyTextToClipboard(message.text);
+        }
         unSelectAllMessages();
         break;
       case 'toggleSender':
