@@ -85,6 +85,9 @@ class HomescreenState extends HomeScreenBaseState {
                 onSelected: handleContextMenuAction,
               ),
             ],
+            systemOverlayStyle: SystemUiOverlayStyle(
+              systemNavigationBarColor: context.isLight ? ThemeConstants.hometoolbarLight3 :ThemeConstants.messageBarDark,
+            ) ,
           ),
           body: GestureDetector(
             behavior: HitTestBehavior.translucent,

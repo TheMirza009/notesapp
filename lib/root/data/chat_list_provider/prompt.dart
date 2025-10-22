@@ -2762,3 +2762,3320 @@
 //   // Optional: pick image
 // }
 
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:flutter_riverpod/legacy.dart';
+// import 'package:notesapp/core/Theme/gradients.dart';
+// import 'package:notesapp/core/extensions/context_extensions.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/auto_hide_scroll_to_bottom.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/bottom_message_bar_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_appbar_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_searchbar.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+
+// //TODO: 2. Notifier needs robustness and double checks
+// //TODO: 5. Full-sized images being shown as thumbnails
+// //TODO: 6. Everything rebuilds when the long press is called
+// //TODO: 7. Search does not show new messages
+// //TODO: 8. First message does not change isSender state.
+// //TODO: 9. Clear Chat does not delete all messages properly.
+// //TODO: 10. Square images not being displayed properly.
+// //TODO: 11. State problems ocurring again.
+// //TODO: 12. Audio/Documents being replied to errors 
+// //TODO: 13. Preferable to revamp the overall messagebar structure 
+// //TODO: 14. If a media has duplicates, don't delete it
+// //TODO: 14. Audio players need to be robusted
+// //TODO: 14. Hero-Overlay needs implementation in ChatDetailScreen
+// //TODO: 14. Media other than images need to be formatted inside ChatDetailScreen
+// //TODO: 14. Search needs to be handled inside Forward screen
+// //TODO: 14. Camera needs robustness
+// //TODO: 14. GIF / Pasting needs robustness
+// //TODO: 14. Reply wrapper needs to handle other media
+// //TODO: 14. Audio record UI / overlay needs implementation
+
+// final StateProvider<bool> isNewChat = StateProvider((_) => false);
+
+// class ChatScreen extends ConsumerWidget {
+//   const ChatScreen({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     // final notifier = ref.read(chatMessagesController.notifier);
+//     final notifier = ref.read(chatStateController.notifier);
+//     final overlayHandler = ref.read(overlayHandlerProvider);
+//     final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
+//     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
+//     final newChat = ref.read(isNewChat);
+//     debugPrint("🔃 ChatScreen rebuilt");
+
+//     if (newChat) {
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         ref.read(chatStateController.notifier).keyboardFocusNode.requestFocus();
+//         ref.read(isNewChat.notifier).state = false;
+//       });
+//     }
+
+//     return PopScope(
+//       canPop: canPop,
+//       onPopInvokedWithResult: (didPop, result) {
+//         final state = ref.read(chatStateController);
+//         final notifier = ref.read(chatStateController.notifier);
+
+//         // intercept back button
+//         if (state.showEmojis) {
+//           notifier.hideEmojiPicker();
+//           return; // prevent popping
+//         }
+
+//         if (state.isSearching) {
+//           notifier.stopSearching();
+//           notifier.closeSearchAndKeyboard();
+//           return; // prevent popping
+//         }
+
+//         // ✅ nothing to intercept → allow pop
+//         notifier.unSelectAllMessages();
+//         notifier.clearAnchorMessage();
+//         notifier.removeChatIfEmpty();
+//         overlayHandler.closeAttachmentBoard(instant: true);
+//         overlayHandler.hideRecordBar(instant: true);
+//         overlayHandler.hideReplyAnchor(instant: true);
+//         notifier.cancelAudioRecording();
+//       },
+//       child: GestureDetector(
+//         onTap: () {
+//           notifier.stopSearching();
+//           notifier.searchFocusNode.unfocus();
+//           notifier.keyboardFocusNode.unfocus();
+//           notifier.hideEmojiPicker();
+//           notifier.unSelectAllMessages();
+//           ref.read(overlayHandlerProvider).closeAttachmentBoard();
+//         },
+//         child: Scaffold(
+//           backgroundColor: Colors.transparent,
+//           body: Container(
+//             decoration: BoxDecoration(gradient: backgroundGradient),
+//             child: Column(
+//               children: [
+//                 const ChatAppBarWrapper(),
+//                 const ChatSearchBar(),
+//                 const MessageListWrapper(),
+//                 const BottomMessageBarWrapper(),
+//                 const EmojiBoardWrapper(),
+//               ],
+//             ),
+//           ),
+//           floatingActionButton: Consumer(
+//             builder: (context, ref, _) {
+//               final state = ref.watch(chatStateController);
+//               if (state.showEmojis || state.isSearching || state.messages.isEmpty) {
+//                 return const SizedBox.shrink(); // hide FAB
+//               }
+
+//               return AutoHideScrollToBottom(
+//                 itemScrollController: notifier.itemScrollController,
+//                 itemPositionsListener: notifier.itemPositionsListener,
+//                 lastIndex: state.messages.length - 1,
+//                 bottomPadding: notifier.isReplying ? 135 : 80,
+//                 backgroundColor: context.isLight ? const Color(0xFFD5F0FF) : const Color(0xFF94C1DB),
+//               );
+//             },
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:notesapp/core/Theme/theme_constants.dart';
+// import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/chat_appbar.dart';
+
+// class ChatAppBarWrapper extends ConsumerWidget {
+//   const ChatAppBarWrapper({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     debugPrint("🔃 Chat App Bar rebuilt");
+
+//     final chatController = ref.watch(chatStateController.notifier);
+
+
+//     final isSearching = ref.watch(chatStateController.select((s) => s.isSearching));
+//     final isSelecting = ref.watch(chatStateController.select((s) => s.isSelecting));
+//     final selectedCount = ref.watch(chatStateController.select((s) => s.selectedMessages.length));
+//     final lastEdited = ref.watch(chatStateController.select((s) => s.messages.isNotEmpty ? s.messages.last.time : DateTime.now()));
+
+//     final chat = ref.watch(chatListProvider).selectedChat;
+//     final chatTitle = chat?.title ?? "New Note";
+//     final chatPhoto = chat?.chatPhotoPath;
+
+//     return ChatAppBar(
+//       chatPhotoPath: chatPhoto,
+//       leading: isSelecting
+//           ? IconButton(
+//               onPressed: chatController.unSelectAllMessages,
+//               icon: Icon(
+//                 Icons.clear,
+//                 color: ThemeConstants.iconColorNeutral,
+//               ),
+//             )
+//           : IconButton(
+//               onPressed: () => Navigator.pop(context),
+//               icon: Icon(
+//                 Icons.arrow_back_ios_new_rounded,
+//                 color: ThemeConstants.iconColorNeutral,
+//               ),
+//             ),
+//       lastEdited: lastEdited,
+//       isSelecting: isSelecting,
+//       title: isSelecting
+//           ? "$selectedCount Notes selected"
+//           : chatTitle,
+//       onTitleTap: () {
+//         if (chat != null) {
+//           Navigator.push(
+//             context,
+//             CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)),
+//           );
+//         }
+//       },
+//       onSearchTap: chatController.toggleSearch,
+//       showActionsIcon: !isSearching,
+//       onOptionsPressed: (value) => chatController.handleChatScreenOptions(value, chat!),
+//       actions: isSelecting
+//           ? [
+//               IconButton(
+//                 onPressed: chatController.deleteSelected,
+//                 icon: const Icon(Icons.delete_outline_rounded),
+//               ),
+//             ]
+//           : null,
+//     );
+//   }
+// }
+
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:notesapp/core/Theme/theme_constants.dart';
+// import 'package:notesapp/core/extensions/context_extensions.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+
+// class ChatSearchBar extends ConsumerWidget {
+//   const ChatSearchBar({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     debugPrint("🔄 Searchbar rebuilt");
+//     final notifier = ref.read(chatStateController.notifier);
+//     final isSearching = ref.watch(chatStateController.select((s) => s.isSearching));
+//     final headerColor = context.isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+
+//     return AnimatedSize(
+//       duration: Duration(milliseconds: 300),
+//       curve: Curves.easeInOutQuint,
+//       child: isSearching
+//               ? Padding(
+//                 padding: const EdgeInsets.only(
+//                   left: 12.0,
+//                   bottom: 0,
+//                   right: 12,
+//                   top: 12,
+//                 ),
+//                 child: ConstrainedBox(
+//                   constraints: BoxConstraints(
+//                     maxHeight: isSearching ? 40 : 0,
+//                     // maxWidth: notifier.isSearching ? double.maxFinite : 0
+//                   ),
+//                   child: SearchBar(
+//                     focusNode: notifier.searchFocusNode,
+//                     controller: notifier.searchController,
+//                     autoFocus: false,
+//                     shape: WidgetStatePropertyAll(
+//                       RoundedRectangleBorder(
+//                         borderRadius: BorderRadiusGeometry.circular(12),
+//                       ),
+//                     ),
+//                     padding: WidgetStatePropertyAll(EdgeInsets.zero),
+//                     shadowColor: WidgetStatePropertyAll(Colors.transparent),
+//                     backgroundColor: WidgetStatePropertyAll(headerColor),
+//                     leading: Padding(
+//                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
+//                       child: Icon(
+//                         Icons.search,
+//                         color: ThemeConstants.iconLight,
+//                       ),
+//                     ),
+//                     trailing: [
+//                       ValueListenableBuilder<TextEditingValue>(
+//                         valueListenable: notifier.searchController,
+//                         builder: (context, value, _) {
+//                           return value.text.isNotEmpty
+//                               ? IconButton(
+//                                 icon: const Icon(Icons.clear_rounded),
+//                                 onPressed: notifier.clearSearch,
+//                               )
+//                               : const SizedBox.shrink();
+//                         },
+//                       ),
+//                     ],
+
+//                     hintText: "Search in notes...",
+//                     hintStyle: WidgetStatePropertyAll(
+//                       TextStyle(
+//                         color: ThemeConstants.iconLight,
+//                         fontWeight: FontWeight.w500,
+//                       ),
+//                     ),
+//                     onChanged: (value) => notifier.searchChats(value),
+//                   ),
+//                 ),
+//               )
+//               : SizedBox.shrink(),
+//     );
+//   }
+// }
+
+// import 'dart:io';
+
+// import 'package:extended_image/extended_image.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:notesapp/core/Theme/theme_constants.dart';
+// import 'package:notesapp/core/extensions/context_extensions.dart';
+// import 'package:notesapp/core/extensions/media_extensions.dart';
+// import 'package:notesapp/core/extensions/message_extensions.dart';
+// import 'package:notesapp/core/extensions/message_list_extensions.dart';
+// import 'package:notesapp/core/utils/context_menu_options.dart';
+// import 'package:notesapp/root/data/enums/bubble_style.dart';
+// import 'package:notesapp/root/data/models/message_model.dart';
+// import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
+// import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/date_chip.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+// import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
+// import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
+// import 'package:notesapp/root/widgets/nothing_to_see.dart';
+// import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+// import 'package:open_file/open_file.dart';
+// import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+// import 'package:url_launcher/url_launcher.dart';
+
+// class MessageListWrapper extends ConsumerWidget {
+//   const MessageListWrapper({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final notifier = ref.read(chatStateController.notifier);
+//     final messages = ref.watch( chatStateController.select((s) => s.messages));
+//     final isLoading = ref.watch(chatStateController.notifier).isLoading;
+
+//   //   WidgetsBinding.instance.addPostFrameCallback((_) {
+//   //   if (notifier.itemScrollController.isAttached && messages.isNotEmpty) {
+//   //     notifier.itemScrollController.jumpTo(index: messages.length - 1);
+//   //   }
+//   // });
+
+//     return Expanded(
+//       child: isLoading ? LoadIndicator() : messages.isEmpty
+//           ? const NothingToSee()
+//           : ScrollablePositionedList.builder(
+//               itemScrollController: notifier.itemScrollController,
+//               itemPositionsListener: notifier.itemPositionsListener,
+//               itemCount: messages.length + 1,
+//               itemBuilder: (context, index) {
+//                 if (index == messages.length) {
+//                   return const SizedBox( height: 150);
+//                 }
+
+//                 final message = messages[index]; // 👈 Get the message directly
+//                 return ProviderScope(
+//                   overrides: [
+//                     // messageIdProvider.overrideWith((_) => messageId),
+//                     messageProvider.overrideWithValue(message), // 👈 Pass the message instead of finding it later
+//                   ],
+//                   child: const _MessageItemBuilder(),
+//                 );
+//               },
+//             ),
+//     );
+//   }
+// }
+
+// // Provide the ID instead of index
+// final messageIdProvider = Provider<int>((_) => throw UnimplementedError());
+// final messageProvider = Provider<Message>((_) => throw UnimplementedError());
+
+// class _MessageItemBuilder extends ConsumerWidget {
+//   const _MessageItemBuilder({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final message = ref.watch(messageProvider);
+//     final bubbleStyle = ref.watch(settingsController)?.selectedBubbleStyle ?? BubbleStyle.opaque;
+
+//     if (message == null) {
+//       return const SizedBox.shrink(); // Message got deleted -> don't render
+//     }
+
+//     if (message.isImage) {
+//       final path = message.media.value?.path;
+//       if (path != null) {
+//         precacheImage(ExtendedFileImageProvider(File(path), cacheRawData: true), context);
+//       }
+//     }
+
+//     // 👇 Watch only derived info for this index
+//     final info = ref.watch( chatStateController.select((s) => s.messages.layoutInfoById(message.isarId)));
+//     final isHighlighted = ref.watch( chatStateController.select((s) => s.highlightedMessage?.isarId == message.isarId), );
+//     final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == message.isarId)), );
+//     final isSelecting = ref.watch( chatStateController.select((s) => s.isSelecting), );
+
+//     debugPrint("🔃 Built message: ${message.text}");
+
+//     return Column(
+//       children: [
+//         if (info.showDateChip) DateChip(message.time),
+//         RepaintBoundary(
+//           child: MessageBubble(
+//             style: bubbleStyle,
+//             message: message,
+//             isSelecting: isSelecting,
+//             isSelected: isSelected,
+//             isHighlighted: isHighlighted,
+//             topPadding: info.topPadding,
+//             bottomPadding: info.bottomPadding,
+//             // interactions
+//             onSwipe: () {
+//               ref.read(overlayHandlerProvider).showReplyAnchor(context); // show hidden
+//               WidgetsBinding.instance.addPostFrameCallback((_) {
+//                 ref.read(chatStateController.notifier).setAnchorMessage(message, context); // trigger slide
+//               });
+//             },
+//             onTapWhileSelecting: () => isSelected
+//                 ? ref.read(chatStateController.notifier).unselectMessage(message)
+//                 : ref.read(chatStateController.notifier).selectMessage(message),
+//             onTap: () async {
+//               if (message.isImage) {
+//                 final allImages = ref.read(chatStateController).messages.imageMedias;
+//                 final initialIndex = allImages.indexOfMediaIsarID(message);
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(
+//                     builder: (_) => GalleryViewWrapper(
+//                       galleryItems: allImages,
+//                       initialIndex: initialIndex,
+//                       showOptions: true,
+//                       options: galleryOptions,
+//                       onOptionSelect: (value) => handleGalleryOptions(context, ref, value, allImages[initialIndex]),
+//                     ),
+//                   ),
+//                 );
+//               } else if (message.isDocument) {
+//                 await OpenFile.open(message.media!.value!.path!);
+//               } else {
+//                 ref.read(chatStateController.notifier).toggleSender(message);
+//               }
+//             },
+//             onLongPress: (pos) {
+//               final notifier = ref.read(chatStateController.notifier);
+//               notifier.selectMessage(message);
+//               notifier.searchFocusNode.unfocus();
+//               notifier.keyboardFocusNode.unfocus();
+//               CustomContextMenu.showMenuAt(
+//                 context,
+//                 position: pos,
+//                 menuItems: messageHoldOptions(isImage: (message.isImage || message.isDocument || message.isAudio) ),
+//                 triangleHorizontalOffset: message.isSender ? 120 : 40,
+//                 onSelected: (val) => notifier.handleMessageMenuAction(val, message, context),
+//               );
+//             },
+//             onReplyTap: () => ref.read(chatStateController.notifier).scrollToMessage(message.replyingTo.value!.isarId),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+
+// class LoadIndicator extends StatelessWidget {
+//   const LoadIndicator({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Align(
+//       alignment: Alignment.topCenter, // 👈 top center instead of center
+//       child: Padding(
+//         padding: const EdgeInsets.only(top: 50), // optional spacing from top
+//         child: SizedBox(
+//           height: 40,
+//           width: 40,
+//           child: CircularProgressIndicator(
+//             strokeWidth: 2,
+//             strokeCap: StrokeCap.round,
+//             color: context.isLight
+//                 ? ThemeConstants.sacredSeed
+//                 : ThemeConstants.sinisterSeed,
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/attachment_board.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/bottom_message_bar.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/record_bar.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/attachment_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+
+// class BottomMessageBarWrapper extends ConsumerWidget {
+//   const BottomMessageBarWrapper({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final notifier = ref.read(chatStateController.notifier);
+//     final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
+
+//     final overlayHandler = ref.read(overlayHandlerProvider);
+//     // overlayHandler.updateKeyboardInset();
+
+//     return RepaintBoundary(
+//       child: BottomMessageBar(
+//         focusNode: notifier.keyboardFocusNode,
+//         keyboardController: notifier.keyboardController,
+//         onFieldTap: () {
+//           notifier.hideEmojiPicker();
+//           overlayHandler.closeAttachmentBoard();
+//         },
+//         onEmojiTap: () {
+//           notifier.toggleEmojiPicker();
+//           overlayHandler.closeAttachmentBoard();
+//           },
+//         onAttachmentTap: () {
+//           // notifier.pickImage();
+//           notifier.keyboardFocusNode.unfocus();
+//           if (isRecording) {
+//             notifier.cancelAudioRecording();
+//           }
+      
+//           // ✅ Only clear anchor if we’re not recording
+//           if (notifier.state.anchorMessage != null && !isRecording) {
+//             notifier.clearAnchorMessage();
+//           }
+      
+//           if (notifier.state.showEmojis) {
+//             notifier.hideEmojiPicker();
+//           }
+      
+//            overlayHandler.toggleAttachmentBoard(context);
+//           // final state = ref.read(openingProvider.notifier);
+//           // state.state = !state.state; // <======= Called here
+//         },
+//         onMicTap: () async {
+//           // Navigator.push(context, CupertinoPageRoute(builder: (_) => MicPage()));
+//           if (isRecording) {
+//             notifier.stopAudioRecording();
+//             await overlayHandler.hideRecordBar();
+//             debugPrint("🎙️Recording stopped");
+//           } else {
+//             await overlayHandler.closeAttachmentBoard();
+      
+//             if (notifier.isReplying == true) {
+//               debugPrint("⬅️ isReplying: $isRecording");
+//             }
+//             notifier.closeSearchAndKeyboard();
+//             notifier.startAudioRecording();
+//             overlayHandler.showRecordBar(context, ref);
+//             debugPrint("🎙️Recording started");
+//           }
+//         },
+//         onSend: notifier.sendMessage,
+//         onImagePasted: (bytes) => notifier.pickImage(imageBytes: bytes),
+//       ),
+//     );
+//   }
+// }
+
+// // OverlayEntry? recordOverlay;
+
+// // void _showRecordBar(BuildContext context, WidgetRef ref) {
+// //   if (recordOverlay != null) return; // ✅ Prevent duplicates
+
+// //   final overlay = Overlay.of(context, rootOverlay: true);
+
+// //   recordOverlay = OverlayEntry(
+// //     builder:
+// //         (overlayContext) => Consumer(
+// //           builder: (context, ref, _) {
+// //             final theme = Theme.of(context);
+// //             return Positioned(
+// //               left: 0,
+// //               right: 0,
+// //               bottom: 70,
+// //               child: Material(
+// //                 type: MaterialType.transparency,
+// //                 child: Theme(
+// //                   data: theme,
+// //                   child: Align(
+// //                     alignment: Alignment.bottomCenter,
+// //                     child: ClipRect(
+// //                       child: SizedBox(height: 85, child: const RecordBar()),
+// //                     ),
+// //                   ),
+// //                 ),
+// //               ),
+// //             );
+// //           },
+// //         ),
+// //   );
+
+// //   if (replyOverlay != null) {
+// //     overlay.insert(recordOverlay!, above: replyOverlay);
+// //   } else {
+// //     overlay.insert(recordOverlay!);
+// //   }
+// // }
+
+// // Future<void> _hideRecordBar() async {
+// //   if (recordOverlay == null) return;
+
+// //   // ✅ Wait for RecordBar’s internal slide animation
+// //   await Future.delayed(const Duration(milliseconds: 500));
+
+// //   // ✅ Remove safely after delay
+// //   recordOverlay?.remove();
+// //   recordOverlay = null;
+// // }
+
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/emoji_board.dart';
+
+
+// class EmojiBoardWrapper extends ConsumerWidget {
+//   const EmojiBoardWrapper({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     debugPrint("🔄 Emoji board rebuilt");
+
+//     final notifier = ref.read(chatStateController.notifier);
+//     final showEmojis = ref.watch(chatStateController.select((s) => s.showEmojis));
+
+//     return AnimatedSize(
+//       duration: const Duration(milliseconds: 300),
+//       curve: Curves.easeOut,
+//       child: Align(
+//         alignment: Alignment.bottomCenter,
+//         child: SizedBox(
+//           height: showEmojis ? 280 : 0,
+//           child: EmojiBoard(
+//             showEmojis: showEmojis,
+//             textController: notifier.keyboardController,
+//             keyboardHeight: 280,
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+
+// import 'dart:async';
+// import 'dart:io';
+// import 'dart:typed_data';
+// import 'package:file_picker/file_picker.dart';
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:iconify_flutter/icons/mdi.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:isar_community/isar.dart';
+// import 'package:notesapp/core/Theme/theme_constants.dart';
+// import 'package:notesapp/core/controllers/recording_handler.dart';
+// import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+// import 'package:riverpod/riverpod.dart';
+// import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+// import 'package:notesapp/core/controllers/isar_database.dart';
+// import 'package:notesapp/core/controllers/media_handler.dart';
+// import 'package:notesapp/core/extensions/message_list_extensions.dart';
+// import 'package:notesapp/core/utils/global_keys.dart';
+// import 'package:notesapp/core/utils/utils.dart';
+// import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+// import 'package:notesapp/root/data/enums/media_type.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+// import 'package:notesapp/root/data/models/media_model.dart';
+// import 'package:notesapp/root/data/models/message_model.dart';
+// import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+// import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+// import 'package:typeset/typeset.dart';
+// import 'package:uuid/uuid.dart';
+// import 'chat_state.dart';
+
+// /// Provider for ChatStateNotifier
+// final chatStateController = NotifierProvider<ChatStateNotifier, ChatState>(() => ChatStateNotifier());
+
+// class ChatStateNotifier extends Notifier<ChatState> {
+//   final _isar = IsarDatabase.isar; // Master references & controllers (not part of state)
+//   List<Message> allMessages = [];
+//   final TextEditingController searchController = TextEditingController();
+//   final TypeSetEditingController keyboardController = TypeSetEditingController();
+//   final FocusNode searchFocusNode = FocusNode();
+//   final FocusNode keyboardFocusNode = FocusNode();
+//   final ItemScrollController itemScrollController = ItemScrollController();
+//   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+//   final Recorder recorder = Recorder();
+//   Chat? _chat;
+//   bool isLoading = false;
+//   bool get isReplying => state.anchorMessage != null;
+
+//   @override
+//   ChatState build() {
+//     keyboardFocusNode.addListener(() {
+//       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
+//     });
+
+//     final selectedChat = ref.watch(chatListProvider.select((s) => s.selectedChat));
+//     if (selectedChat == null) return ChatState();
+
+//     _chat = selectedChat;
+//     _hydrateMessages(); // Load messages into state
+//     return ChatState(); // empty initial
+//   }
+
+//   // =====================================================
+//   // Helper: Centralized DB helpers to reduce redundancy
+//   // =====================================================
+
+//   /// Persist a Media object and return the managed (persisted) instance.
+//   Future<Media?> _persistMedia(Media media) async {
+//     await _isar.writeTxn(() async {
+//       await _isar.medias.put(media);
+//     });
+//     return await _isar.medias.get(media.isarId);
+//   }
+
+//   /// Core helper to create a Message, optionally attach persisted media & reply link, attach it to the active chat.
+//   /// This runs a single writeTxn combining all DB writes for a message-send flow.
+//   Future<Message?> _createAndAttachMessage({
+//     required Message message,
+//     Media? persistedMedia, // managed media (must already be in DB or null)
+//     Message? replyingTo, // link to another managed message
+//   }) async {
+//     if (_chat == null) return null;
+
+//     await _isar.writeTxn(() async {
+//       // If replying, link first
+//       if (replyingTo != null) {
+//         message.replyingTo.value = replyingTo;
+//       }
+
+//       // Ensure message is stored to obtain isarId
+//       await _isar.messages.put(message);
+
+//       // Attach media if provided
+//       if (persistedMedia != null) {
+//         message.media.value = persistedMedia;
+//         await message.media.save();
+//       }
+
+//       // Ensure chat exists in DB
+//       Chat? managedChat = await _isar.chats.get(_chat!.isarID);
+//       if (managedChat == null) {
+//         // chat might be new; put _chat to create managed chat
+//         await _isar.chats.put(_chat!);
+//         managedChat = await _isar.chats.get(_chat!.isarID);
+//       }
+
+//       // Attach message to chat and save
+//       if (managedChat != null) {
+//         await managedChat.messages.load();
+//         managedChat.messages.add(message);
+//         await managedChat.messages.save();
+//         await _isar.chats.put(managedChat);
+//         _chat = managedChat;
+//       }
+
+//       // If replying link exists, save it as well
+//       if (replyingTo != null) {
+//         await message.replyingTo.save();
+//       }
+//     });
+
+//     return message;
+//   }
+
+//   /// Delete a message within a single DB transaction (removes message record and removes links from chat)
+//   /// Returns a reference to the media (if any) so caller can check and perform file cleanup outside the txn.
+//   Future<Media?> _deleteMessageManaged(Message message) async {
+//     Media? mediaRef;
+//     await _isar.writeTxn(() async {
+//       final managedMsg = await _isar.messages.get(message.isarId);
+//       if (managedMsg != null) {
+//         // Grab media reference before deletion
+//         await managedMsg.media.load();
+//         mediaRef = managedMsg.media.value;
+
+//         // Delete the message record
+//         await _isar.messages.delete(managedMsg.isarId);
+//       }
+
+//       // Remove from chat links if chat exists
+//       if (_chat != null) {
+//         final managedChat = await _isar.chats.get(_chat!.isarID);
+//         if (managedChat != null) {
+//           await managedChat.messages.load();
+//           // Remove any linked references with same isarId
+//           final toRemove = managedChat.messages.where((m) => m.isarId == message.isarId).toList();
+//           if (toRemove.isNotEmpty) {
+//             for (final r in toRemove) {
+//               managedChat.messages.remove(r);
+//             }
+//             await managedChat.messages.save();
+//             await _isar.chats.put(managedChat);
+//             _chat = managedChat;
+//           }
+//         }
+//       }
+//     });
+
+//     return mediaRef;
+//   }
+
+//   /// Helper: determine whether a given media (by path) is used by any message other than an optional excluded message.
+//   Future<bool> _isMediaUsedByOthers(String? mediaPath, {int? excludingMessageIsarId}) async {
+//     if (mediaPath == null) return false;
+//     // Fetch all messages and preload media to inspect paths.
+//     final msgs = await _isar.messages.where().findAll();
+//     for (final m in msgs) {
+//       await m.media.load();
+//     }
+//     // Use your existing extension function if available
+//     final dup = msgs.hasDuplicateMediaPathByPath(mediaPath, excludingIsarId: excludingMessageIsarId);
+//     return dup;
+//   }
+
+//   // =====================================================
+//   // Section: Messages CRUD (refactored to reuse helpers)
+//   // =====================================================
+
+//   Future<void> _hydrateMessages() async {
+//     if (_chat == null || isLoading) return;
+//     isLoading = true;
+
+//     final freshChat = await _isar.chats.get(_chat!.isarID);
+//     if (freshChat != null) {
+//       await freshChat.messages.load();
+//       await Future.wait(freshChat.messages.map((m) => m.media.load()));
+//       isLoading = false;
+//       allMessages = freshChat.messages.toList();
+//       state = state.copyWith(messages: allMessages);
+//     }
+//   }
+
+//   Future<void> updateMessage(Message message) async {
+//     // Single txn to update message
+//     await _isar.writeTxn(() async {
+//       final existing = await _isar.messages.get(message.isarId);
+//       if (existing != null) {
+//         existing.text = message.text;
+//         existing.isSender = message.isSender;
+//         await _isar.messages.put(existing);
+//       } else {
+//         await _isar.messages.put(message);
+//       }
+//     });
+
+//     final messages = [...state.messages];
+//     final index = messages.indexWhere((m) => m.isarId == message.isarId);
+//     if (index != -1) {
+//       messages[index] = message;
+//     } else {
+//       messages.add(message);
+//     }
+
+//     state = state.copyWith(messages: messages);
+//   }
+
+//   Future<void> sendMessage(String text) async {
+//     if (_chat == null) return;
+//     await deleteInitMessage();
+
+//     final newMessage = Message()
+//       ..text = text
+//       ..time = DateTime.now()
+//       ..isSender = true;
+
+//     // Reuse centralized helper for full DB persistence & linking
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: null,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages], anchorMessage: null);
+//     scrollToBottom();
+//   }
+
+//   Future<void> forwardMessage({
+//     required Message original,
+//     required Chat targetChat,
+//   }) async {
+//     // Preload before transaction
+//     try {
+//       await original.media.load();
+//     } catch (_) {}
+//     try {
+//       await original.replyingTo.load();
+//     } catch (_) {}
+
+//     final newMessage = Message()
+//       ..id = const Uuid().v7()
+//       ..text = original.text
+//       ..time = DateTime.now()
+//       ..isSender = true;
+
+//     // Clone media if present (no DB assignment yet)
+//     final originalMedia = original.media.value;
+//     Media? clonedMedia;
+//     if (originalMedia != null) {
+//       clonedMedia = Media()
+//         ..name = originalMedia.name
+//         ..path = originalMedia.path
+//         ..extension = originalMedia.extension
+//         ..type = originalMedia.type
+//         ..aspectRatio = originalMedia.aspectRatio;
+//     }
+
+//     // Persist media + message + attach to targetChat in a single txn (reuse helper semantics)
+//     await _isar.writeTxn(() async {
+//       if (clonedMedia != null) {
+//         await _isar.medias.put(clonedMedia);
+//       }
+//       await _isar.messages.put(newMessage);
+
+//       if (clonedMedia != null) {
+//         newMessage.media.value = clonedMedia;
+//         await newMessage.media.save();
+//       }
+
+//       if (original.replyingTo.value != null) {
+//         newMessage.replyingTo.value = original.replyingTo.value;
+//         await newMessage.replyingTo.save();
+//       }
+
+//       // Attach to targetChat
+//       await targetChat.messages.load();
+//       targetChat.messages.add(newMessage);
+//       await targetChat.messages.save();
+//       await _isar.chats.put(targetChat);
+//     });
+
+//     // Update UI if forwarding to current chat
+//     final currentChat = _chat;
+//     if (currentChat != null && currentChat.isarID == targetChat.isarID) {
+//       allMessages.add(newMessage);
+//       state = state.copyWith(messages: [...allMessages]);
+//     }
+//   }
+
+//   Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false, Media? media}) async {
+//     final Media? pickedMedia = imageBytes != null
+//         ? await MediaHandler.fromImageBytes(imageBytes)
+//         : (media ?? await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery));
+
+//     if (pickedMedia == null || _chat == null) return;
+//     await deleteInitMessage();
+
+//     // Persist media in a centralized helper
+//     final persisted = await _persistMedia(pickedMedia);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "📷 Photo"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   Future<void> deleteInitMessage() async {
+//     if (_chat == null || state.messages.isEmpty) return;
+
+//     const initID = "0000";
+//     const initText = "This is a new chat. Start typing to create your first note.";
+
+//     final firstMessage = state.messages.first;
+//     if (firstMessage.id == initID && firstMessage.text == initText && firstMessage.isSender == false && state.messages.length == 1) {
+//       deleteMessage(firstMessage);
+//     }
+//   }
+
+//   Future<void> deleteMessage(Message message) async {
+//     // Delete message within DB and get media reference back
+//     final mediaRef = await _deleteMessageManaged(message);
+
+//     // If message had media, check if that media is used by any other message; if not, delete file
+//     if (mediaRef != null && mediaRef.type != Mediatype.text) {
+//       // See if used by others excluding current message
+//       final usedByOthers = await _isMediaUsedByOthers(mediaRef.path, excludingMessageIsarId: message.isarId);
+
+//       if (!usedByOthers) {
+//         // Offload file deletion to background isolate to avoid blocking UI
+//         try {
+//           await compute(_backgroundDeleteMedia, mediaRef.path ?? '');
+//         } catch (_) {
+//           // fallback to direct call if compute fails
+//           await MediaHandler.deleteMedia(mediaRef);
+//         }
+//       }
+//     }
+
+//     // Update in-memory collections & state
+//     allMessages.removeWhere((m) => m.isarId == message.isarId);
+//     unSelectAllMessages();
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   /// Background isolate function to delete a media file path. Runs via compute().
+//   /// Note: compute only accepts/top-level functions.
+//   static Future<bool> _backgroundDeleteMedia(String path) async {
+//     try {
+//       if (path.isEmpty) return false;
+//       final file = File(path);
+//       if (await file.exists()) {
+//         await file.delete();
+//       }
+//       return true;
+//     } catch (_) {
+//       return false;
+//     }
+//   }
+
+//   /// Function to delete selected messages from chat
+//   Future<void> deleteSelected() async {
+//     final selected = state.selectedMessages;
+//     if (selected.isEmpty) return;
+
+//     // We will collect media references to inspect after the txn.
+//     final List<Media> mediaToCheck = [];
+
+//     await _isar.writeTxn(() async {
+//       for (final m in selected) {
+//         final managedMsg = await _isar.messages.get(m.isarId);
+//         if (managedMsg != null) {
+//           await managedMsg.media.load();
+//           if (managedMsg.media.value != null) {
+//             mediaToCheck.add(managedMsg.media.value!);
+//           }
+//         }
+//         await _isar.messages.delete(m.isarId);
+
+//         if (_chat != null) {
+//           final managedChat = await _isar.chats.get(_chat!.isarID);
+//           if (managedChat != null) {
+//             await managedChat.messages.load();
+//             managedChat.messages.removeWhere((mm) => mm.isarId == m.isarId);
+//             await managedChat.messages.save();
+//             await _isar.chats.put(managedChat);
+//             _chat = managedChat;
+//           }
+//         }
+//       }
+//     });
+
+//     // Outside txn: for each media, check usage and delete files off main isolate
+//     for (final media in mediaToCheck) {
+//       if (media.type != Mediatype.text) {
+//         final usedByOthers = await _isMediaUsedByOthers(media.path);
+//         if (!usedByOthers) {
+//           try {
+//             await compute(_backgroundDeleteMedia, media.path ?? '');
+//           } catch (_) {
+//             await MediaHandler.deleteMedia(media);
+//           }
+//         }
+//       }
+//     }
+
+//     unSelectAllMessages();
+//     allMessages.removeWhere((m) => selected.contains(m));
+//     state = state.clearSelection().copyWith(messages: allMessages);
+//   }
+
+//   /// Function to change the message sender position
+//   void toggleSender(Message message) async {
+//     message.isSender = !message.isSender;
+
+//     await _isar.writeTxn(() async {
+//       await _isar.messages.put(message); // update
+//     });
+
+//     final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
+//     if (index != -1) allMessages[index] = message;
+
+//     state = allMessages.length == 1
+//         ? state.copyWith(messages: [message.copyWith()]) // new instance for first-message animation (BUG FIX)
+//         : state.copyWith(messages: [...allMessages]);
+//   }
+
+//   // =====================================================
+//   // Section: Message selection & highlight
+//   // =====================================================
+
+//   /// Long press to hold message
+//   void selectMessage(Message message) {
+//     state = state.selectMessage(message);
+//     debugPrint("Selected: ${state.selectedMessages.length}");
+//   }
+
+//   /// Unselect while selection mode
+//   void unselectMessage(Message message) {
+//     state = state.unselectMessage(message);
+//   }
+
+//   /// Unselects all messages and exits selection mode
+//   void unSelectAllMessages() {
+//     state = state.clearSelection();
+//   }
+
+//   /// Selects all messages while in selection mode
+//   void selectAllMessages() {
+//     state = state.copyWith(
+//       selectedMessages: [...state.messages],
+//     );
+//   }
+
+//   /// Exposes number of selected messages
+//   int selectCount() => state.selectedMessages.length;
+
+//   /// Highlights a message temporarily when reply wrapper clicked
+//   void highlightMessageTemporarily(Message message) {
+//     state = state.highlightMessage(message);
+//     Future.delayed(const Duration(milliseconds: 700), () {
+//       if (state.highlightedMessage?.isarId == message.isarId) {
+//         state = state.clearHighlight();
+//       }
+//     });
+//   }
+
+//   // =====================================================
+//   // Section: Chat bar / emoji / anchor
+//   // =====================================================
+
+//   /// Reply anchor set
+//   Future<void> setAnchorMessage(Message message, BuildContext context) async {
+//     final overlayHandler = ref.read(overlayHandlerProvider);
+//     state = state.copyWith(anchorMessage: message);
+//     if (!keyboardFocusNode.hasFocus) {
+//       keyboardFocusNode.requestFocus();
+//     }
+
+//     // Ensure the attachment board is closed via the centralized handler
+//     await overlayHandler.closeAttachmentBoard();
+//     overlayHandler.showReplyAnchor(context);
+//   }
+
+//   /// Clears reply anchor message
+//   void clearAnchorMessage() {
+//     final newState = state.copyWith(anchorMessage: null);
+//     state = newState;
+//     keyboardFocusNode.unfocus();
+//   }
+
+//   /// Toggles emoji board
+//   void toggleEmojiPicker() {
+//     if (state.showEmojis) {
+//       state = state.copyWith(showEmojis: false);
+//       keyboardFocusNode.requestFocus();
+//     } else {
+//       if (keyboardFocusNode.hasFocus) keyboardFocusNode.unfocus();
+//       Future.delayed(const Duration(milliseconds: 100), () {
+//         state = state.copyWith(showEmojis: true);
+//       });
+//     }
+//   }
+
+//   /// hides emoji board
+//   void hideEmojiPicker() {
+//     if (state.showEmojis) state = state.copyWith(showEmojis: false);
+//   }
+
+//   /// Toggles search
+//   void toggleSearch() async {
+//     final newSearching = !state.isSearching;
+//     if (!newSearching) {
+//       clearSearch();
+//     } else {
+//       searchController.clear();
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         if (searchFocusNode.canRequestFocus) searchFocusNode.requestFocus();
+//       });
+//     }
+//     state = state.copyWith(isSearching: newSearching);
+//   }
+
+//   /// Clears search and resets results
+//   void clearSearch() {
+//     searchController.clear();
+//     state = state.copyWith(messages: [...allMessages], anchorMessage: state.anchorMessage);
+//   }
+
+//   /// Filters chat by query
+//   void searchChats(String query) {
+//     if (query.isEmpty) {
+//       state = state.copyWith(messages: [...allMessages]);
+//       return;
+//     }
+//     final filtered = allMessages.where((m) => (m.text ?? "").toLowerCase().contains(query.toLowerCase())).toList();
+//     state = state.copyWith(messages: filtered);
+//   }
+
+//   /// Closes search and resets chat
+//   void closeSearchAndKeyboard() {
+//     if (state.isSearching) toggleSearch();
+//     clearSearch();
+//     keyboardFocusNode.unfocus();
+//     hideEmojiPicker();
+//   }
+
+//   void closeKeyboard() {
+//     keyboardFocusNode.unfocus();
+//     hideEmojiPicker();
+//   }
+
+//   void stopSearching() {
+//     state = state.copyWith(isSearching: false, anchorMessage: state.anchorMessage);
+//   }
+
+//   // =====================================================
+//   // Section: Recording Audio helpers (refactored)
+//   // =====================================================
+
+//   Future<void> startAudioRecording() async {
+//     await recorder.startRecording();
+//     state = state.copyWith(isRecording: true, anchorMessage: state.anchorMessage);
+//   }
+
+//   Future<void> cancelAudioRecording() async {
+//     ref.read(overlayHandlerProvider).hideRecordBar(instant: false);
+//     await recorder.cancelRecording();
+//     state = state.copyWith(isRecording: false, anchorMessage: state.anchorMessage);
+//   }
+
+//   void stopAudioRecording() async {
+//     final String? recordingPath = await recorder.stopRecording();
+//     if (recordingPath == null) return;
+
+//     final savedAudio = await MediaHandler.saveAudio(recordingPath);
+//     if (savedAudio == null) return;
+
+//     await deleteInitMessage();
+
+//     // Persist media then create message via centralized helper
+//     final persisted = await _persistMedia(savedAudio);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "🎙️ Recording"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages], isRecording: false);
+//   }
+
+//   Future<void> pickDocument() async {
+//     final Media? pickedMedia = await MediaHandler.pickDocument();
+
+//     if (pickedMedia == null || _chat == null) return;
+//     await deleteInitMessage();
+
+//     final persisted = await _persistMedia(pickedMedia);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "📃 Document"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   Future<void> pickAudio() async {
+//     final Media? pickedMedia = await MediaHandler.pickDocument(fileType: FileType.audio);
+
+//     if (pickedMedia == null || _chat == null) return;
+//     await deleteInitMessage();
+
+//     final persisted = await _persistMedia(pickedMedia);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "🎧 Audio"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   // =====================================================
+//   // Section: Scroll helpers
+//   // =====================================================
+
+//   void scrollToBottom() {
+//     if (!itemScrollController.isAttached) return;
+
+//     itemScrollController.scrollTo(
+//       index: state.messages.length - 1,
+//       duration: const Duration(milliseconds: 300),
+//       curve: Curves.easeOut,
+//       alignment: 0.0,
+//     );
+//   }
+
+//   void scrollToMessage(int isarID, {bool animated = true}) {
+//     final index = state.messages.indexWhere((m) => m.isarId == isarID);
+//     if (index == -1 || !itemScrollController.isAttached) return;
+
+//     itemScrollController.scrollTo(
+//       index: index,
+//       duration: animated ? const Duration(milliseconds: 300) : Duration.zero,
+//       curve: Curves.easeIn,
+//       alignment: 0.1,
+//     );
+
+//     final msg = state.messages.firstWhere((m) => m.isarId == isarID);
+//     highlightMessageTemporarily(msg);
+//   }
+
+//   // =====================================================
+//   // Section: Chat cleanup / clear
+//   // =====================================================
+
+//   void clearChat() async {
+//     if (_chat == null) return;
+//     await _isar.writeTxn(() async {
+//       await _chat!.messages.filter().deleteAll();
+//       await _chat!.messages.save();
+//       await _isar.chats.put(_chat!);
+//     });
+//     state = ChatState();
+//   }
+
+//   void removeChatIfEmpty() async {
+//     if (_chat == null) return;
+//     final managedChat = await _isar.chats.get(_chat!.isarID);
+//     if (managedChat == null) return;
+//     await managedChat.messages.load();
+
+//     if (managedChat.messages.isEmpty) {
+//       ref.read(chatListProvider.notifier).removeChat(managedChat);
+//       return;
+//     }
+
+//     const initText = "This is a new chat. Start typing to create your first note.";
+//     const initID = "0000";
+
+//     final isInit = managedChat.messages.length == 1 &&
+//         managedChat.messages.first.text == initText &&
+//         managedChat.messages.first.id == initID;
+
+//     if (isInit) ref.read(chatListProvider.notifier).removeChat(managedChat);
+//   }
+
+//   /// Context menu actions
+//   void handleMessageMenuAction(String action, Message message, BuildContext? context) async {
+//     switch (action) {
+//       case 'deleteMessage':
+//         deleteMessage(message);
+//         break;
+//       case 'reply':
+//         unSelectAllMessages();
+//         ref.read(overlayHandlerProvider).showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden
+//         WidgetsBinding.instance.addPostFrameCallback((_) {
+//           setAnchorMessage(message, context!); // trigger slide
+//         });
+//         break;
+//       case 'forward':
+//         unSelectAllMessages();
+//         Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatForwardScreen(message: message)));
+//         break;
+//       case 'copy':
+//         Utils.copyToClipboard(message.text);
+//         unSelectAllMessages();
+//         break;
+//       case 'toggleSender':
+//         message.isSender = !message.isSender;
+//         updateMessage(message);
+//         unSelectAllMessages();
+//         break;
+//       case "share":
+//         await Utils.shareToApps(XFile(message.media.value!.path!));
+//         unSelectAllMessages();
+//         break;
+//     }
+//   }
+
+//   void handleChatScreenOptions(String action, Chat chat) {
+//     switch (action) {
+//       case "chatInfo":
+//         Navigator.push(
+//           navigatorKey.currentContext!,
+//           CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)),
+//         );
+//         break;
+//       case "chatMedia":
+//         Navigator.push(
+//           navigatorKey.currentContext!,
+//           CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat, scrollToMedia: true,)),
+//         );
+//         break;
+//       case "search":
+//         toggleSearch();
+//       case "clearChat":
+//         showCupertinoDialog(
+//           context: navigatorKey.currentContext!,
+//           builder:
+//               (_) => CustomAlertDialog(
+//                 title: "Delete all notes",
+//                 content: "Are you sure you want to delete all notes?",
+//                 iconColor: Colors.redAccent,
+//                 iconData:
+//                     (Mdi.delete_empty_outline),
+//                 iconSize: 25,
+//                 option: TextButton(
+//                   onPressed: () {
+//                     Navigator.pop(navigatorKey.currentContext!);
+//                     clearChat();
+//                   },
+//                   child: Text(
+//                     "Delete",
+//                     style: TextStyle(color: Colors.redAccent),
+//                   ),
+//                 ),
+//               ),
+//         );
+//     }
+//   }
+
+//   @override
+//   void dispose() {
+//     searchController.dispose();
+//     keyboardController.dispose();
+//     searchFocusNode.dispose();
+//     keyboardFocusNode.dispose();
+//   }
+// }
+
+
+// import 'package:notesapp/root/data/models/message_model.dart';
+
+// class ChatState {
+//   final List<Message> messages;
+
+//   // Flags
+//   final bool isSearching;
+//   final bool showEmojis;
+//   final bool isLoading;
+//   final bool isRecording;
+//   final Message? anchorMessage;
+
+//   // Optimized message subsets
+//   final Message? highlightedMessage;        // Only one highlighted at a time
+//   final List<Message> selectedMessages;     // Can have multiple
+
+//   /// Derived flag: true if any message is selected
+//   bool get isSelecting => selectedMessages.isNotEmpty;
+
+//   ChatState({
+//     this.messages = const [],
+//     this.isSearching = false,
+//     this.isLoading = false,
+//     this.isRecording = false,
+//     this.showEmojis = false,
+//     this.anchorMessage,
+//     this.highlightedMessage,
+//     this.selectedMessages = const [],
+//   });
+
+//   /// CopyWith for immutability
+//   ChatState copyWith({
+//     List<Message>? messages,
+//     bool? isSearching,
+//     bool? showEmojis,
+//     bool? isLoading,
+//     bool? isRecording,
+//     Message? anchorMessage,
+//     Message? highlightedMessage,
+//     List<Message>? selectedMessages,
+//   }) {
+//     return ChatState(
+//       messages: messages ?? this.messages,
+//       isSearching: isSearching ?? this.isSearching,
+//       showEmojis: showEmojis ?? this.showEmojis,
+//       isLoading: isLoading ?? this.isLoading,
+//       isRecording: isRecording ?? this.isRecording,
+//       anchorMessage: anchorMessage,
+//       highlightedMessage: highlightedMessage,
+//       selectedMessages: selectedMessages ?? this.selectedMessages,
+//     );
+//   }
+
+//   /// Add a new message
+//   ChatState addMessage(Message message) {
+//     return copyWith(messages: [...messages, message]);
+//   }
+
+//   /// Remove a message safely
+//   ChatState removeMessage(String id) {
+//     final updatedMessages = messages.where((m) => m.isarId != id).toList();
+//     final updatedSelected = selectedMessages.where((m) => m.isarId != id).toList();
+//     final updatedHighlighted = highlightedMessage?.isarId == id ? null : highlightedMessage;
+
+//     return copyWith(
+//       messages: updatedMessages,
+//       selectedMessages: updatedSelected,
+//       highlightedMessage: updatedHighlighted,
+//     );
+//   }
+
+//   /// Highlight a message
+//   ChatState highlightMessage(Message? message) {
+//     return copyWith(highlightedMessage: message);
+//   }
+
+//   /// Select a message
+//   ChatState selectMessage(Message message) {
+//   if (selectedMessages.any((m) => m.isarId == message.isarId)) return this;
+//   return copyWith(selectedMessages: [...selectedMessages, message]);
+// }
+
+//   /// Unselect a message
+//   ChatState unselectMessage(Message message) {
+//     return copyWith(
+//       selectedMessages: selectedMessages.where((m) => m.isarId != message.isarId).toList(),
+//     );
+//   }
+
+//   /// Clear all selections
+//   ChatState clearSelection() {
+//     // final cleared = messages.map((m) => m..isSelected = false).toList();
+//     return copyWith(selectedMessages: []);
+//   }
+
+
+//   /// Clear highlight
+//   ChatState clearHighlight() {
+//     return copyWith(highlightedMessage: null);
+//   }
+
+//   /// Check if a message is selected
+//   bool isSelected(Message message) => selectedMessages.contains(message);
+
+//   /// Check if a message is highlighted
+//   bool isHighlighted(Message message) => highlightedMessage?.isarId == message.isarId;
+// }
+
+
+// I give you the following code for inspection:
+
+// import 'package:notesapp/root/data/models/message_model.dart';
+
+// class ChatState {
+//   final List<Message> messages;
+
+//   // Flags
+//   final bool isSearching;
+//   final bool showEmojis;
+//   final bool isLoading;
+//   final bool isRecording;
+//   final Message? anchorMessage;
+
+//   // Optimized message subsets
+//   final Message? highlightedMessage;        // Only one highlighted at a time
+//   final List<Message> selectedMessages;     // Can have multiple
+
+//   /// Derived flag: true if any message is selected
+//   bool get isSelecting => selectedMessages.isNotEmpty;
+
+//   ChatState({
+//     this.messages = const [],
+//     this.isSearching = false,
+//     this.isLoading = false,
+//     this.isRecording = false,
+//     this.showEmojis = false,
+//     this.anchorMessage,
+//     this.highlightedMessage,
+//     this.selectedMessages = const [],
+//   });
+
+//   /// CopyWith for immutability
+//   ChatState copyWith({
+//     List<Message>? messages,
+//     bool? isSearching,
+//     bool? showEmojis,
+//     bool? isLoading,
+//     bool? isRecording,
+//     Message? anchorMessage,
+//     Message? highlightedMessage,
+//     List<Message>? selectedMessages,
+//   }) {
+//     return ChatState(
+//       messages: messages ?? this.messages,
+//       isSearching: isSearching ?? this.isSearching,
+//       showEmojis: showEmojis ?? this.showEmojis,
+//       isLoading: isLoading ?? this.isLoading,
+//       isRecording: isRecording ?? this.isRecording,
+//       anchorMessage: anchorMessage,
+//       highlightedMessage: highlightedMessage,
+//       selectedMessages: selectedMessages ?? this.selectedMessages,
+//     );
+//   }
+
+//   /// Add a new message
+//   ChatState addMessage(Message message) {
+//     return copyWith(messages: [...messages, message]);
+//   }
+
+//   /// Remove a message safely
+//   ChatState removeMessage(String id) {
+//     final updatedMessages = messages.where((m) => m.isarId != id).toList();
+//     final updatedSelected = selectedMessages.where((m) => m.isarId != id).toList();
+//     final updatedHighlighted = highlightedMessage?.isarId == id ? null : highlightedMessage;
+
+//     return copyWith(
+//       messages: updatedMessages,
+//       selectedMessages: updatedSelected,
+//       highlightedMessage: updatedHighlighted,
+//     );
+//   }
+
+//   /// Highlight a message
+//   ChatState highlightMessage(Message? message) {
+//     return copyWith(highlightedMessage: message);
+//   }
+
+//   /// Select a message
+//   ChatState selectMessage(Message message) {
+//   if (selectedMessages.any((m) => m.isarId == message.isarId)) return this;
+//   return copyWith(selectedMessages: [...selectedMessages, message]);
+// }
+
+//   /// Unselect a message
+//   ChatState unselectMessage(Message message) {
+//     return copyWith(
+//       selectedMessages: selectedMessages.where((m) => m.isarId != message.isarId).toList(),
+//     );
+//   }
+
+//   /// Clear all selections
+//   ChatState clearSelection() {
+//     // final cleared = messages.map((m) => m..isSelected = false).toList();
+//     return copyWith(selectedMessages: []);
+//   }
+
+
+//   /// Clear highlight
+//   ChatState clearHighlight() {
+//     return copyWith(highlightedMessage: null);
+//   }
+
+//   /// Check if a message is selected
+//   bool isSelected(Message message) => selectedMessages.contains(message);
+
+//   /// Check if a message is highlighted
+//   bool isHighlighted(Message message) => highlightedMessage?.isarId == message.isarId;
+// }
+
+// import 'dart:async';
+// import 'dart:io';
+// import 'dart:typed_data';
+// import 'package:file_picker/file_picker.dart';
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:iconify_flutter/icons/mdi.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:isar_community/isar.dart';
+// import 'package:notesapp/core/Theme/theme_constants.dart';
+// import 'package:notesapp/core/controllers/recording_handler.dart';
+// import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+// import 'package:riverpod/riverpod.dart';
+// import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+// import 'package:notesapp/core/controllers/isar_database.dart';
+// import 'package:notesapp/core/controllers/media_handler.dart';
+// import 'package:notesapp/core/extensions/message_list_extensions.dart';
+// import 'package:notesapp/core/utils/global_keys.dart';
+// import 'package:notesapp/core/utils/utils.dart';
+// import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+// import 'package:notesapp/root/data/enums/media_type.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+// import 'package:notesapp/root/data/models/media_model.dart';
+// import 'package:notesapp/root/data/models/message_model.dart';
+// import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+// import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+// import 'package:typeset/typeset.dart';
+// import 'package:uuid/uuid.dart';
+// import 'chat_state.dart';
+
+// /// Provider for ChatStateNotifier
+// final chatStateController = NotifierProvider<ChatStateNotifier, ChatState>(() => ChatStateNotifier());
+
+// class ChatStateNotifier extends Notifier<ChatState> {
+//   final _isar = IsarDatabase.isar; // Master references & controllers (not part of state)
+//   List<Message> allMessages = [];
+//   final TextEditingController searchController = TextEditingController();
+//   final TypeSetEditingController keyboardController = TypeSetEditingController();
+//   final FocusNode searchFocusNode = FocusNode();
+//   final FocusNode keyboardFocusNode = FocusNode();
+//   final ItemScrollController itemScrollController = ItemScrollController();
+//   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+//   final Recorder recorder = Recorder();
+//   Chat? _chat;
+//   bool isLoading = false;
+//   bool get isReplying => state.anchorMessage != null;
+
+//   @override
+//   ChatState build() {
+//     keyboardFocusNode.addListener(() {
+//       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
+//     });
+
+//     final selectedChat = ref.watch(chatListProvider.select((s) => s.selectedChat));
+//     if (selectedChat == null) return ChatState();
+
+//     _chat = selectedChat;
+//     _hydrateMessages(); // Load messages into state
+//     return ChatState(); // empty initial
+//   }
+
+//   // =====================================================
+//   // Helper: Centralized DB helpers to reduce redundancy
+//   // =====================================================
+
+//   /// Persist a Media object and return the managed (persisted) instance.
+//   Future<Media?> _persistMedia(Media media) async {
+//     await _isar.writeTxn(() async {
+//       await _isar.medias.put(media);
+//     });
+//     return await _isar.medias.get(media.isarId);
+//   }
+
+//   /// Core helper to create a Message, optionally attach persisted media & reply link, attach it to the active chat.
+//   /// This runs a single writeTxn combining all DB writes for a message-send flow.
+//   Future<Message?> _createAndAttachMessage({
+//     required Message message,
+//     Media? persistedMedia, // managed media (must already be in DB or null)
+//     Message? replyingTo, // link to another managed message
+//   }) async {
+//     if (_chat == null) return null;
+
+//     await _isar.writeTxn(() async {
+//       // If replying, link first
+//       if (replyingTo != null) {
+//         message.replyingTo.value = replyingTo;
+//       }
+
+//       // Ensure message is stored to obtain isarId
+//       await _isar.messages.put(message);
+
+//       // Attach media if provided
+//       if (persistedMedia != null) {
+//         message.media.value = persistedMedia;
+//         await message.media.save();
+//       }
+
+//       // Ensure chat exists in DB
+//       Chat? managedChat = await _isar.chats.get(_chat!.isarID);
+//       if (managedChat == null) {
+//         // chat might be new; put _chat to create managed chat
+//         await _isar.chats.put(_chat!);
+//         managedChat = await _isar.chats.get(_chat!.isarID);
+//       }
+
+//       // Attach message to chat and save
+//       if (managedChat != null) {
+//         await managedChat.messages.load();
+//         managedChat.messages.add(message);
+//         await managedChat.messages.save();
+//         await _isar.chats.put(managedChat);
+//         _chat = managedChat;
+//       }
+
+//       // If replying link exists, save it as well
+//       if (replyingTo != null) {
+//         await message.replyingTo.save();
+//       }
+//     });
+
+//     return message;
+//   }
+
+//   /// Delete a message within a single DB transaction (removes message record and removes links from chat)
+//   /// Returns a reference to the media (if any) so caller can check and perform file cleanup outside the txn.
+//   Future<Media?> _deleteMessageManaged(Message message) async {
+//     Media? mediaRef;
+//     await _isar.writeTxn(() async {
+//       final managedMsg = await _isar.messages.get(message.isarId);
+//       if (managedMsg != null) {
+//         // Grab media reference before deletion
+//         await managedMsg.media.load();
+//         mediaRef = managedMsg.media.value;
+
+//         // Delete the message record
+//         await _isar.messages.delete(managedMsg.isarId);
+//       }
+
+//       // Remove from chat links if chat exists
+//       if (_chat != null) {
+//         final managedChat = await _isar.chats.get(_chat!.isarID);
+//         if (managedChat != null) {
+//           await managedChat.messages.load();
+//           // Remove any linked references with same isarId
+//           final toRemove = managedChat.messages.where((m) => m.isarId == message.isarId).toList();
+//           if (toRemove.isNotEmpty) {
+//             for (final r in toRemove) {
+//               managedChat.messages.remove(r);
+//             }
+//             await managedChat.messages.save();
+//             await _isar.chats.put(managedChat);
+//             _chat = managedChat;
+//           }
+//         }
+//       }
+//     });
+
+//     return mediaRef;
+//   }
+
+//   /// Helper: determine whether a given media (by path) is used by any message other than an optional excluded message.
+//   Future<bool> _isMediaUsedByOthers(String? mediaPath, {int? excludingMessageIsarId}) async {
+//     if (mediaPath == null) return false;
+//     // Fetch all messages and preload media to inspect paths.
+//     final msgs = await _isar.messages.where().findAll();
+//     for (final m in msgs) {
+//       await m.media.load();
+//     }
+//     // Use your existing extension function if available
+//     final dup = msgs.hasDuplicateMediaPathByPath(mediaPath, excludingIsarId: excludingMessageIsarId);
+//     return dup;
+//   }
+
+//   // =====================================================
+//   // Section: Messages CRUD (refactored to reuse helpers)
+//   // =====================================================
+
+//   Future<void> _hydrateMessages() async {
+//     if (_chat == null || isLoading) return;
+//     isLoading = true;
+
+//     final freshChat = await _isar.chats.get(_chat!.isarID);
+//     if (freshChat != null) {
+//       await freshChat.messages.load();
+//       await Future.wait(freshChat.messages.map((m) => m.media.load()));
+//       isLoading = false;
+//       allMessages = freshChat.messages.toList();
+//       state = state.copyWith(messages: allMessages);
+//     }
+//   }
+
+//   Future<void> updateMessage(Message message) async {
+//     // Single txn to update message
+//     await _isar.writeTxn(() async {
+//       final existing = await _isar.messages.get(message.isarId);
+//       if (existing != null) {
+//         existing.text = message.text;
+//         existing.isSender = message.isSender;
+//         await _isar.messages.put(existing);
+//       } else {
+//         await _isar.messages.put(message);
+//       }
+//     });
+
+//     final messages = [...state.messages];
+//     final index = messages.indexWhere((m) => m.isarId == message.isarId);
+//     if (index != -1) {
+//       messages[index] = message;
+//     } else {
+//       messages.add(message);
+//     }
+
+//     state = state.copyWith(messages: messages);
+//   }
+
+//   Future<void> sendMessage(String text) async {
+//     if (_chat == null) return;
+//     await deleteInitMessage();
+
+//     final newMessage = Message()
+//       ..text = text
+//       ..time = DateTime.now()
+//       ..isSender = true;
+
+//     // Reuse centralized helper for full DB persistence & linking
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: null,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages], anchorMessage: null);
+//     scrollToBottom();
+//   }
+
+//   Future<void> forwardMessage({
+//     required Message original,
+//     required Chat targetChat,
+//   }) async {
+//     // Preload before transaction
+//     try {
+//       await original.media.load();
+//     } catch (_) {}
+//     try {
+//       await original.replyingTo.load();
+//     } catch (_) {}
+
+//     final newMessage = Message()
+//       ..id = const Uuid().v7()
+//       ..text = original.text
+//       ..time = DateTime.now()
+//       ..isSender = true;
+
+//     // Clone media if present (no DB assignment yet)
+//     final originalMedia = original.media.value;
+//     Media? clonedMedia;
+//     if (originalMedia != null) {
+//       clonedMedia = Media()
+//         ..name = originalMedia.name
+//         ..path = originalMedia.path
+//         ..extension = originalMedia.extension
+//         ..type = originalMedia.type
+//         ..aspectRatio = originalMedia.aspectRatio;
+//     }
+
+//     // Persist media + message + attach to targetChat in a single txn (reuse helper semantics)
+//     await _isar.writeTxn(() async {
+//       if (clonedMedia != null) {
+//         await _isar.medias.put(clonedMedia);
+//       }
+//       await _isar.messages.put(newMessage);
+
+//       if (clonedMedia != null) {
+//         newMessage.media.value = clonedMedia;
+//         await newMessage.media.save();
+//       }
+
+//       if (original.replyingTo.value != null) {
+//         newMessage.replyingTo.value = original.replyingTo.value;
+//         await newMessage.replyingTo.save();
+//       }
+
+//       // Attach to targetChat
+//       await targetChat.messages.load();
+//       targetChat.messages.add(newMessage);
+//       await targetChat.messages.save();
+//       await _isar.chats.put(targetChat);
+//     });
+
+//     // Update UI if forwarding to current chat
+//     final currentChat = _chat;
+//     if (currentChat != null && currentChat.isarID == targetChat.isarID) {
+//       allMessages.add(newMessage);
+//       state = state.copyWith(messages: [...allMessages]);
+//     }
+//   }
+
+//   Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false, Media? media}) async {
+//     final Media? pickedMedia = imageBytes != null
+//         ? await MediaHandler.fromImageBytes(imageBytes)
+//         : (media ?? await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery));
+
+//     if (pickedMedia == null || _chat == null) return;
+//     await deleteInitMessage();
+
+//     // Persist media in a centralized helper
+//     final persisted = await _persistMedia(pickedMedia);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "📷 Photo"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   Future<void> deleteInitMessage() async {
+//     if (_chat == null || state.messages.isEmpty) return;
+
+//     const initID = "0000";
+//     const initText = "This is a new chat. Start typing to create your first note.";
+
+//     final firstMessage = state.messages.first;
+//     if (firstMessage.id == initID && firstMessage.text == initText && firstMessage.isSender == false && state.messages.length == 1) {
+//       deleteMessage(firstMessage);
+//     }
+//   }
+
+//   Future<void> deleteMessage(Message message) async {
+//     // Delete message within DB and get media reference back
+//     final mediaRef = await _deleteMessageManaged(message);
+
+//     // If message had media, check if that media is used by any other message; if not, delete file
+//     if (mediaRef != null && mediaRef.type != Mediatype.text) {
+//       // See if used by others excluding current message
+//       final usedByOthers = await _isMediaUsedByOthers(mediaRef.path, excludingMessageIsarId: message.isarId);
+
+//       if (!usedByOthers) {
+//         // Offload file deletion to background isolate to avoid blocking UI
+//         try {
+//           await compute(_backgroundDeleteMedia, mediaRef.path ?? '');
+//         } catch (_) {
+//           // fallback to direct call if compute fails
+//           await MediaHandler.deleteMedia(mediaRef);
+//         }
+//       }
+//     }
+
+//     // Update in-memory collections & state
+//     allMessages.removeWhere((m) => m.isarId == message.isarId);
+//     unSelectAllMessages();
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   /// Background isolate function to delete a media file path. Runs via compute().
+//   /// Note: compute only accepts/top-level functions.
+//   static Future<bool> _backgroundDeleteMedia(String path) async {
+//     try {
+//       if (path.isEmpty) return false;
+//       final file = File(path);
+//       if (await file.exists()) {
+//         await file.delete();
+//       }
+//       return true;
+//     } catch (_) {
+//       return false;
+//     }
+//   }
+
+//   /// Function to delete selected messages from chat
+//   Future<void> deleteSelected() async {
+//     final selected = state.selectedMessages;
+//     if (selected.isEmpty) return;
+
+//     // We will collect media references to inspect after the txn.
+//     final List<Media> mediaToCheck = [];
+
+//     await _isar.writeTxn(() async {
+//       for (final m in selected) {
+//         final managedMsg = await _isar.messages.get(m.isarId);
+//         if (managedMsg != null) {
+//           await managedMsg.media.load();
+//           if (managedMsg.media.value != null) {
+//             mediaToCheck.add(managedMsg.media.value!);
+//           }
+//         }
+//         await _isar.messages.delete(m.isarId);
+
+//         if (_chat != null) {
+//           final managedChat = await _isar.chats.get(_chat!.isarID);
+//           if (managedChat != null) {
+//             await managedChat.messages.load();
+//             managedChat.messages.removeWhere((mm) => mm.isarId == m.isarId);
+//             await managedChat.messages.save();
+//             await _isar.chats.put(managedChat);
+//             _chat = managedChat;
+//           }
+//         }
+//       }
+//     });
+
+//     // Outside txn: for each media, check usage and delete files off main isolate
+//     for (final media in mediaToCheck) {
+//       if (media.type != Mediatype.text) {
+//         final usedByOthers = await _isMediaUsedByOthers(media.path);
+//         if (!usedByOthers) {
+//           try {
+//             await compute(_backgroundDeleteMedia, media.path ?? '');
+//           } catch (_) {
+//             await MediaHandler.deleteMedia(media);
+//           }
+//         }
+//       }
+//     }
+
+//     unSelectAllMessages();
+//     allMessages.removeWhere((m) => selected.contains(m));
+//     state = state.clearSelection().copyWith(messages: allMessages);
+//   }
+
+//   /// Function to change the message sender position
+//   void toggleSender(Message message) async {
+//     message.isSender = !message.isSender;
+
+//     await _isar.writeTxn(() async {
+//       await _isar.messages.put(message); // update
+//     });
+
+//     final index = allMessages.indexWhere((m) => m.isarId == message.isarId);
+//     if (index != -1) allMessages[index] = message;
+
+//     state = allMessages.length == 1
+//         ? state.copyWith(messages: [message.copyWith()]) // new instance for first-message animation (BUG FIX)
+//         : state.copyWith(messages: [...allMessages]);
+//   }
+
+//   // =====================================================
+//   // Section: Message selection & highlight
+//   // =====================================================
+
+//   /// Long press to hold message
+//   void selectMessage(Message message) {
+//     state = state.selectMessage(message);
+//     debugPrint("Selected: ${state.selectedMessages.length}");
+//   }
+
+//   /// Unselect while selection mode
+//   void unselectMessage(Message message) {
+//     state = state.unselectMessage(message);
+//   }
+
+//   /// Unselects all messages and exits selection mode
+//   void unSelectAllMessages() {
+//     state = state.clearSelection();
+//   }
+
+//   /// Selects all messages while in selection mode
+//   void selectAllMessages() {
+//     state = state.copyWith(
+//       selectedMessages: [...state.messages],
+//     );
+//   }
+
+//   /// Exposes number of selected messages
+//   int selectCount() => state.selectedMessages.length;
+
+//   /// Highlights a message temporarily when reply wrapper clicked
+//   void highlightMessageTemporarily(Message message) {
+//     state = state.highlightMessage(message);
+//     Future.delayed(const Duration(milliseconds: 700), () {
+//       if (state.highlightedMessage?.isarId == message.isarId) {
+//         state = state.clearHighlight();
+//       }
+//     });
+//   }
+
+//   // =====================================================
+//   // Section: Chat bar / emoji / anchor
+//   // =====================================================
+
+//   /// Reply anchor set
+//   Future<void> setAnchorMessage(Message message, BuildContext context) async {
+//     final overlayHandler = ref.read(overlayHandlerProvider);
+//     state = state.copyWith(anchorMessage: message);
+//     if (!keyboardFocusNode.hasFocus) {
+//       keyboardFocusNode.requestFocus();
+//     }
+
+//     // Ensure the attachment board is closed via the centralized handler
+//     await overlayHandler.closeAttachmentBoard();
+//     overlayHandler.showReplyAnchor(context);
+//   }
+
+//   /// Clears reply anchor message
+//   void clearAnchorMessage() {
+//     final newState = state.copyWith(anchorMessage: null);
+//     state = newState;
+//     keyboardFocusNode.unfocus();
+//   }
+
+//   /// Toggles emoji board
+//   void toggleEmojiPicker() {
+//     if (state.showEmojis) {
+//       state = state.copyWith(showEmojis: false);
+//       keyboardFocusNode.requestFocus();
+//     } else {
+//       if (keyboardFocusNode.hasFocus) keyboardFocusNode.unfocus();
+//       Future.delayed(const Duration(milliseconds: 100), () {
+//         state = state.copyWith(showEmojis: true);
+//       });
+//     }
+//   }
+
+//   /// hides emoji board
+//   void hideEmojiPicker() {
+//     if (state.showEmojis) state = state.copyWith(showEmojis: false);
+//   }
+
+//   /// Toggles search
+//   void toggleSearch() async {
+//     final newSearching = !state.isSearching;
+//     if (!newSearching) {
+//       clearSearch();
+//     } else {
+//       searchController.clear();
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         if (searchFocusNode.canRequestFocus) searchFocusNode.requestFocus();
+//       });
+//     }
+//     state = state.copyWith(isSearching: newSearching);
+//   }
+
+//   /// Clears search and resets results
+//   void clearSearch() {
+//     searchController.clear();
+//     state = state.copyWith(messages: [...allMessages], anchorMessage: state.anchorMessage);
+//   }
+
+//   /// Filters chat by query
+//   void searchChats(String query) {
+//     if (query.isEmpty) {
+//       state = state.copyWith(messages: [...allMessages]);
+//       return;
+//     }
+//     final filtered = allMessages.where((m) => (m.text ?? "").toLowerCase().contains(query.toLowerCase())).toList();
+//     state = state.copyWith(messages: filtered);
+//   }
+
+//   /// Closes search and resets chat
+//   void closeSearchAndKeyboard() {
+//     if (state.isSearching) toggleSearch();
+//     clearSearch();
+//     keyboardFocusNode.unfocus();
+//     hideEmojiPicker();
+//   }
+
+//   void closeKeyboard() {
+//     keyboardFocusNode.unfocus();
+//     hideEmojiPicker();
+//   }
+
+//   void stopSearching() {
+//     state = state.copyWith(isSearching: false, anchorMessage: state.anchorMessage);
+//   }
+
+//   // =====================================================
+//   // Section: Recording Audio helpers (refactored)
+//   // =====================================================
+
+//   Future<void> startAudioRecording() async {
+//     await recorder.startRecording();
+//     state = state.copyWith(isRecording: true, anchorMessage: state.anchorMessage);
+//   }
+
+//   Future<void> cancelAudioRecording() async {
+//     ref.read(overlayHandlerProvider).hideRecordBar(instant: false);
+//     await recorder.cancelRecording();
+//     state = state.copyWith(isRecording: false, anchorMessage: state.anchorMessage);
+//   }
+
+//   void stopAudioRecording() async {
+//     final String? recordingPath = await recorder.stopRecording();
+//     if (recordingPath == null) return;
+
+//     final savedAudio = await MediaHandler.saveAudio(recordingPath);
+//     if (savedAudio == null) return;
+
+//     await deleteInitMessage();
+
+//     // Persist media then create message via centralized helper
+//     final persisted = await _persistMedia(savedAudio);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "🎙️ Recording"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages], isRecording: false);
+//   }
+
+//   Future<void> pickDocument() async {
+//     final Media? pickedMedia = await MediaHandler.pickDocument();
+
+//     if (pickedMedia == null || _chat == null) return;
+//     await deleteInitMessage();
+
+//     final persisted = await _persistMedia(pickedMedia);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "📃 Document"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   Future<void> pickAudio() async {
+//     final Media? pickedMedia = await MediaHandler.pickDocument(fileType: FileType.audio);
+
+//     if (pickedMedia == null || _chat == null) return;
+//     await deleteInitMessage();
+
+//     final persisted = await _persistMedia(pickedMedia);
+//     if (persisted == null) return;
+
+//     final newMessage = Message()
+//       ..text = "🎧 Audio"
+//       ..isSender = true
+//       ..time = DateTime.now();
+
+//     await _createAndAttachMessage(
+//       message: newMessage,
+//       persistedMedia: persisted,
+//       replyingTo: state.anchorMessage,
+//     );
+
+//     allMessages.add(newMessage);
+//     state = state.copyWith(messages: [...allMessages]);
+//   }
+
+//   // =====================================================
+//   // Section: Scroll helpers
+//   // =====================================================
+
+//   void scrollToBottom() {
+//     if (!itemScrollController.isAttached) return;
+
+//     itemScrollController.scrollTo(
+//       index: state.messages.length - 1,
+//       duration: const Duration(milliseconds: 300),
+//       curve: Curves.easeOut,
+//       alignment: 0.0,
+//     );
+//   }
+
+//   void scrollToMessage(int isarID, {bool animated = true}) {
+//     final index = state.messages.indexWhere((m) => m.isarId == isarID);
+//     if (index == -1 || !itemScrollController.isAttached) return;
+
+//     itemScrollController.scrollTo(
+//       index: index,
+//       duration: animated ? const Duration(milliseconds: 300) : Duration.zero,
+//       curve: Curves.easeIn,
+//       alignment: 0.1,
+//     );
+
+//     final msg = state.messages.firstWhere((m) => m.isarId == isarID);
+//     highlightMessageTemporarily(msg);
+//   }
+
+//   // =====================================================
+//   // Section: Chat cleanup / clear
+//   // =====================================================
+
+//   void clearChat() async {
+//     if (_chat == null) return;
+//     await _isar.writeTxn(() async {
+//       await _chat!.messages.filter().deleteAll();
+//       await _chat!.messages.save();
+//       await _isar.chats.put(_chat!);
+//     });
+//     state = ChatState();
+//   }
+
+//   void removeChatIfEmpty() async {
+//     if (_chat == null) return;
+//     final managedChat = await _isar.chats.get(_chat!.isarID);
+//     if (managedChat == null) return;
+//     await managedChat.messages.load();
+
+//     if (managedChat.messages.isEmpty) {
+//       ref.read(chatListProvider.notifier).removeChat(managedChat);
+//       return;
+//     }
+
+//     const initText = "This is a new chat. Start typing to create your first note.";
+//     const initID = "0000";
+
+//     final isInit = managedChat.messages.length == 1 &&
+//         managedChat.messages.first.text == initText &&
+//         managedChat.messages.first.id == initID;
+
+//     if (isInit) ref.read(chatListProvider.notifier).removeChat(managedChat);
+//   }
+
+//   /// Context menu actions
+//   void handleMessageMenuAction(String action, Message message, BuildContext? context) async {
+//     switch (action) {
+//       case 'deleteMessage':
+//         deleteMessage(message);
+//         break;
+//       case 'reply':
+//         unSelectAllMessages();
+//         ref.read(overlayHandlerProvider).showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden
+//         WidgetsBinding.instance.addPostFrameCallback((_) {
+//           setAnchorMessage(message, context!); // trigger slide
+//         });
+//         break;
+//       case 'forward':
+//         unSelectAllMessages();
+//         Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatForwardScreen(message: message)));
+//         break;
+//       case 'copy':
+//         Utils.copyToClipboard(message.text);
+//         unSelectAllMessages();
+//         break;
+//       case 'toggleSender':
+//         message.isSender = !message.isSender;
+//         updateMessage(message);
+//         unSelectAllMessages();
+//         break;
+//       case "share":
+//         await Utils.shareToApps(XFile(message.media.value!.path!));
+//         unSelectAllMessages();
+//         break;
+//     }
+//   }
+
+//   void handleChatScreenOptions(String action, Chat chat) {
+//     switch (action) {
+//       case "chatInfo":
+//         Navigator.push(
+//           navigatorKey.currentContext!,
+//           CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)),
+//         );
+//         break;
+//       case "chatMedia":
+//         Navigator.push(
+//           navigatorKey.currentContext!,
+//           CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat, scrollToMedia: true,)),
+//         );
+//         break;
+//       case "search":
+//         toggleSearch();
+//       case "clearChat":
+//         showCupertinoDialog(
+//           context: navigatorKey.currentContext!,
+//           builder:
+//               (_) => CustomAlertDialog(
+//                 title: "Delete all notes",
+//                 content: "Are you sure you want to delete all notes?",
+//                 iconColor: Colors.redAccent,
+//                 iconData:
+//                     (Mdi.delete_empty_outline),
+//                 iconSize: 25,
+//                 option: TextButton(
+//                   onPressed: () {
+//                     Navigator.pop(navigatorKey.currentContext!);
+//                     clearChat();
+//                   },
+//                   child: Text(
+//                     "Delete",
+//                     style: TextStyle(color: Colors.redAccent),
+//                   ),
+//                 ),
+//               ),
+//         );
+//     }
+//   }
+
+//   @override
+//   void dispose() {
+//     searchController.dispose();
+//     keyboardController.dispose();
+//     searchFocusNode.dispose();
+//     keyboardFocusNode.dispose();
+//   }
+// }
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:flutter_riverpod/legacy.dart';
+// import 'package:notesapp/core/Theme/gradients.dart';
+// import 'package:notesapp/core/extensions/context_extensions.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/components/auto_hide_scroll_to_bottom.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/bottom_message_bar_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_appbar_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_searchbar.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
+// import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+
+// //TODO: 2. Notifier needs robustness and double checks
+// //TODO: 5. Full-sized images being shown as thumbnails
+// //TODO: 6. Everything rebuilds when the long press is called
+// //TODO: 7. Search does not show new messages
+// //TODO: 8. First message does not change isSender state.
+// //TODO: 9. Clear Chat does not delete all messages properly.
+// //TODO: 10. Square images not being displayed properly.
+// //TODO: 11. State problems ocurring again.
+// //TODO: 12. Audio/Documents being replied to errors 
+// //TODO: 13. Preferable to revamp the overall messagebar structure 
+// //TODO: 14. If a media has duplicates, don't delete it
+// //TODO: 14. Audio players need to be robusted
+// //TODO: 14. Hero-Overlay needs implementation in ChatDetailScreen
+// //TODO: 14. Media other than images need to be formatted inside ChatDetailScreen
+// //TODO: 14. Search needs to be handled inside Forward screen
+// //TODO: 14. Camera needs robustness
+// //TODO: 14. GIF / Pasting needs robustness
+// //TODO: 14. Reply wrapper needs to handle other media
+// //TODO: 14. Audio record UI / overlay needs implementation
+
+// final StateProvider<bool> isNewChat = StateProvider((_) => false);
+
+// class ChatScreen extends ConsumerWidget {
+//   const ChatScreen({super.key});
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     // final notifier = ref.read(chatMessagesController.notifier);
+//     final notifier = ref.read(chatStateController.notifier);
+//     final overlayHandler = ref.read(overlayHandlerProvider);
+//     final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
+//     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
+//     final newChat = ref.read(isNewChat);
+//     debugPrint("🔃 ChatScreen rebuilt");
+
+//     if (newChat) {
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         ref.read(chatStateController.notifier).keyboardFocusNode.requestFocus();
+//         ref.read(isNewChat.notifier).state = false;
+//       });
+//     }
+
+//     return PopScope(
+//       canPop: canPop,
+//       onPopInvokedWithResult: (didPop, result) {
+//         final state = ref.read(chatStateController);
+//         final notifier = ref.read(chatStateController.notifier);
+
+//         // intercept back button
+//         if (state.showEmojis) {
+//           notifier.hideEmojiPicker();
+//           return; // prevent popping
+//         }
+
+//         if (state.isSearching) {
+//           notifier.stopSearching();
+//           notifier.closeSearchAndKeyboard();
+//           return; // prevent popping
+//         }
+
+//         // ✅ nothing to intercept → allow pop
+//         notifier.unSelectAllMessages();
+//         notifier.clearAnchorMessage();
+//         notifier.removeChatIfEmpty();
+//         overlayHandler.closeAttachmentBoard(instant: true);
+//         overlayHandler.hideRecordBar(instant: true);
+//         overlayHandler.hideReplyAnchor(instant: true);
+//         notifier.cancelAudioRecording();
+//       },
+//       child: GestureDetector(
+//         onTap: () {
+//           notifier.stopSearching();
+//           notifier.searchFocusNode.unfocus();
+//           notifier.keyboardFocusNode.unfocus();
+//           notifier.hideEmojiPicker();
+//           notifier.unSelectAllMessages();
+//           ref.read(overlayHandlerProvider).closeAttachmentBoard();
+//         },
+//         child: Scaffold(
+//           backgroundColor: Colors.transparent,
+//           body: Container(
+//             decoration: BoxDecoration(gradient: backgroundGradient),
+//             child: Column(
+//               children: [
+//                 const ChatAppBarWrapper(),
+//                 const ChatSearchBar(),
+//                 const MessageListWrapper(),
+//                 const BottomMessageBarWrapper(),
+//                 const EmojiBoardWrapper(),
+//               ],
+//             ),
+//           ),
+//           floatingActionButton: Consumer(
+//             builder: (context, ref, _) {
+//               final state = ref.watch(chatStateController);
+//               if (state.showEmojis || state.isSearching || state.messages.isEmpty) {
+//                 return const SizedBox.shrink(); // hide FAB
+//               }
+
+//               return AutoHideScrollToBottom(
+//                 itemScrollController: notifier.itemScrollController,
+//                 itemPositionsListener: notifier.itemPositionsListener,
+//                 lastIndex: state.messages.length - 1,
+//                 bottomPadding: notifier.isReplying ? 135 : 80,
+//                 backgroundColor: context.isLight ? const Color(0xFFD5F0FF) : const Color(0xFF94C1DB),
+//               );
+//             },
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+// import 'dart:io';
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:notesapp/core/Theme/gradients.dart';
+// import 'package:notesapp/core/Theme/icon_paths.dart';
+// import 'package:notesapp/core/Theme/theme_constants.dart';
+// import 'package:notesapp/core/extensions/chat_extensions.dart';
+// import 'package:notesapp/core/extensions/context_extensions.dart';
+// import 'package:notesapp/core/utils/context_menu_options.dart';
+// import 'package:notesapp/core/utils/time_format.dart';
+// import 'package:notesapp/core/utils/utils.dart';
+// import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+// import 'package:notesapp/root/data/enums/chatlist_filter.dart';
+// import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
+// import 'package:notesapp/root/screens/Profile/wrappers/parent_slide_wrapper.dart';
+// import 'package:notesapp/root/screens/Profile/profile_screen.dart';
+// import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
+// import 'package:notesapp/root/widgets/custom_icon_button.dart';
+// import 'package:notesapp/root/widgets/nothing_to_see.dart';
+// import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
+// import 'homescreen_state.dart';
+
+// class Homescreen extends ConsumerStatefulWidget {
+//   const Homescreen({super.key});
+
+//   @override
+//   ConsumerState<Homescreen> createState() => HomescreenState();
+// }
+
+// class HomescreenState extends HomeScreenBaseState {
+  
+//   @override
+//   Widget build(BuildContext context) {
+//     final chatNotifier = ref.read(chatListProvider.notifier);
+//     final chatlist = ref.watch(chatListProvider.select((state) => state.chats));
+//     final isLoading = ref.watch(chatListProvider.select((state) => state.isLoading));
+//     final isLight = Theme.brightnessOf(context) == Brightness.light;
+//     final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+//     final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+//     final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
+
+//     return PopScope(
+//       canPop: false,
+//       onPopInvokedWithResult: (didPop, result) {
+//         if (didPop) return;
+//         final now = DateTime.now();
+
+//         if (isSliding) {
+//           setState(() => isSliding = false);
+//         } else if (lastBackPress == null || now.difference(lastBackPress!) > const Duration(seconds: 2)) {
+//           lastBackPress = now;
+//           Utils.showGlobalSnackBar("Press again to exit.", Colors.blueGrey);
+//         } else {
+//           SystemNavigator.pop();
+//         }
+//       },
+//       child: ParentSlideWrapper(
+//         overlay: ProfileScreen(
+//           leading: IconButton(
+//             onPressed: () => setState(() => isSliding = false),
+//             icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+//           ),
+//         ),
+//         trigger: isSliding,
+//         child: Scaffold(
+//           floatingActionButton: CustomIconButton(
+//             size: 60,
+//             splashColor: const Color.fromARGB(14, 96, 125, 139),
+//             onPressed: createNewChat,
+//             icon: Image.asset(IconPaths.addNoteLight, scale: 10),
+//           ),
+//           appBar: AppBar(
+//             elevation: 0,
+//             backgroundColor: headerColor,
+//             shadowColor: Colors.transparent,
+//             toolbarHeight: 65,
+//             title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
+//             leading: Padding(padding: const EdgeInsets.only(left: 12), child: circularAvatar(isLight)),
+//             actions: [
+//               CustomContextMenu(
+//                 icon: const Icon(Icons.more_vert),
+//                 menuItems: homeScreenOptions,
+//                 onSelected: handleContextMenuAction,
+//               ),
+//             ],
+//           ),
+//           body: GestureDetector(
+//             behavior: HitTestBehavior.translucent,
+//             onTap: () => FocusScope.of(context).unfocus(),
+//             child: Container(
+//               height: context.screenHeight,
+//               width: context.screenWidth,
+//               padding: const EdgeInsets.only(top: 12),
+//               decoration: BoxDecoration(gradient: backgroundGradient),
+//               child: Column(
+//                 children: [
+//                   Padding(
+//                     padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
+//                     child: Row(
+//                       spacing: Platform.isWindows ? 5 : 0,
+//                       crossAxisAlignment: CrossAxisAlignment.center,
+//                       children: [
+//                         Expanded(
+//                           child: ConstrainedBox(
+//                             constraints: const BoxConstraints(maxHeight: 40),
+//                             child: SearchBar(
+//                               focusNode: searchFocusNode,
+//                               controller: searchController,
+//                               autoFocus: false,
+//                               shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+//                               padding: WidgetStatePropertyAll(EdgeInsets.zero),
+//                               shadowColor: WidgetStatePropertyAll(Colors.transparent),
+//                               backgroundColor: WidgetStatePropertyAll(headerColor),
+//                               leading: Padding(
+//                                 padding: const EdgeInsets.symmetric(
+//                                   horizontal: 10.0,
+//                                 ),
+//                                 child: Icon(
+//                                   Icons.search,
+//                                   color: ThemeConstants.iconLight,
+//                                 ),
+//                               ),
+//                               trailing: [
+//                                 searchController.text.isNotEmpty
+//                                   ? IconButton(
+//                                     icon: Icon(Icons.clear_rounded),
+//                                     onPressed: clearSearch,
+//                                   )
+//                                   : SizedBox.shrink(),
+//                               ],
+//                               hintText: "Search in notes...",
+//                               hintStyle: WidgetStatePropertyAll(
+//                                 TextStyle(
+//                                   color: ThemeConstants.iconLight,
+//                                   fontWeight: FontWeight.w500,
+//                                 ),
+//                               ),
+//                               onChanged: (value) => chatNotifier.searchChats(value),
+//                             ),
+//                           ),
+//                         ),
+//                         Align(
+//                           alignment: Alignment.topCenter,
+//                           child: IconButton(
+//                             onPressed: () {
+//                               CustomContextMenu.showMenuAt(
+//                                 context,
+//                                 position: Offset(context.screenWidth, kToolbarHeight * 2),
+//                                 showTail: false,
+//                                 menuItems: chatFilterOptions,
+//                                 onSelected: (value) {
+//                                   final selectedFilter = ChatlistFilter.values.firstWhere((f) => f.name == value);
+//                                   chatNotifier.applyFilter(selectedFilter);
+//                                   },
+//                                 triangleHorizontalOffset: 200,
+//                               );
+//                               // Navigator.push(
+//                               //   context,
+//                               //   CupertinoPageRoute(
+//                               //     builder: (_) => ProfileScreen(),
+//                               //   ),
+//                               // );
+//                               // ref.read(chatListProvider.notifier).applyFilter(ChatlistFilter.oldestCreated);
+//                             },
+//                             icon: Icon(
+//                               Icons.filter_list,
+//                               color: ThemeConstants.iconLight,
+//                             ),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                   Expanded(
+//                     child: isLoading ? LoadIndicator() : chatlist.isEmpty
+//                       ? const NothingToSee()
+//                       : ListView.separated(
+//                           itemCount: chatlist.length,
+//                           itemBuilder: (context, index) {
+//                             final chat = chatlist[index];
+//                             return TweenAnimationBuilder<double>(
+//                               tween: Tween(begin: 0, end: 1),
+//                               duration: const Duration(milliseconds: 300),
+//                               builder: (context, value, child) => Opacity(opacity: value, child: child),
+//                               child: ChatTile(
+//                                 title: chat.title ?? "New Note",
+//                                 subtitle: chat.loadLastMessage(),
+//                                 chatPhotoPath: chat.chatPhotoPath,
+//                                 time: TimeFormat.formatChatTime(chat.date),
+//                                 onDismissed: (_) => chatNotifier.removeChat(chat),
+//                                 onTap: () async => await navigateToChatScreen(chat),
+//                               ),
+//                             );
+//                           },
+//                           separatorBuilder: (context, index) => Divider(
+//                             thickness: 1,
+//                             indent: ThemeConstants.screenWidth * 0.07,
+//                             color: dividerColor,
+//                           ),
+//                         ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// import 'dart:io';
+
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:iconify_flutter/icons/mdi.dart';
+// import 'package:notesapp/core/Theme/icon_paths.dart';
+// import 'package:notesapp/core/controllers/user_provider.dart';
+// import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+// import 'package:notesapp/root/data/enums/chatlist_filter.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+// import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
+// import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
+// import 'package:notesapp/root/screens/Settings/settings_screen.dart';
+// import 'package:notesapp/root/widgets/custom_icon_button.dart';
+// import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+
+// import 'homescreen.dart';
+
+// abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
+//   final FocusNode searchFocusNode = FocusNode();
+//   final TextEditingController searchController = TextEditingController();
+//   bool isSliding = false;
+//   ChatlistFilter filter = ChatlistFilter.oldestCreated;
+//   DateTime? lastBackPress;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     ref.read(userController.notifier).loadUser();
+//   }
+
+//   @override
+//   void dispose() {
+//     searchController.dispose();
+//     searchFocusNode.dispose();
+//     super.dispose();
+//   }
+
+//   void clearSearch() {
+//     searchController.clear();
+//     searchFocusNode.unfocus();
+//     ref.read(chatListProvider.notifier).clearSearch();
+//   }
+
+//   Future<void> navigateToChatScreen(Chat chat) async {
+//     ref.read(chatListProvider.notifier).selectChat(chat);
+//     await chat.messages.load(); // preload before push
+//     await Future.wait(chat.messages.map((m) => m.media.load()));
+//     if (mounted) {
+//     Navigator.push(
+//       context,
+//       CupertinoPageRoute(builder: (_) => const ChatScreen()),
+//     );
+//   }
+//   }
+
+//   Future<void> createNewChat() async {
+//     final newChat = await ref.read(chatListProvider.notifier).addChat();
+//     await newChat.messages.load();
+//     ref.read(chatListProvider.notifier).selectChat(newChat);
+//     await newChat.messages.load();
+//     ref.read(isNewChat.notifier).state = true;
+//     Navigator.push(
+//       context,
+//       CupertinoPageRoute(builder: (_) => const ChatScreen()),
+//     );
+//   }
+
+//   void handleContextMenuAction(String value) {
+//     final chatNotifier = ref.read(chatListProvider.notifier);
+
+//     switch (value) {
+//       case "profile":
+//         setState(() => isSliding = true);
+//         break;
+//       case "settings":
+//         Navigator.push(
+//           context,
+//           CupertinoPageRoute(builder: (_) => const SettingsScreen()),
+//         );
+//         break;
+//       case "deleteAll":
+//         showCupertinoDialog(
+//           context: context,
+//           builder: (_) => CustomAlertDialog(
+//             title: "Delete all notes",
+//             content: "Are you sure you want to delete all notes?",
+//             iconColor: Colors.redAccent,
+//             iconData: Mdi.delete_empty_outline,
+//             iconSize: 25,
+//             option: TextButton(
+//               onPressed: () {
+//                 Navigator.pop(context);
+//                 chatNotifier.clearChats();
+//               },
+//               child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
+//             ),
+//           ),
+//         );
+//         break;
+//     }
+//   }
+
+//   void handleChatFilter(String value) {
+
+//   }
+
+//   Widget circularAvatar(bool isLight) {
+//     final String? path = ref.watch(userController)?.profilePhotoPath;
+
+//     return CustomIconButton(
+//       size: 40,
+//       backgroundColor: Colors.transparent,
+//       splashColor: const Color.fromARGB(144, 164, 182, 191),
+//       icon: ClipOval(
+//         child: SizedBox(
+//           width: 40,
+//           height: 40,
+//           child: Transform.scale(
+//             scale: 0.94,
+//             child: path != null
+//                 ? Image.file(File(path), fit: BoxFit.cover)
+//                 : Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark, fit: BoxFit.cover),
+//           ),
+//         ),
+//       ),
+//       onPressed: () => setState(() => isSliding = true),
+//     );
+//   }
+
+// }
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:flutter_riverpod/legacy.dart';
+// import 'package:notesapp/core/controllers/isar_database.dart';
+// import 'package:notesapp/core/extensions/chat_extensions.dart';
+// import 'package:notesapp/root/data/enums/chatlist_filter.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+
+// class ChatListState {
+//   final List<Chat> chats;
+//   final Chat? selectedChat;
+//   final bool isLoading; 
+
+//   const ChatListState({
+//     this.chats = const [],
+//     this.selectedChat,
+//     this.isLoading = false,
+//   });
+
+//   ChatListState copyWith({
+//     List<Chat>? chats,
+//     Chat? selectedChat,
+//     bool? isLoading,
+//   }) {
+//     return ChatListState(
+//       chats: chats ?? this.chats,
+//       selectedChat: selectedChat ?? this.selectedChat,
+//       isLoading: isLoading ?? this.isLoading,
+//     );
+//   }
+// }
+
+// /// The provider
+// final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>((ref) {
+//   return ChatListNotifier();
+// });
+
+
+// /// Notifier that controls a list of chats stored in Isar
+// class ChatListNotifier extends StateNotifier<ChatListState> {
+//   List<Chat> _allChats = [];// master list, source of truth
+//   ChatlistFilter _currentFilter = ChatlistFilter.oldestCreated; // default
+//   ChatListNotifier() : super(const ChatListState()) {
+//     loadChats();
+//   }
+
+//   /// Load all chats from DB
+//   Future<void> loadChats() async {
+//     state = state.copyWith(isLoading: true);
+//     final loadedChats = await IsarDatabase.loadAllChats();
+//     _allChats = loadedChats;
+//     state = state.copyWith(chats: loadedChats, isLoading: false);
+//   }
+
+//   Future<void> refreshChat(int isarId) async {
+//   final fresh = await IsarDatabase.isar.chats.get(isarId);
+//   if (fresh == null) return;
+
+//   await fresh.messages.load();
+//   _allChats = _allChats.map((c) => c.isarID == isarId ? fresh : c).toList();
+//   final updatedChats = state.chats.map((c) => c.isarID == isarId ? fresh : c).toList();
+//   final newSelected = state.selectedChat?.isarID == isarId ? fresh : state.selectedChat;
+
+//   state = state.copyWith(chats: updatedChats, selectedChat: newSelected);
+// }
+
+//   /// Create + persist + add to state
+//   Future<Chat> addChat() async {
+//     final savedChat = await IsarDatabase.addNewChat();
+//     _allChats = [..._allChats, savedChat];
+//     state = state.copyWith(chats: [...state.chats, savedChat]);
+//     return savedChat;
+//   }
+
+//   /// Remove chat
+//   Future<void> removeChat(Chat chat) async {
+//     await IsarDatabase.isar.writeTxn(() async {
+//       await IsarDatabase.isar.chats.delete(chat.isarID);
+//     });
+
+//     _allChats = _allChats.where((c) => c.isarID != chat.isarID).toList();
+
+//     state = state.copyWith(
+//       chats: state.chats.where((c) => c.isarID != chat.isarID).toList(),
+//       selectedChat: state.selectedChat?.isarID == chat.isarID
+//           ? null
+//           : state.selectedChat,
+//     );
+//   }
+
+//   /// Clear all chats
+//   Future<void> clearChats() async {
+//     await IsarDatabase.clearRepo();
+//     _allChats = [];
+//     state = const ChatListState();
+//   }
+
+//   /// Update chat and keep state consistent
+//   Future<void> updateChat(Chat updatedChat) async {
+//     await IsarDatabase.saveChat(updatedChat);
+
+//     _allChats = _allChats
+//         .map((c) => c.isarID == updatedChat.isarID ? updatedChat : c)
+//         .toList();
+
+//     final updatedChats = state.chats
+//         .map((c) => c.isarID == updatedChat.isarID ? updatedChat : c)
+//         .toList();
+
+//     final newSelected = state.selectedChat?.isarID == updatedChat.isarID
+//         ? updatedChat
+//         : state.selectedChat;
+
+//     state = state.copyWith(chats: updatedChats, selectedChat: newSelected);
+//   }
+
+//   /// Search chats by title
+//   void searchChats(String query) {
+//     if (query.isEmpty) {
+//       clearSearch();
+//       return;
+//     }
+//     final lowercaseQuery = query.toLowerCase();
+//     state = state.copyWith(
+//       chats: _allChats.where(
+//         (chat) => (chat.title ?? "").toLowerCase().contains(lowercaseQuery)).toList(),
+//     );
+//   }
+
+//   /// Reset to full list
+//   void clearSearch() {
+//     state = state.copyWith(chats: _allChats);
+//   }
+
+//   /// Select chat
+//   void selectChat(Chat chat) {
+//     state = state.copyWith(selectedChat: chat);
+//   }
+
+//   /// clear selectedChat
+//   void clearSelectedChat() {
+//   state = state.copyWith(selectedChat: null);
+//   }
+
+//   /// Change selected chat title
+//   void changeSelectedChatTitle(String newTitle) {
+//     if (state.selectedChat == null) return;
+//     final updatedChat = state.selectedChat!.copyWith(title: newTitle);
+//     final updatedChats = state.chats
+//         .map((c) => c.isarID == updatedChat.isarID ? updatedChat : c)
+//         .toList();
+
+//     state = state.copyWith(chats: updatedChats, selectedChat: updatedChat);
+//   }
+
+//   /// Get chat by ID
+//   Chat getChatByID(String uuid) {
+//     return _allChats.firstWhere((chat) => chat.uuid == uuid);
+//   }
+
+//   /// Sort chats based on the current filter
+//   void applyFilter(ChatlistFilter filter) {
+//     _currentFilter = filter;
+
+//     List<Chat> sortedChats = List.from(_allChats); // clone master list
+
+//     switch (filter) {
+//       case ChatlistFilter.alphabetical:
+//         sortedChats.sort(
+//           (a, b) => (a.title ?? "").toLowerCase().compareTo(
+//             (b.title ?? "").toLowerCase(),
+//           ),
+//         );
+//         break;
+
+//       case ChatlistFilter.newestCreated:
+//         sortedChats.sort((a, b) => b.date.compareTo(a.date));
+//         break;
+
+//       case ChatlistFilter.oldestCreated:
+//         sortedChats.sort((a, b) => a.date.compareTo(b.date));
+//         break;
+
+//       case ChatlistFilter.newestModified:
+//         sortedChats.sort(
+//           (a, b) => b.loadLastMessageTime().compareTo(a.loadLastMessageTime()),
+//         );
+//         break;
+
+//       case ChatlistFilter.oldestModified:
+//         sortedChats.sort(
+//           (a, b) => a.loadLastMessageTime().compareTo(b.loadLastMessageTime()),
+//         );
+//         break;
+//     }
+
+//     state = state.copyWith(chats: sortedChats);
+//   }
+// }
+
+// import 'package:isar_community/isar.dart';
+// import 'package:notesapp/root/data/models/chat_model.dart';
+// import 'package:notesapp/root/data/models/media_model.dart';
+// import 'package:notesapp/root/data/models/message_model.dart';
+// import 'package:notesapp/root/data/models/settings_model.dart';
+// import 'package:notesapp/root/data/models/user_model.dart';
+// import 'package:path_provider/path_provider.dart';
+
+// class IsarDatabase {
+//   static Isar? _isar;
+
+//   /// Initialize Isar
+//   static Future<void> init() async {
+//     if (_isar != null && _isar!.isOpen) return;
+//     final dir = await getApplicationDocumentsDirectory();
+//     _isar = await Isar.open(
+//       [ChatSchema, MessageSchema, MediaSchema, UserSchema, SettingsSchema],
+//       directory: dir.path,
+//       name: 'chat_repo',
+//     );
+//   }
+
+//   /// Accessor
+//   static Isar get isar {
+//     if (_isar == null) throw Exception("Isar not initialized. Call IsarKit.init()");
+//     return _isar!;
+//   }
+
+//   /// Load all chats
+//   static Future<List<Chat>> loadAllChats() async {
+//     return await isar.chats.where().findAll();
+//   }
+
+//   static Future<User?> loadUserData() async {
+//     return await isar.users.where().findFirst();
+//   }
+
+//   static Future<User?> loadSettings() async {
+//     return await isar.users.where().findFirst();
+//   }
+
+//   /// Load first N messages for a chat
+//   static Future<List<Message>> loadInitialMessages(Id chatId, {int limit = 50}) async {
+//     return await isar.messages
+//         .filter()
+//         .chat((q) => q.isarIDEqualTo(chatId))
+//         .sortByTimeDesc()
+//         .limit(limit)
+//         .findAll();
+//   }
+
+//   /// Lazy-load older messages
+//   static Future<List<Message>> loadOlderMessages(Id chatId, DateTime before, {int limit = 50}) async {
+//     return await isar.messages
+//         .filter()
+//         .chat((q) => q.isarIDEqualTo(chatId))
+//         .timeLessThan(before)
+//         .sortByTimeDesc()
+//         .limit(limit)
+//         .findAll();
+//   }
+
+// static Future<Chat> addNewChat() async {
+//   late Chat savedChat;
+
+//   await isar.writeTxn(() async {
+//     // 1️⃣ Create chat
+//     final newChat = Chat()
+//       ..title = "New Note"
+//       ..date = DateTime.now()
+//       ..messages = IsarLinks<Message>();
+
+//     // 2️⃣ Create and persist init message (so it gets a real Isar ID)
+//     final newMessage = Message()
+//       ..id = "0000"
+//       ..text = "This is a new chat. Start typing to create your first note."
+//       ..isSender = false
+//       ..time = DateTime.now();
+
+//     await isar.messages.put(newMessage);      // assign isarId
+//     await isar.chats.put(newChat);            // 3️⃣ Persist chat
+//     newChat.messages.add(newMessage);         // 4️⃣ Link init message safely
+//     await newChat.messages.save();            // Save the linked message to chat
+//     newChat.preview = newMessage.text;        // 5️⃣ Update preview and date
+//     newChat.date = newMessage.time;
+//     await isar.chats.put(newChat);
+//     savedChat = (await isar.chats.get(newChat.isarID))!; // 6️⃣ Re-fetch the fully managed chat and preload links
+//     await savedChat.messages.load();
+//   });
+
+//   return savedChat;
+// }
+
+
+
+
+
+
+//   /// Save or update a chat
+//   static Future<void> saveChat(Chat chat) async {
+//     await isar.writeTxn(() async {
+//       await isar.chats.put(chat);
+//     });
+//   }
+
+//   /// Save or update a message
+//   static Future<void> saveMessage(Message message) async {
+//     await isar.writeTxn(() async {
+//       await isar.messages.put(message);
+//     });
+//   }
+
+//   /// Save or update media
+//   static Future<void> saveMedia(Media media) async {
+//     await isar.writeTxn(() async {
+//       await isar.medias.put(media);
+//     });
+//   }
+
+//   static Future<void> clearRepo() async {
+//     if (_isar == null || !_isar!.isOpen) {
+//       throw Exception("Isar instance 'chat_repo' is not initialized.");
+//     }
+
+//     isar.writeTxn(() async {
+//       await isar.chats.clear();
+//       await isar.messages.clear();
+//       await isar.medias.clear();
+//     });
+//   }
+// }
+
+// now please tell me whats up

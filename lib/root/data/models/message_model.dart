@@ -58,6 +58,15 @@ class Message {
     return newMessage;
   }
 
+  factory Message.fromCroppedImage(Media media) {
+    final message = Message();
+    message.text = "📷 Photo"; // Cropped images usually have no text
+    message.media.value = media;
+    message.isSender = true; // or false, depending on your app logic
+    message.time = DateTime.now();
+    return message;
+  }
+
   @override
   String toString() =>
       'Message(id: $id, text: "$text", isSender: $isSender, time: $time, media: ${media.value}, replyingTo: ${replyingTo.value?.id})';

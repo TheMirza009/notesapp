@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:croppy/croppy.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
@@ -7,6 +8,7 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
+import 'package:notesapp/root/widgets/photo_view/croppyImage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -79,14 +81,17 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
     setState(() => isEditing = false);
     focusNode.unfocus();
   }
-  
-Future<void> pickNewProfilePhoto() async {
-    final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
+
+  Future<void> pickNewProfilePhoto() async {
+    final pickedMedia = await MediaHandler.pickImage(
+      isProfilePicture: true,
+      useCroppy: false,
+    );
     if (pickedMedia == null) {
       debugPrint("❌ No media selected");
       return;
     }
-
+    
     debugPrint("📷 Picked media: ${pickedMedia.path}");
 
     final currentUser = ref.read(userController);
@@ -135,7 +140,6 @@ Future<void> pickNewProfilePhoto() async {
     }
   }
 
-
   void _precacheProfileImage(String? path) {
     if (path == null) return;
 
@@ -146,7 +150,6 @@ Future<void> pickNewProfilePhoto() async {
       debugPrint('Error precaching profile image: $e');
     }
   }
-
 
   void removeProfilePhoto() {
     final user = ref.read(userController);

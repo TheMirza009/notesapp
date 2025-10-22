@@ -166,6 +166,14 @@ List<PopupMenuItem<String>> get chatScreenOptions => [
 /// Options: Chat Screen
 List<PopupMenuItem<String>> get galleryOptions => [
   PopupMenuItem(
+    value: 'croppy',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.crop2),
+      text: "Crop Image",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
     value: 'shareImage',
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.shareIcon2),

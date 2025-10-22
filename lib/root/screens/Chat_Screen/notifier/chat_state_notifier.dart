@@ -52,6 +52,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   @override
   ChatState build() {
+    ref.keepAlive();
     keyboardFocusNode.addListener(() {
       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
     });
@@ -60,7 +61,9 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (selectedChat == null) return ChatState();
 
     _chat = selectedChat;
-    _hydrateMessages(); // Load messages into state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _hydrateMessages();
+  });
     return ChatState(); // empty initial
   }
 
@@ -363,7 +366,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     // Update in-memory collections & state
     allMessages.removeWhere((m) => m.isarId == message.isarId);
     unSelectAllMessages();
-    state = state.copyWith(messages: [...allMessages]);
+    state = state.copyWith(messages: List.unmodifiable(allMessages));
   }
 
   /// Background isolate function to delete a media file path. Runs via compute().
@@ -547,7 +550,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   /// Clears search and resets results
   void clearSearch() {
     searchController.clear();
-    state = state.copyWith(messages: [...allMessages]);
+    state = state.copyWith(messages: [...allMessages], anchorMessage: state.anchorMessage);
   }
 
   /// Filters chat by query
@@ -574,7 +577,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   }
 
   void stopSearching() {
-    state = state.copyWith(isSearching: false);
+    state = state.copyWith(isSearching: false, anchorMessage: state.anchorMessage);
   }
 
   // =====================================================

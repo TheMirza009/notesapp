@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -58,6 +59,9 @@ class ProfileScreenState extends ProfileScreenBaseState {
           actions: [
             ThemeSwitch()
           ],
+          systemOverlayStyle: SystemUiOverlayStyle(
+              systemNavigationBarColor: (context.isLight ? ThemeConstants.hometoolbarLight3 :ThemeConstants.messageBarDark),
+          ) ,
         ),
         body: Container(
           height: screensize.height,
@@ -126,10 +130,12 @@ class ProfileScreenState extends ProfileScreenBaseState {
   }
 }
 
+bool? _isHeroOpen = false;
+
 Widget _buildProfileImage(BuildContext context, String? path, {bool expanded = false}) {
   if (expanded) {
+    _isHeroOpen = true;
     final double availableHeight = context.screenHeight - 200; // leave space for buttons
-
     return SizedBox(
       height: availableHeight,
       width: context.screenWidth,

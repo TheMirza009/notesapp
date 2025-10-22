@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/screens/Chat_screen/bodies/chat_screen_glass_body.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/auto_hide_scroll_to_bottom.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
@@ -14,6 +19,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_w
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 
 //TODO: 2. Notifier needs robustness and double checks
 //TODO: 5. Full-sized images being shown as thumbnails
@@ -43,11 +49,10 @@ class ChatScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // final notifier = ref.read(chatMessagesController.notifier);
-    final notifier = ref.read(chatStateController.notifier);
     final overlayHandler = ref.read(overlayHandlerProvider);
     final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
-    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
     final newChat = ref.read(isNewChat);
+    final bubbleStyle = ref.watch(settingsController)?.selectedBubbleStyle ?? BubbleStyle.opaque;
     debugPrint("🔃 ChatScreen rebuilt");
 
     if (newChat) {
@@ -84,7 +89,20 @@ class ChatScreen extends ConsumerWidget {
         overlayHandler.hideReplyAnchor(instant: true);
         notifier.cancelAudioRecording();
       },
-      child: GestureDetector(
+      child: bubbleStyle == BubbleStyle.glass ? ChatScreenGlassBody() : _ChatScreenBody()
+    );
+  }
+}
+
+class _ChatScreenBody extends ConsumerWidget {
+  const _ChatScreenBody({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(chatStateController.notifier);
+    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
+    final backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
+    return GestureDetector(
         onTap: () {
           notifier.stopSearching();
           notifier.searchFocusNode.unfocus();
@@ -94,17 +112,32 @@ class ChatScreen extends ConsumerWidget {
           ref.read(overlayHandlerProvider).closeAttachmentBoard();
         },
         child: Scaffold(
+          extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          toolbarHeight: 0,
+          backgroundColor: context.isLight ? const Color(0xFFE7ECF3) : const Color(0xFF23333F),
+          shadowColor: Colors.transparent,
+          toolbarOpacity: 0,
+          surfaceTintColor: backgroundColor,
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            systemNavigationBarColor: backgroundColor,
+            statusBarColor: Colors.transparent,
+          ),
+        ),
           backgroundColor: Colors.transparent,
           body: Container(
             decoration: BoxDecoration(gradient: backgroundGradient),
-            child: Column(
-              children: [
-                const ChatAppBarWrapper(),
-                const ChatSearchBar(),
-                const MessageListWrapper(),
-                const BottomMessageBarWrapper(),
-                const EmojiBoardWrapper(),
-              ],
+            child: SafeArea(
+              child: Column(
+                children: [
+                  const ChatAppBarWrapper(),
+                  const ChatSearchBar(),
+                  const MessageListWrapper(),
+                  const BottomMessageBarWrapper(),
+                  const EmojiBoardWrapper(),
+                ],
+              ),
             ),
           ),
           floatingActionButton: Consumer(
@@ -124,7 +157,6 @@ class ChatScreen extends ConsumerWidget {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 }

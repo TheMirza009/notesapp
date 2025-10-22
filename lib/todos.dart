@@ -2,7 +2,8 @@
 // 🛑 P0 — CRITICAL FIXES
 // =====================================================
 
-//TODO (P0): Email app not opening
+//// (P0): Email app not opening
+//TODO (P0): problems with replying with Voice messages again
 //TODO (P0): Videos to be added
 //TODO (P0): Navigation janky 
 //TODO (P0): Fonts not being updated

@@ -1,10 +1,14 @@
 
 import 'dart:io';
 import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen_state.dart';
+import 'package:notesapp/root/widgets/photo_view/croppyImage.dart';
+import 'package:notesapp/root/widgets/photo_view/croppy_example.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -168,8 +172,8 @@ abstract class ChatDetailBase extends ConsumerState<ChatDetailScreen> {
         if (!context.mounted) return; // Prevent navigation if context is disposed
 
         await ref.read(chatStateController.notifier).deleteMessage(message);
-        ref.invalidate(chatStateController);
-        ref.invalidate(chatDetailProvider);
+        // ref.invalidate(chatStateController);
+        ref.read(chatDetailProvider.notifier).getMedia();
         Navigator.pop(context);
         break;
       case "forwardimage":
@@ -200,9 +204,48 @@ abstract class ChatDetailBase extends ConsumerState<ChatDetailScreen> {
         final media = await MediaHandler.cropAndSavePhoto(image.path!);
          if (media == null) return;
          await saveNewProfilePhoto(ref, media);
-         Navigator.push(context, CupertinoPageRoute(builder: (_) => ProfileScreen()));
-        
-    default:
-    }
-  }
+        Navigator.push(
+          context,
+          CupertinoPageRoute(builder: (_) => ProfileScreen()),
+        );
+      case 'croppy':
+        final media = await MediaHandler.cropAndSavePhoto(image.path!);
+        if (media == null) return;
 
+        final Message message = Message.fromCroppedImage(media);
+        Navigator.push(
+          context,
+          CupertinoPageRoute(builder: (_) => ChatForwardScreen(message: message)),
+        );
+      //  await ref.read(chatStateController.notifier).forwardMessage(original: message, targetChat: ref.read(chatListProvider).selectedChat!);
+
+    default:
+  }
+}
+
+
+class SlowMaterialPageRoute<T> extends MaterialPageRoute<T> {
+  SlowMaterialPageRoute({
+    required super.builder,
+    super.settings,
+  });
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 600);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 400);
+
+  @override
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+    // Apply a custom curve to Material's default fade/slide
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return super
+        .buildTransitions(context, curved, secondaryAnimation, child);
+  }
+}

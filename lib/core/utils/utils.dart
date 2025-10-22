@@ -69,4 +69,41 @@ class Utils {
       return '${gb.toStringAsFixed(2)} GB';
     }
   }
+
+  static bool isAndroidGestureNavigationEnabled(BuildContext context) {
+    final value = MediaQuery.of(context).systemGestureInsets.bottom;
+    return value < 48.0 && value != 0.0;
+  }
+  static void smoothNavigate(BuildContext? context, Widget child) {
+  final ctx = context ?? navigatorKey.currentContext!;
+  Navigator.of(ctx).push(
+    PageRouteBuilder(
+      opaque: false, // makes the fade more natural
+      barrierColor: Colors.black26, // subtle dim background like iOS
+      transitionDuration: const Duration(milliseconds: 500),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) => child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutQuart,
+          reverseCurve: Curves.easeInQuint,
+        );
+
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.8, // slightly larger, then settles
+              end: 1.0,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    ),
+  );
+}
+
+
 }

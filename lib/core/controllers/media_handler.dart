@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -11,6 +13,8 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
+import 'package:notesapp/root/widgets/photo_view/croppyImage.dart';
+import 'package:notesapp/root/widgets/photo_view/croppy_settings_modal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart'; // uncomment if using compression
@@ -21,7 +25,7 @@ class MediaHandler {
   /// Pick an image.
   /// - If [isProfilePicture] = true → crop + save to ProfilePictures.
   /// - Else → save to Photos.
-  static Future<Media?> pickImage({bool isProfilePicture = false, ImageSource? source = ImageSource.gallery}) async {
+  static Future<Media?> pickImage({bool isProfilePicture = false, ImageSource? source = ImageSource.gallery, bool? useCroppy = false}) async {
     final XFile? pickedFile = await _picker.pickImage(
       source: source ?? ImageSource.gallery,
     );
@@ -34,7 +38,7 @@ class MediaHandler {
     debugPrint("✅ Picked file: ${file.path}");
 
     if (isProfilePicture && !kisWindows) {
-      final croppedFile = await _cropImage(file);
+      final croppedFile = (useCroppy ?? false) ? await _croppyImage(file) : await _cropImage(file); //_croppyImage(file);
       if (croppedFile != null) {
         debugPrint("✂️ Cropped file: ${croppedFile.path}");
         file = croppedFile;
@@ -253,14 +257,14 @@ class MediaHandler {
     bool isProfilePicture = true,
   }) async {
     try {
-      final File file = File(filePath);
+      final file = File(filePath);
       if (!await file.exists()) {
         debugPrint("❌ cropAndSavePhoto: File not found at $filePath");
         return null;
       }
 
       debugPrint("✂️ Starting crop for: $filePath");
-      final croppedFile = await _cropImage(file);
+      final croppedFile = await _croppyImage(file); // your cropper function
       if (croppedFile == null) {
         debugPrint("⚠️ cropAndSavePhoto: Cropper returned null");
         return null;
@@ -273,9 +277,15 @@ class MediaHandler {
       );
 
       debugPrint("💾 Saved cropped file: ${savedFile.path}");
-      final bytes = await savedFile.readAsBytes();
-      final decodedImage = await decodeImageFromList(bytes);
-      final aspectRatio = decodedImage.width / decodedImage.height;
+
+      await _ensureFileReady(savedFile);     // ✅ Wait again after saving
+      await savedFile.openRead().drain();    // ✅ Ensure file flushes to disk before reading
+
+      // ✅ Compute aspect ratio off the main isolate
+      final aspectRatio = await _getAspectRatio(savedFile.path);
+      if (aspectRatio == null) {
+        debugPrint("⚠️ Could not decode aspect ratio for ${savedFile.path}");
+      }
 
       final media = Media.fromFilePath(savedFile.path);
       media.aspectRatio = aspectRatio;
@@ -287,6 +297,38 @@ class MediaHandler {
       return null;
     }
   }
+
+  /// Static helper for compute() to use
+  static Future<double?> _getAspectRatio(String path) async {
+  final file = File(path);
+  final bytes = await file.openRead(16, 24).fold<Uint8List>(
+    Uint8List(0),
+    (prev, chunk) => Uint8List.fromList([...prev, ...chunk]),
+  );
+  if (bytes.length < 8) return null;
+
+  // PNG header starts at byte 16 for width, 20 for height
+  final width = bytes.buffer.asByteData().getUint32(0);
+  final height = bytes.buffer.asByteData().getUint32(4);
+  if (width == 0 || height == 0) return null;
+  return width / height;
+}
+
+  static Future<void> _ensureFileReady(File file) async {
+    const maxWait = Duration(seconds: 2);
+    const pollInterval = Duration(milliseconds: 50);
+
+    final stopwatch = Stopwatch()..start();
+    while (stopwatch.elapsed < maxWait) {
+      if (await file.exists()) {
+        final length = await file.length();
+        if (length > 0) return; // ✅ file ready
+      }
+      await Future.delayed(pollInterval);
+    }
+    throw Exception("File never became ready: ${file.path}");
+  }
+
 
 
   /// Cropping logic
@@ -310,6 +352,33 @@ class MediaHandler {
     );
 
     return croppedFile != null ? File(croppedFile.path) : null;
+  }
+
+  /// ✂️ New Croppy-based image cropping
+  static Future<File?> _croppyImage(File imageFile) async {
+    final context = navigatorKey.currentContext!;
+    final result = await cropImageWithCroppy(
+      heroTag: "cropped_image_${imageFile.path}",
+      context: context,
+      path: imageFile.path,
+      settings: CropSettings.initial(), // optional custom settings
+      useCupertino: true, // Theme.of(context).platform == TargetPlatform.iOS,
+    );
+
+    if (result == null) return null;
+
+    // Convert Cropped ui.Image → PNG bytes → File
+    final byteData = await result.image.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
+
+    final croppedPath = imageFile.path.replaceFirst(
+      RegExp(r'\.(jpg|jpeg|png)$', caseSensitive: false),
+      '_cropped.png',
+    );
+    final croppedFile = File(croppedPath);
+    await croppedFile.writeAsBytes(buffer);
+
+    return croppedFile;
   }
 
   /// Save file into app storage under Media/<subfolder>/

@@ -1,11 +1,16 @@
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/ripple_well.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/swipable.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_content_builder.dart';
@@ -82,7 +87,11 @@ class MessageBubble extends StatefulWidget {
 
 class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => (widget.message.media?.value?.type == Mediatype.image) ?? true;
+  bool get wantKeepAlive {
+    final type = widget.message.media?.value?.type;
+    return type == Mediatype.image || type == Mediatype.audio || type == Mediatype.text;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -253,4 +262,3 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
     );
   }
 }
-

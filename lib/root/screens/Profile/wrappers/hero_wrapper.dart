@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
 
 /// A reusable [HeroWrapper] that manages both:
 /// - the source (thumbnail in widget tree)
@@ -99,60 +101,63 @@ class HeroWrapper extends StatelessWidget {
     Alignment alignment = Alignment.center,
     void Function()? onBackgroundTapped,
   }) {
-    return GestureDetector(
-      onTap: onBackgroundTapped ?? () => Navigator.of(context).pop(),
-      child: Material(
-        color: Colors.transparent,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (topWidget != null)
-                FadeTransition(
-                  opacity: CurvedAnimation(
-                    parent: ModalRoute.of(context)!.animation!,
-                    curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(systemNavigationBarColor: Colors.black),
+      child: GestureDetector(
+        onTap: onBackgroundTapped ?? () => Navigator.of(context).pop(),
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (topWidget != null)
+                  FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: ModalRoute.of(context)!.animation!,
+                      curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+                    ),
+                    child: topWidget,
                   ),
-                  child: topWidget,
-                ),
-              Hero(
-                tag: tag,
-                flightShuttleBuilder: (
-                  flightContext,
-                  animation,
-                  flightDirection,
-                  fromHeroContext,
-                  toHeroContext,
-                ) {
-                  final curvedAnimation = CurvedAnimation(
-                    parent: animation,
-                    curve: flightDirection == HeroFlightDirection.push
-                        ? pushCurve
-                        : popCurve,
-                  );
-                  return AnimatedBuilder(
-                    animation: curvedAnimation,
-                    builder: (context, child) => child!,
-                    child: toHeroContext.widget,
-                  );
-                },
-                child: Material(
-                  color: Colors.transparent,
-                  child: Align(
-                    alignment: alignment,
-                    child: expandedChild,
+                Hero(
+                  tag: tag,
+                  flightShuttleBuilder: (
+                    flightContext,
+                    animation,
+                    flightDirection,
+                    fromHeroContext,
+                    toHeroContext,
+                  ) {
+                    final curvedAnimation = CurvedAnimation(
+                      parent: animation,
+                      curve: flightDirection == HeroFlightDirection.push
+                          ? pushCurve
+                          : popCurve,
+                    );
+                    return AnimatedBuilder(
+                      animation: curvedAnimation,
+                      builder: (context, child) => child!,
+                      child: toHeroContext.widget,
+                    );
+                  },
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Align(
+                      alignment: alignment,
+                      child: expandedChild,
+                    ),
                   ),
                 ),
-              ),
-              if (bottomWidget != null)
-                FadeTransition(
-                  opacity: CurvedAnimation(
-                    parent: ModalRoute.of(context)!.animation!,
-                    curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+                if (bottomWidget != null)
+                  FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: ModalRoute.of(context)!.animation!,
+                      curve: const Interval(0.6, 1.0, curve: Curves.easeIn),
+                    ),
+                    child: bottomWidget,
                   ),
-                  child: bottomWidget,
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -161,39 +166,44 @@ class HeroWrapper extends StatelessWidget {
 
   /// Pushes fullscreen overlay manually (if you don’t want to use the widget thumbnail).
   static Future<T?> push<T>(
-    BuildContext context, {
-    required String tag,
-    required Widget expandedChild,
-    Widget? topWidget,
-    Widget? bottomWidget,
-    Duration pushDuration = const Duration(milliseconds: 400),
-    Duration popDuration = const Duration(milliseconds: 300),
-    Curve pushCurve = Curves.easeOut,
-    Curve popCurve = Curves.easeInBack,
-    Alignment alignment = Alignment.center,
-  }) {
-    return Navigator.of(context).push<T>(
-      PageRouteBuilder(
-        opaque: false,
-        barrierDismissible: true,
-        barrierColor: Colors.black87,
-        transitionDuration: pushDuration,
-        reverseTransitionDuration: popDuration,
-        pageBuilder: (_, __, ___) {
-          return _destination(
-            context,
-            tag: tag,
-            expandedChild: expandedChild,
-            topWidget: topWidget,
-            bottomWidget: bottomWidget,
-            pushDuration: pushDuration,
-            popDuration: popDuration,
-            pushCurve: pushCurve,
-            popCurve: popCurve,
-            alignment: alignment,
-          );
-        },
-      ),
-    );
-  }
+  BuildContext context, {
+  required String tag,
+  required Widget expandedChild,
+  Widget? topWidget,
+  Widget? bottomWidget,
+  Duration pushDuration = const Duration(milliseconds: 400),
+  Duration popDuration = const Duration(milliseconds: 300),
+  Curve pushCurve = Curves.easeOut,
+  Curve popCurve = Curves.easeInBack,
+  Alignment alignment = Alignment.center,
+}) async {
+  
+  // 👇 Push fullscreen
+  final result = await Navigator.of(context).push<T>(
+    PageRouteBuilder(
+      opaque: false,
+      barrierDismissible: true,
+      barrierColor: Colors.black87,
+      transitionDuration: pushDuration,
+      reverseTransitionDuration: popDuration,
+      pageBuilder: (_, __, ___) {
+        return _destination(
+          context,
+          tag: tag,
+          expandedChild: expandedChild,
+          topWidget: topWidget,
+          bottomWidget: bottomWidget,
+          pushDuration: pushDuration,
+          popDuration: popDuration,
+          pushCurve: pushCurve,
+          popCurve: popCurve,
+          alignment: alignment,
+        );
+      },
+    ),
+  );
+
+  return result;
+}
+
 }

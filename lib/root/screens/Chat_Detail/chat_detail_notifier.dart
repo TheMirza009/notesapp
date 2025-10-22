@@ -146,7 +146,7 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
     ref.read(chatListProvider.notifier).refreshChat(chat.isarID);
     state = state.copyWith(chat: chat);
   }
-
+  
   void openImage() {
     imageOpened = !imageOpened;
     state = state.copyWith();

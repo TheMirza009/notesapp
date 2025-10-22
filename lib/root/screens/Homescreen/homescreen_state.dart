@@ -44,16 +44,23 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   }
 
   Future<void> navigateToChatScreen(Chat chat) async {
-    ref.read(chatListProvider.notifier).selectChat(chat);
-    await chat.messages.load(); // preload before push
-    await Future.wait(chat.messages.map((m) => m.media.load()));
-    if (mounted) {
+  // 1. Select chat immediately (lightweight)
+  ref.read(chatListProvider.notifier).selectChat(chat);
+  
+  // 2. Navigate FIRST (don't wait for data)
+  if (mounted) {
     Navigator.push(
       context,
       CupertinoPageRoute(builder: (_) => const ChatScreen()),
     );
   }
-  }
+  
+  // 3. Load data in background (optional - ChatScreen will handle it)
+  // This happens AFTER navigation starts
+  chat.messages.load().then((_) {
+    Future.wait(chat.messages.map((m) => m.media.load()));
+  });
+}
 
   Future<void> createNewChat() async {
     final newChat = await ref.read(chatListProvider.notifier).addChat();
@@ -118,7 +125,7 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
           width: 40,
           height: 40,
           child: Transform.scale(
-            scale: 0.94,
+            scale: 1,
             child: path != null
                 ? Image.file(File(path), fit: BoxFit.cover)
                 : Image.asset(isLight ? IconPaths.avatarLight : IconPaths.avatarDark, fit: BoxFit.cover),

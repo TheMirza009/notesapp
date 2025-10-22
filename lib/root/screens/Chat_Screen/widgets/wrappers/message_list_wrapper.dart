@@ -12,11 +12,8 @@ import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
-import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/date_chip.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
@@ -25,7 +22,6 @@ import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 import 'package:open_file/open_file.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MessageListWrapper extends ConsumerWidget {
   const MessageListWrapper({super.key});
@@ -43,7 +39,7 @@ class MessageListWrapper extends ConsumerWidget {
   // });
 
     return Expanded(
-      child: isLoading ? LoadIndicator() : messages.isEmpty
+      child: isLoading ? const LoadIndicator() : messages.isEmpty
           ? const NothingToSee()
           : ScrollablePositionedList.builder(
               itemScrollController: notifier.itemScrollController,
@@ -53,7 +49,7 @@ class MessageListWrapper extends ConsumerWidget {
                 if (index == messages.length) {
                   return const SizedBox( height: 150);
                 }
-
+          
                 final message = messages[index]; // 👈 Get the message directly
                 return ProviderScope(
                   overrides: [
@@ -64,6 +60,7 @@ class MessageListWrapper extends ConsumerWidget {
                 );
               },
             ),
+            
     );
   }
 }
@@ -87,7 +84,12 @@ class _MessageItemBuilder extends ConsumerWidget {
     if (message.isImage) {
       final path = message.media.value?.path;
       if (path != null) {
-        precacheImage(ExtendedFileImageProvider(File(path), cacheRawData: true), context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          precacheImage(
+            ExtendedFileImageProvider(File(path), cacheRawData: true),
+            context,
+          );
+        });
       }
     }
 
@@ -125,6 +127,7 @@ class _MessageItemBuilder extends ConsumerWidget {
               if (message.isImage) {
                 final allImages = ref.read(chatStateController).messages.imageMedias;
                 final initialIndex = allImages.indexOfMediaIsarID(message);
+                debugPrint( "📷❓ASPECT RATIO:  ${(message.media.value?.aspectRatio).toString()}" ?? "COULD NOT GET");
                 Navigator.push(
                   context,
                   MaterialPageRoute(
