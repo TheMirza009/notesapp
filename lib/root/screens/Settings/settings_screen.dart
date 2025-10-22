@@ -48,6 +48,7 @@ class SettingsScreen extends ConsumerWidget {
                 CustomContextMenu.showMenuAt(
                 context,
                 triangleHorizontalOffset: 180,
+                showTail: false,
                 position: Offset(context.screenWidth - 20, 190), // Offset(200, 120),
                 menuItems: bubbleStyleOptions,
                 onSelected: (val) => handleBubbleStyle(ref, val),

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ class BottomMessageBar extends StatefulWidget {
   final VoidCallback onAttachmentTap;
   final VoidCallback onMicTap;
   final Function(String) onSend;
+  final Function(String) onEdit;
   final Function(String)? onSubmitted;
   final void Function(Uint8List)? onImagePasted;
   final void Function()? onFieldTap;
@@ -24,6 +26,7 @@ class BottomMessageBar extends StatefulWidget {
     required this.onAttachmentTap,
     required this.onMicTap,
     required this.onSend,
+    required this.onEdit,
     this.onSubmitted,
     this.onImagePasted,
     this.keyboardController,
@@ -157,7 +160,12 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                             ),
                             IconButton(
                               onPressed: widget.onMicTap,
-                              icon: Icon(Icons.mic, color: isRecording ? (context.isLight ? const Color.fromARGB(255, 23, 132, 182) : ThemeConstants.sinisterSeed) : iconLight , ),
+                              icon: Icon(
+                                Icons.mic,
+                                color: isRecording
+                                        ? (context.isLight ? const Color(0xFF1784B6) : ThemeConstants.sinisterSeed)
+                                        : iconLight,
+                              ),
                             ),
                           ],
                         ),
@@ -165,17 +173,22 @@ class _BottomMessageBarState extends State<BottomMessageBar> {
                     }
                   );
                 } else {
-                  return IconButton(
-                    onPressed: () {
-                      widget.onSend(text);
-                      messageController.clear();
-                    },
-                    icon: Icon(
-                      Icons.send,
-                      color: context.isLight
-                          ? ThemeConstants.sinisterSeed
-                          : ThemeConstants.sinisterSeed,
-                    ),
+                  return Consumer(
+                    builder: (context, ref, child) {
+                      final isEditing = ref.watch(chatStateController.select((s) => s.isEditing));
+                      return IconButton(
+                        onPressed: () {
+                          isEditing ? widget.onEdit(text) : widget.onSend(text);
+                          messageController.clear();
+                        },
+                        icon: Icon(
+                          isEditing ? CupertinoIcons.check_mark : Icons.send,
+                          color: context.isLight
+                              ? ThemeConstants.sinisterSeed
+                              : ThemeConstants.sinisterSeed,
+                        ),
+                      );
+                    }
                   );
                 }
               },

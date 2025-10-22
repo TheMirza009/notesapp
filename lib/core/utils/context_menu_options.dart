@@ -216,8 +216,8 @@ List<PopupMenuItem<String>> get galleryOptions => [
 ];
 
 /// Options: Message Hold
-List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
-  if (isImage) PopupMenuItem(
+List<PopupMenuItem<String>> messageHoldOptions({bool isMedia = false})  => [
+  if (isMedia) PopupMenuItem(
     value: 'toggleSender',
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.switchSender2),
@@ -229,6 +229,13 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.messageReply),
       text: "Reply",
+    ),
+  ),
+  if (!isMedia) PopupMenuItem(
+    value: 'edit',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.editText),
+      text: "Edit Text",
     ),
   ),
   PopupMenuItem(
@@ -245,7 +252,7 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isImage = false})  => [
       text: "Copy",
     ),
   ),
-  if (isImage) PopupMenuItem(
+  if (isMedia) PopupMenuItem(
     value: 'share',
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.shareIcon2),

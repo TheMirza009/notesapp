@@ -85,7 +85,7 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
   Future<void> pickNewProfilePhoto() async {
     final pickedMedia = await MediaHandler.pickImage(
       isProfilePicture: true,
-      useCroppy: false,
+      useCroppy: true,
     );
     if (pickedMedia == null) {
       debugPrint("❌ No media selected");

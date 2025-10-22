@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/attachment_board.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/bottom_message_bar.dart';
@@ -17,6 +18,7 @@ class BottomMessageBarWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatStateController.notifier);
     final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
+    final isEditing = ref.watch(chatStateController.select((s) => s.isEditing));
 
     final overlayHandler = ref.read(overlayHandlerProvider);
     // overlayHandler.updateKeyboardInset();
@@ -69,6 +71,12 @@ class BottomMessageBarWrapper extends ConsumerWidget {
             notifier.startAudioRecording();
             overlayHandler.showRecordBar(context, ref);
             debugPrint("🎙️Recording started");
+          }
+        },
+        onEdit: (newText) async {
+          final Message? heldMessage =  ref.watch(chatStateController).highlightedMessage;
+          if (heldMessage != null && isEditing == true) {
+            await notifier.editTextMessage(heldMessage, newText);
           }
         },
         onSend: notifier.sendMessage,

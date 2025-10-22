@@ -8,6 +8,7 @@ class ChatState {
   final bool showEmojis;
   final bool isLoading;
   final bool isRecording;
+  final bool isEditing;
   final Message? anchorMessage;
 
   // Optimized message subsets
@@ -22,6 +23,7 @@ class ChatState {
     this.isSearching = false,
     this.isLoading = false,
     this.isRecording = false,
+    this.isEditing= false,
     this.showEmojis = false,
     this.anchorMessage,
     this.highlightedMessage,
@@ -35,6 +37,7 @@ class ChatState {
     bool? showEmojis,
     bool? isLoading,
     bool? isRecording,
+    bool? isEditing,
     Message? anchorMessage,
     Message? highlightedMessage,
     List<Message>? selectedMessages,
@@ -45,6 +48,7 @@ class ChatState {
       showEmojis: showEmojis ?? this.showEmojis,
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
+      isEditing: isEditing ?? this.isEditing,
       anchorMessage: anchorMessage,
       highlightedMessage: highlightedMessage,
       selectedMessages: selectedMessages ?? this.selectedMessages,

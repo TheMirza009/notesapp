@@ -358,7 +358,7 @@ class MediaHandler {
   static Future<File?> _croppyImage(File imageFile) async {
     final context = navigatorKey.currentContext!;
     final result = await cropImageWithCroppy(
-      heroTag: "cropped_image_${imageFile.path}",
+      heroTag: "profile-avatar", // "cropped_image_${imageFile.path}",
       context: context,
       path: imageFile.path,
       settings: CropSettings.initial(), // optional custom settings

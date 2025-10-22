@@ -304,6 +304,64 @@ class ChatStateNotifier extends Notifier<ChatState> {
     }
   }
 
+  void startEditingTextMessage(Message message) {
+    keyboardFocusNode.requestFocus();
+    keyboardController.text = message.text;
+    state = state.copyWith(highlightedMessage: message, isEditing: true);
+  }
+
+  Future<void> editTextMessage(Message message, String newText) async {
+    if (message.isarId == 0) {
+      debugPrint("⚠️ Cannot edit unsaved message: ${message.id}");
+      return;
+    }
+
+    // 1) Persist change on the managed Isar instance
+    await _isar.writeTxn(() async {
+      final managed = await _isar.messages.get(message.isarId);
+      if (managed != null) {
+        managed.text = newText;
+        await _isar.messages.put(managed);
+      } else {
+        // Defensive: fallback to putting the detached instance with updated text
+        final fallback = message.copyWith(text: newText);
+        await _isar.messages.put(fallback);
+      }
+    });
+
+    // 2) Update in-memory authoritative list (allMessages) if present
+    final idx = allMessages.indexWhere((m) => m.isarId == message.isarId);
+    if (idx != -1) {
+      // Reload the managed message so it has any lazy-loaded links (media, replyingTo, etc.)
+      final managedReload = await _isar.messages.get(message.isarId);
+      if (managedReload != null) {
+        // Ensure related backlinks / media are loaded if needed:
+        try {
+          await managedReload.media.load();
+          await managedReload.replyingTo.load();
+        } catch (_) {}
+
+        allMessages[idx] = managedReload;
+      } else {
+        // Fallback: update the detached object in place
+        allMessages[idx] = message.copyWith(text: newText);
+      }
+    } else {
+      // If the message isn't in allMessages, don't append — just log
+      debugPrint(
+        "⚠️ editTextMessage: message not found in allMessages (${message.isarId})",
+      );
+    }
+
+    // 3) Push updated list into state (immutable)
+    state = state.copyWith(
+      messages: List.unmodifiable([...allMessages]),
+      isEditing: false,
+      highlightedMessage: null,
+      selectedMessages: [],
+    );
+  }
+
   Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false, Media? media}) async {
     final Media? pickedMedia = imageBytes != null
         ? await MediaHandler.fromImageBytes(imageBytes)
@@ -742,6 +800,8 @@ class ChatStateNotifier extends Notifier<ChatState> {
       case 'deleteMessage':
         deleteMessage(message);
         break;
+      case 'edit':
+        startEditingTextMessage(message);
       case 'reply':
         unSelectAllMessages();
         ref.read(overlayHandlerProvider).showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden
