@@ -63,6 +63,8 @@ dependencies:
   flutter_native_splash: ^2.4.7
   flutter_launcher_icons: ^0.14.4
   croppy: ^1.4.1
+  blurhash_dart: ^1.2.1
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:

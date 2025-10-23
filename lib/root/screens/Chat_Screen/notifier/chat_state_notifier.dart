@@ -9,6 +9,7 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
@@ -59,13 +60,15 @@ class ChatStateNotifier extends Notifier<ChatState> {
       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
     });
 
-    final selectedChat = ref.watch(chatListProvider.select((s) => s.selectedChat));
+    final selectedChat = ref.watch(
+      chatListProvider.select((s) => s.selectedChat),
+    );
     if (selectedChat == null) return ChatState();
 
     _chat = selectedChat;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    _hydrateMessages();
-  });
+      _hydrateMessages();
+    });
     return ChatState(); // empty initial
   }
 
@@ -185,19 +188,145 @@ class ChatStateNotifier extends Notifier<ChatState> {
   // Section: Messages CRUD (refactored to reuse helpers)
   // =====================================================
 
-  Future<void> _hydrateMessages() async {
+  Future<void> _hydrateMessages({
+    bool ascending = true, // true → load oldest first, false → newest first
+    int visibleCount = 15, // how many messages to load instantly
+    int batchSize = 20, // how many to load per background batch
+    int concurrency = 4, // how many parallel media loads at a time
+    Duration delay = const Duration(milliseconds: 100),
+  }) async {
+    // Prevent overlapping loads
     if (_chat == null || isLoading) return;
     isLoading = true;
+    state = state.copyWith(isLoading: true);
 
-    final freshChat = await _isar.chats.get(_chat!.isarID);
-    if (freshChat != null) {
-      await freshChat.messages.load();
-      await Future.wait(freshChat.messages.map((m) => m.media.load()));
+    try {
+      // === STEP 1: Fetch only message IDs for efficiency
+      final messageIds =
+          await _isar.messages
+              .filter()
+              .chat((q) => q.isarIDEqualTo(_chat!.isarID))
+              .sortByTime() // oldest first
+              .isarIdProperty()
+              .findAll();
+
+      if (messageIds.isEmpty) {
+        allMessages = [];
+        state = state.copyWith(messages: allMessages, isLoading: false);
+        isLoading = false;
+        return;
+      }
+
+      // === STEP 2: Select which IDs to load first based on order
+      List<int> visibleIds;
+      if (ascending) {
+        // Load oldest messages first (start of chat)
+        visibleIds = messageIds.take(visibleCount).toList();
+      } else {
+        // Load newest messages first (end of chat)
+        visibleIds = messageIds.skip(messageIds.length - visibleCount).toList();
+      }
+
+      // === STEP 3: Load visible batch
+      final visibleMessages = await _loadMessageBatch(
+        visibleIds,
+        concurrency: concurrency,
+      );
+
+      allMessages = visibleMessages;
+      state = state.copyWith(
+        messages: List.unmodifiable(allMessages),
+        isLoading: false,
+      );
       isLoading = false;
-      allMessages = freshChat.messages.toList();
-      state = state.copyWith(messages: allMessages);
+
+      // === STEP 4: Progressive background loading
+      if (messageIds.length > visibleCount) {
+        List<int> remainingIds =
+            ascending
+                ? messageIds.skip(visibleCount).toList()
+                : messageIds.take(messageIds.length - visibleCount).toList();
+
+        _loadRemainingMessagesInBatches(
+          remainingIds,
+          ascending: ascending,
+          batchSize: batchSize,
+          concurrency: concurrency,
+          delay: delay,
+        );
+      }
+    } catch (e, stack) {
+      debugPrint('❌ Error hydrating messages: $e');
+      debugPrint(stack.toString());
+      isLoading = false;
+      state = state.copyWith(isLoading: false);
     }
   }
+
+  /// Load a batch of messages and their media concurrently with a pool
+  Future<List<Message>> _loadMessageBatch(
+    List<int> ids, {
+    int concurrency = 4,
+  }) async {
+    final messages = await _isar.messages.getAll(ids);
+    final validMessages = messages.whereType<Message>().toList();
+
+    // Load all media in parallel - let the system handle scheduling
+    await Future.wait(
+      validMessages.map((message) async {
+        try {
+          await message.media.load();
+
+          final media = message.media.value;
+          if (media == null || media.path == null) return;
+
+          // ✅ Optional: prefetch the blurHash string into memory
+          // (Generation handled in ImageMessageView and MediaHandler)
+          if (media.blurHash != null && media.aspectRatio != null) {
+            unawaited(
+              BlurHashService.warmup(media.blurHash, media.aspectRatio!),
+            );
+          }
+        } catch (e) {
+          debugPrint('⚠️ Failed to load media for message ${message.id}: $e');
+        }
+      }),
+    );
+
+    return validMessages;
+  }
+
+  /// Progressive background loading with append/prepend logic
+  Future<void> _loadRemainingMessagesInBatches(
+    List<int> remainingIds, {
+    bool ascending = true,
+    int batchSize = 20,
+    int concurrency = 4,
+    Duration delay = const Duration(milliseconds: 100),
+  }) async {
+    for (int i = 0; i < remainingIds.length; i += batchSize) {
+      if (_chat == null) return; // Cancel if chat changed
+
+      await Future.delayed(delay);
+
+      final batchIds = remainingIds.skip(i).take(batchSize).toList();
+      final batchMessages = await _loadMessageBatch(
+        batchIds,
+        concurrency: concurrency,
+      );
+
+      if (ascending) {
+        // Appending (older → newer)
+        allMessages = [...allMessages, ...batchMessages];
+      } else {
+        // Prepending (newer → older)
+        allMessages = [...batchMessages, ...allMessages];
+      }
+
+      state = state.copyWith(messages: List.unmodifiable(allMessages));
+    }
+  }
+
 
   Future<void> updateMessage(Message message) async {
     // Single txn to update message

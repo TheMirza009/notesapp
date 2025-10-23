@@ -47,7 +47,7 @@ class TimeFormat {
     if (lastEditedDate == today) {
       return "today at $formattedTime";
     } else if (lastEditedDate == yesterday) {
-      return "yesterday at $formattedTime";
+      return "yesterday $formattedTime";
     } else if (now.difference(lastEditedDate).inDays < 7) {
       return DateFormat.EEEE().format(lastEdited);
     } else {

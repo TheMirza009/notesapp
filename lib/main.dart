@@ -10,7 +10,6 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
 
 bool kisWindows = Platform.isWindows;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await IsarDatabase.init();

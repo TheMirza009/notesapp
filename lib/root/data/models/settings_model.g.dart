@@ -17,8 +17,18 @@ const SettingsSchema = CollectionSchema(
   name: r'Settings',
   id: -8656046621518759136,
   properties: {
-    r'selectedBubbleStyleIndex': PropertySchema(
+    r'chatDisplayAscending': PropertySchema(
       id: 0,
+      name: r'chatDisplayAscending',
+      type: IsarType.bool,
+    ),
+    r'isLightMode': PropertySchema(
+      id: 1,
+      name: r'isLightMode',
+      type: IsarType.bool,
+    ),
+    r'selectedBubbleStyleIndex': PropertySchema(
+      id: 2,
       name: r'selectedBubbleStyleIndex',
       type: IsarType.long,
     ),
@@ -54,7 +64,9 @@ void _settingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.selectedBubbleStyleIndex);
+  writer.writeBool(offsets[0], object.chatDisplayAscending);
+  writer.writeBool(offsets[1], object.isLightMode);
+  writer.writeLong(offsets[2], object.selectedBubbleStyleIndex);
 }
 
 Settings _settingsDeserialize(
@@ -63,9 +75,12 @@ Settings _settingsDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = Settings();
+  final object = Settings(
+    chatDisplayAscending: reader.readBoolOrNull(offsets[0]) ?? true,
+    isLightMode: reader.readBoolOrNull(offsets[1]) ?? false,
+  );
   object.id = id;
-  object.selectedBubbleStyleIndex = reader.readLong(offsets[0]);
+  object.selectedBubbleStyleIndex = reader.readLong(offsets[2]);
   return object;
 }
 
@@ -77,6 +92,10 @@ P _settingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readBoolOrNull(offset) ?? true) as P;
+    case 1:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 2:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -175,6 +194,18 @@ extension SettingsQueryWhere on QueryBuilder<Settings, Settings, QWhereClause> {
 
 extension SettingsQueryFilter
     on QueryBuilder<Settings, Settings, QFilterCondition> {
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+  chatDisplayAscendingEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'chatDisplayAscending',
+          value: value,
+        ),
+      );
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -228,6 +259,16 @@ extension SettingsQueryFilter
           upper: upper,
           includeUpper: includeUpper,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> isLightModeEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isLightMode', value: value),
       );
     });
   }
@@ -298,6 +339,31 @@ extension SettingsQueryLinks
     on QueryBuilder<Settings, Settings, QFilterCondition> {}
 
 extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByChatDisplayAscending() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatDisplayAscending', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy>
+  sortByChatDisplayAscendingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatDisplayAscending', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByIsLightMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLightMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByIsLightModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLightMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy>
   sortBySelectedBubbleStyleIndex() {
     return QueryBuilder.apply(this, (query) {
@@ -315,6 +381,19 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
 
 extension SettingsQuerySortThenBy
     on QueryBuilder<Settings, Settings, QSortThenBy> {
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByChatDisplayAscending() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatDisplayAscending', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy>
+  thenByChatDisplayAscendingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatDisplayAscending', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -324,6 +403,18 @@ extension SettingsQuerySortThenBy
   QueryBuilder<Settings, Settings, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByIsLightMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLightMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByIsLightModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLightMode', Sort.desc);
     });
   }
 
@@ -344,6 +435,18 @@ extension SettingsQuerySortThenBy
 
 extension SettingsQueryWhereDistinct
     on QueryBuilder<Settings, Settings, QDistinct> {
+  QueryBuilder<Settings, Settings, QDistinct> distinctByChatDisplayAscending() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'chatDisplayAscending');
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QDistinct> distinctByIsLightMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isLightMode');
+    });
+  }
+
   QueryBuilder<Settings, Settings, QDistinct>
   distinctBySelectedBubbleStyleIndex() {
     return QueryBuilder.apply(this, (query) {
@@ -357,6 +460,19 @@ extension SettingsQueryProperty
   QueryBuilder<Settings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Settings, bool, QQueryOperations>
+  chatDisplayAscendingProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'chatDisplayAscending');
+    });
+  }
+
+  QueryBuilder<Settings, bool, QQueryOperations> isLightModeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isLightMode');
     });
   }
 

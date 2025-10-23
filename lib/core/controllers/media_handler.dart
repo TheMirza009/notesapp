@@ -1,12 +1,17 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:ui' as ui;
+import 'package:croppy/croppy.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/blurhash_service.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
@@ -53,6 +58,9 @@ class MediaHandler {
       isProfilePicture ? 'Profile Pictures' : 'Photos',
     );
     debugPrint("💾 Saved file: ${savedFile.path}");
+
+    // ✅ Generate blurHash in background (don't wait for it)
+    unawaited(_generateAndStoreBlurHash(savedFile.path));
 
     final bytes = await savedFile.readAsBytes();
     final decodedImage = await decodeImageFromList(bytes);
@@ -264,7 +272,7 @@ class MediaHandler {
       }
 
       debugPrint("✂️ Starting crop for: $filePath");
-      final croppedFile = await _croppyImage(file); // your cropper function
+      final croppedFile = await _croppyImage(file);
       if (croppedFile == null) {
         debugPrint("⚠️ cropAndSavePhoto: Cropper returned null");
         return null;
@@ -278,14 +286,10 @@ class MediaHandler {
 
       debugPrint("💾 Saved cropped file: ${savedFile.path}");
 
-      await _ensureFileReady(savedFile);     // ✅ Wait again after saving
-      await savedFile.openRead().drain();    // ✅ Ensure file flushes to disk before reading
-
-      // ✅ Compute aspect ratio off the main isolate
-      final aspectRatio = await _getAspectRatio(savedFile.path);
-      if (aspectRatio == null) {
-        debugPrint("⚠️ Could not decode aspect ratio for ${savedFile.path}");
-      }
+      // ✅ Use the same reliable method as pickImage
+      final bytes = await savedFile.readAsBytes();
+      final decodedImage = await decodeImageFromList(bytes);
+      final aspectRatio = decodedImage.width / decodedImage.height;
 
       final media = Media.fromFilePath(savedFile.path);
       media.aspectRatio = aspectRatio;
@@ -354,32 +358,62 @@ class MediaHandler {
     return croppedFile != null ? File(croppedFile.path) : null;
   }
 
-  /// ✂️ New Croppy-based image cropping
+  /// ✂️ Improved Croppy-based image cropping with proper storage
   static Future<File?> _croppyImage(File imageFile) async {
     final context = navigatorKey.currentContext!;
     final result = await cropImageWithCroppy(
-      heroTag: "profile-avatar", // "cropped_image_${imageFile.path}",
+      heroTag: "profile-avatar",
       context: context,
       path: imageFile.path,
-      settings: CropSettings.initial(), // optional custom settings
-      useCupertino: true, // Theme.of(context).platform == TargetPlatform.iOS,
+      settings: CropSettings.initial(),
+      useCupertino: true,
     );
 
     if (result == null) return null;
 
-    // Convert Cropped ui.Image → PNG bytes → File
-    final byteData = await result.image.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
+    try {
+      // Convert to byte data
+      final byteData = await result.image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      if (byteData == null) {
+        debugPrint("❌ Failed to get byte data from cropped image");
+        result.image.dispose();
+        return null;
+      }
 
-    final croppedPath = imageFile.path.replaceFirst(
-      RegExp(r'\.(jpg|jpeg|png)$', caseSensitive: false),
-      '_cropped.png',
-    );
-    final croppedFile = File(croppedPath);
-    await croppedFile.writeAsBytes(buffer);
+      final buffer = byteData.buffer.asUint8List();
 
-    return croppedFile;
+      // ✅ Use saveToStorage directly instead of temp directory
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final originalName = imageFile.uri.pathSegments.last.split('.').first;
+      final tempCroppedFile = File(
+        '${(await getTemporaryDirectory()).path}/cropped_${timestamp}.png',
+      );
+
+      // Write to temp file first (required for saveToStorage which uses file.copy)
+      await tempCroppedFile.writeAsBytes(buffer, flush: true);
+
+      // ✅ Now save to proper storage using your existing method
+      final savedCroppedFile = await saveToStorage(
+        tempCroppedFile,
+        'Cropped Photos', // Or 'Profile Pictures' if it's for profile
+      );
+
+      // Clean up temp file
+      await tempCroppedFile.delete();
+
+      debugPrint("✅ Cropped image saved to: ${savedCroppedFile.path}");
+
+      result.image.dispose();
+      return savedCroppedFile;
+    } catch (e, st) {
+      debugPrint("🔥 Error in _croppyImage: $e\n$st");
+      result.image.dispose();
+      return null;
+    }
   }
+
 
   /// Save file into app storage under Media/<subfolder>/
   static Future<File> saveToStorage(
@@ -433,6 +467,29 @@ class MediaHandler {
   //   return targetDir.path;
   // }
 
+  static Future<void> _generateAndStoreBlurHash(String imagePath) async {
+    try {
+      final blurHash = await BlurHashService.generateBlurHash(imagePath);
+      if (blurHash != null) {
+        // Update in database
+        final isar = IsarDatabase.isar;
+        final media =
+            await isar.medias.filter().pathEqualTo(imagePath).findFirst();
+        if (media != null) {
+          await isar.writeTxn(() async {
+            media.blurHash = blurHash;
+            await isar.medias.put(media);
+          });
+          debugPrint(
+            '✅ BlurHash generated and stored: ${blurHash.substring(0, 20)}...',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Error storing blurHash: $e');
+    }
+  }
+
   /// (Optional) Compress image before saving (stub)
   static Future<File?> _compressImage(File file) async {
     final XFile? result = await FlutterImageCompress.compressAndGetFile(
@@ -444,3 +501,4 @@ class MediaHandler {
     return result != null ? File(result.path) : null;
   }
 }
+

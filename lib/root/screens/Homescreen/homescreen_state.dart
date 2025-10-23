@@ -56,8 +56,7 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   }
   
   // 3. Load data in background (optional - ChatScreen will handle it)
-  // This happens AFTER navigation starts
-  chat.messages.load().then((_) {
+  chat.messages.load().then((_) {  // This happens AFTER navigation starts
     Future.wait(chat.messages.map((m) => m.media.load()));
   });
 }

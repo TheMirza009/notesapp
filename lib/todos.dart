@@ -3,18 +3,19 @@
 // =====================================================
 
 //// (P0): Email app not opening
-//TODO (P0): problems with replying with Voice messages again
+//// (P0): problems with replying with Voice messages again
+//// (P0): Navigation janky 
+//// (P0): Chat search not cleared upon popping screen
+//// (P0): Init message errors
+//// (P0): First message does not change isSender state (must rebind Isar instance properly).
+//TODO (P0): Reply Anchor does not respect system UI
 //TODO (P0): Videos to be added
-//TODO (P0): Navigation janky 
 //TODO (P0): Fonts not being updated
-//TODO (P0): Chat search not cleared upon popping screen
 //TODO (P0): Chat deletes must be undoable
 //TODO (P0): Chat tiles must be pinnable
-//TODO (P0): Init message errors
 //TODO (P0): Notifier needs robustness and double-checks for Isar links, async races, and null states.
 //TODO (P0): Fix state desynchronization issues (allMessages vs state.messages).
 //TODO (P0): Full-sized images being shown as thumbnails — fix aspect ratio or cached preview source.
-//TODO (P0): First message does not change isSender state (must rebind Isar instance properly).
 
 // =====================================================
 // ⚠️ P1 — HIGH PRIORITY
@@ -23,6 +24,7 @@
 //// (P1): Filter homescreen chats
 //// (P1): Loading indicator for homescreen chatlist
 //// (P1): Convert ReplyAnchor to Overlay to fix animation issues
+//TODO (P1): Crop rotation is
 //TODO (P1): Revamp overall MessageBar structure for unified text/media/reply handling.
 //TODO (P1): Ensure consistent state updates after forwarding, replying, or deleting messages.
 //TODO (P1): Fix transaction boundary issues when saving linked media or replies.

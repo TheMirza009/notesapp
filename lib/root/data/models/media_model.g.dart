@@ -22,15 +22,37 @@ const MediaSchema = CollectionSchema(
       name: r'aspectRatio',
       type: IsarType.double,
     ),
-    r'extension': PropertySchema(
+    r'blurHash': PropertySchema(
       id: 1,
+      name: r'blurHash',
+      type: IsarType.string,
+    ),
+    r'duration': PropertySchema(
+      id: 2,
+      name: r'duration',
+      type: IsarType.string,
+    ),
+    r'extension': PropertySchema(
+      id: 3,
       name: r'extension',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(id: 2, name: r'name', type: IsarType.string),
-    r'path': PropertySchema(id: 3, name: r'path', type: IsarType.string),
+    r'fileSize': PropertySchema(id: 4, name: r'fileSize', type: IsarType.long),
+    r'fileSizeDisplay': PropertySchema(
+      id: 5,
+      name: r'fileSizeDisplay',
+      type: IsarType.string,
+    ),
+    r'hasCompleteMetadata': PropertySchema(
+      id: 6,
+      name: r'hasCompleteMetadata',
+      type: IsarType.bool,
+    ),
+    r'hashCode': PropertySchema(id: 7, name: r'hashCode', type: IsarType.long),
+    r'name': PropertySchema(id: 8, name: r'name', type: IsarType.string),
+    r'path': PropertySchema(id: 9, name: r'path', type: IsarType.string),
     r'type': PropertySchema(
-      id: 4,
+      id: 10,
       name: r'type',
       type: IsarType.byte,
       enumMap: _MediatypeEnumValueMap,
@@ -66,7 +88,20 @@ int _mediaEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.blurHash;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.duration;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.extension.length * 3;
+  bytesCount += 3 + object.fileSizeDisplay.length * 3;
   bytesCount += 3 + object.name.length * 3;
   {
     final value = object.path;
@@ -84,10 +119,16 @@ void _mediaSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDouble(offsets[0], object.aspectRatio);
-  writer.writeString(offsets[1], object.extension);
-  writer.writeString(offsets[2], object.name);
-  writer.writeString(offsets[3], object.path);
-  writer.writeByte(offsets[4], object.type.index);
+  writer.writeString(offsets[1], object.blurHash);
+  writer.writeString(offsets[2], object.duration);
+  writer.writeString(offsets[3], object.extension);
+  writer.writeLong(offsets[4], object.fileSize);
+  writer.writeString(offsets[5], object.fileSizeDisplay);
+  writer.writeBool(offsets[6], object.hasCompleteMetadata);
+  writer.writeLong(offsets[7], object.hashCode);
+  writer.writeString(offsets[8], object.name);
+  writer.writeString(offsets[9], object.path);
+  writer.writeByte(offsets[10], object.type.index);
 }
 
 Media _mediaDeserialize(
@@ -98,12 +139,15 @@ Media _mediaDeserialize(
 ) {
   final object = Media();
   object.aspectRatio = reader.readDoubleOrNull(offsets[0]);
-  object.extension = reader.readString(offsets[1]);
+  object.blurHash = reader.readStringOrNull(offsets[1]);
+  object.duration = reader.readStringOrNull(offsets[2]);
+  object.extension = reader.readString(offsets[3]);
+  object.fileSize = reader.readLongOrNull(offsets[4]);
   object.isarId = id;
-  object.name = reader.readString(offsets[2]);
-  object.path = reader.readStringOrNull(offsets[3]);
+  object.name = reader.readString(offsets[8]);
+  object.path = reader.readStringOrNull(offsets[9]);
   object.type =
-      _MediatypeValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+      _MediatypeValueEnumMap[reader.readByteOrNull(offsets[10])] ??
       Mediatype.text;
   return object;
 }
@@ -118,12 +162,24 @@ P _mediaDeserializeProp<P>(
     case 0:
       return (reader.readDoubleOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
-    case 2:
-      return (reader.readString(offset)) as P;
-    case 3:
       return (reader.readStringOrNull(offset)) as P;
+    case 2:
+      return (reader.readStringOrNull(offset)) as P;
+    case 3:
+      return (reader.readString(offset)) as P;
     case 4:
+      return (reader.readLongOrNull(offset)) as P;
+    case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readBool(offset)) as P;
+    case 7:
+      return (reader.readLong(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
       return (_MediatypeValueEnumMap[reader.readByteOrNull(offset)] ??
               Mediatype.text)
           as P;
@@ -350,6 +406,330 @@ extension MediaQueryFilter on QueryBuilder<Media, Media, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'blurHash'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'blurHash'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'blurHash',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'blurHash',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'blurHash',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'blurHash',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'blurHash',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'blurHash',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'blurHash',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'blurHash',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'blurHash', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> blurHashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'blurHash', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'duration'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'duration'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'duration',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'duration',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'duration',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'duration',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'duration',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'duration',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'duration',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'duration',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'duration', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> durationIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'duration', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterFilterCondition> extensionEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -492,6 +872,295 @@ extension MediaQueryFilter on QueryBuilder<Media, Media, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'extension', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'fileSize'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'fileSize'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'fileSize', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'fileSize',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'fileSize',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'fileSize',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'fileSizeDisplay',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'fileSizeDisplay',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'fileSizeDisplay',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'fileSizeDisplay',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'fileSizeDisplay',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'fileSizeDisplay',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'fileSizeDisplay',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'fileSizeDisplay',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> fileSizeDisplayIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'fileSizeDisplay', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition>
+  fileSizeDisplayIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'fileSizeDisplay', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> hasCompleteMetadataEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'hasCompleteMetadata', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> hashCodeEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'hashCode', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> hashCodeGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'hashCode',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> hashCodeLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'hashCode',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> hashCodeBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'hashCode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
       );
     });
   }
@@ -1004,6 +1673,30 @@ extension MediaQuerySortBy on QueryBuilder<Media, Media, QSortBy> {
     });
   }
 
+  QueryBuilder<Media, Media, QAfterSortBy> sortByBlurHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByBlurHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'duration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'duration', Sort.desc);
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterSortBy> sortByExtension() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'extension', Sort.asc);
@@ -1013,6 +1706,54 @@ extension MediaQuerySortBy on QueryBuilder<Media, Media, QSortBy> {
   QueryBuilder<Media, Media, QAfterSortBy> sortByExtensionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'extension', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByFileSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByFileSizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByFileSizeDisplay() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSizeDisplay', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByFileSizeDisplayDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSizeDisplay', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByHasCompleteMetadata() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompleteMetadata', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByHasCompleteMetadataDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompleteMetadata', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByHashCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByHashCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashCode', Sort.desc);
     });
   }
 
@@ -1066,6 +1807,30 @@ extension MediaQuerySortThenBy on QueryBuilder<Media, Media, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Media, Media, QAfterSortBy> thenByBlurHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByBlurHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'duration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'duration', Sort.desc);
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterSortBy> thenByExtension() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'extension', Sort.asc);
@@ -1075,6 +1840,54 @@ extension MediaQuerySortThenBy on QueryBuilder<Media, Media, QSortThenBy> {
   QueryBuilder<Media, Media, QAfterSortBy> thenByExtensionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'extension', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByFileSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByFileSizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByFileSizeDisplay() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSizeDisplay', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByFileSizeDisplayDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSizeDisplay', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByHasCompleteMetadata() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompleteMetadata', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByHasCompleteMetadataDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompleteMetadata', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByHashCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByHashCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashCode', Sort.desc);
     });
   }
 
@@ -1134,11 +1947,56 @@ extension MediaQueryWhereDistinct on QueryBuilder<Media, Media, QDistinct> {
     });
   }
 
+  QueryBuilder<Media, Media, QDistinct> distinctByBlurHash({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'blurHash', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Media, Media, QDistinct> distinctByDuration({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'duration', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Media, Media, QDistinct> distinctByExtension({
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'extension', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Media, Media, QDistinct> distinctByFileSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'fileSize');
+    });
+  }
+
+  QueryBuilder<Media, Media, QDistinct> distinctByFileSizeDisplay({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'fileSizeDisplay',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QDistinct> distinctByHasCompleteMetadata() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasCompleteMetadata');
+    });
+  }
+
+  QueryBuilder<Media, Media, QDistinct> distinctByHashCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hashCode');
     });
   }
 
@@ -1178,9 +2036,45 @@ extension MediaQueryProperty on QueryBuilder<Media, Media, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Media, String?, QQueryOperations> blurHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'blurHash');
+    });
+  }
+
+  QueryBuilder<Media, String?, QQueryOperations> durationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'duration');
+    });
+  }
+
   QueryBuilder<Media, String, QQueryOperations> extensionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'extension');
+    });
+  }
+
+  QueryBuilder<Media, int?, QQueryOperations> fileSizeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fileSize');
+    });
+  }
+
+  QueryBuilder<Media, String, QQueryOperations> fileSizeDisplayProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fileSizeDisplay');
+    });
+  }
+
+  QueryBuilder<Media, bool, QQueryOperations> hasCompleteMetadataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasCompleteMetadata');
+    });
+  }
+
+  QueryBuilder<Media, int, QQueryOperations> hashCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hashCode');
     });
   }
 

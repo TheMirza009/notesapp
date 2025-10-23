@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
@@ -35,6 +36,7 @@ class ShareIntentHandler {
 
   /// Initialize listener for incoming shares
   static void initialize() {
+    if (kisWindows) return;
     if (_initialized) return;
     _initialized = true;
 
@@ -58,8 +60,10 @@ class ShareIntentHandler {
   }
 
   static void dispose() {
-    _mediaSub?.cancel();
-    _initialized = false;
+    if (!kisWindows) {
+      _mediaSub?.cancel();
+      _initialized = false;
+    }
   }
 
   /// Handle shared files with debounce and safe navigation
