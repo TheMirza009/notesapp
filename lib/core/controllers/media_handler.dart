@@ -30,7 +30,12 @@ class MediaHandler {
   /// Pick an image.
   /// - If [isProfilePicture] = true → crop + save to ProfilePictures.
   /// - Else → save to Photos.
-  static Future<Media?> pickImage({bool isProfilePicture = false, ImageSource? source = ImageSource.gallery, bool? useCroppy = false}) async {
+  static Future<Media?> pickImage({
+    bool isProfilePicture = false,
+    ImageSource? source = ImageSource.gallery,
+    bool? useCroppy = false,
+    bool? navigateToCrop = false,
+  }) async {
     final XFile? pickedFile = await _picker.pickImage(
       source: source ?? ImageSource.gallery,
     );
@@ -43,7 +48,7 @@ class MediaHandler {
     debugPrint("✅ Picked file: ${file.path}");
 
     if (isProfilePicture && !kisWindows) {
-      final croppedFile = (useCroppy ?? false) ? await _croppyImage(file) : await _cropImage(file); //_croppyImage(file);
+      final croppedFile = (useCroppy ?? false) ? await _croppyImage(file, navigate: (navigateToCrop ?? false), showCircle: isProfilePicture) : await _cropImage(file); //_croppyImage(file);
       if (croppedFile != null) {
         debugPrint("✂️ Cropped file: ${croppedFile.path}");
         file = croppedFile;
@@ -263,6 +268,7 @@ class MediaHandler {
   static Future<Media?> cropAndSavePhoto(
     String filePath, {
     bool isProfilePicture = true,
+    bool navigate = false,
   }) async {
     try {
       final file = File(filePath);
@@ -272,7 +278,7 @@ class MediaHandler {
       }
 
       debugPrint("✂️ Starting crop for: $filePath");
-      final croppedFile = await _croppyImage(file);
+      final croppedFile = await _croppyImage(file, navigate: navigate);
       if (croppedFile == null) {
         debugPrint("⚠️ cropAndSavePhoto: Cropper returned null");
         return null;
@@ -359,13 +365,15 @@ class MediaHandler {
   }
 
   /// ✂️ Improved Croppy-based image cropping with proper storage
-  static Future<File?> _croppyImage(File imageFile) async {
-    final context = navigatorKey.currentContext!;
+  static Future<File?> _croppyImage(File imageFile, {bool navigate = false, bool showCircle = false}) async {
+    final ctx = navigatorKey.currentContext!;
+    if (ctx == null || !ctx.mounted) return null;
     final result = await cropImageWithCroppy(
-      heroTag: "profile-avatar",
-      context: context,
+      forceCircle: showCircle,
+      context: ctx,
+      heroTag: "profile-avatar-crop",
       path: imageFile.path,
-      settings: CropSettings.initial(),
+      settings: showCircle == true ? CropSettings.initial().copyWith(showGestureHandlesOn: [CropShapeType.ellipse],) : CropSettings.initial(),
       useCupertino: true,
     );
 

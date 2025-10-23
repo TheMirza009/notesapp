@@ -28,6 +28,9 @@ Future<CroppedImageResult?> cropImageWithCroppy({
 
   /// Optional hero tag (for smooth transition).
   Object? heroTag,
+
+  /// Navigate to a new screen before opening cropper
+  bool forceCircle = false,
 }) async {
   final cropSettings = settings ?? CropSettings.initial();
 
@@ -53,6 +56,11 @@ Future<CroppedImageResult?> cropImageWithCroppy({
 
   final completer = Completer<CroppedImageResult?>();
 
+  CropSettings circleSettings = CropSettings.initial().copyWith(
+    forcedAspectRatio: CropAspectRatio(height: 1, width: 1), // Square aspect ratio
+    showGestureHandlesOn: [CropShapeType.ellipse]
+  );
+
   Future<void> openCropper() async {
     final showCropper = useCupertinoCropper
         ? showCupertinoImageCropper
@@ -64,11 +72,11 @@ Future<CroppedImageResult?> cropImageWithCroppy({
       imageProvider: provider,
       heroTag: heroTag,
       initialData: initialData,
-      showGestureHandlesOn: cropSettings.showGestureHandlesOn,
+      showGestureHandlesOn: forceCircle ? [CropShapeType.ellipse] : cropSettings.showGestureHandlesOn,
       cropPathFn: cropSettings.cropShapeFn,
       showLoadingIndicatorOnSubmit: false,
       enabledTransformations: cropSettings.enabledTransformations,
-      allowedAspectRatios: cropSettings.forcedAspectRatio != null
+      allowedAspectRatios: forceCircle ? [CropAspectRatio(height: 1, width: 1)] : cropSettings.forcedAspectRatio != null
           ? [cropSettings.forcedAspectRatio!]
           : null,
       postProcessFn: (result) async {
@@ -87,8 +95,12 @@ Future<CroppedImageResult?> cropImageWithCroppy({
     }
   }
 
+
   // --- Step 4. Use microtask to avoid blocking UI ---
-  WidgetsBinding.instance.addPostFrameCallback((_) => openCropper());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+  
+      openCropper();
+  });
 
   return completer.future;
 }
