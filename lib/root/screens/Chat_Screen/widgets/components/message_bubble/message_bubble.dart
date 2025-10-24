@@ -52,6 +52,7 @@ class MessageBubble extends StatefulWidget {
 
   /// Style
   final BubbleStyle style;
+  final BubbleColor? bubbleColor;
   final bool? isHighlighted;
   final bool? isSelected;
 
@@ -73,6 +74,7 @@ class MessageBubble extends StatefulWidget {
     this.borderWidth = 1.0,
     this.borderColor = const Color.fromARGB(100, 255, 255, 255),
     this.backgroundColor,
+    this.bubbleColor = BubbleColor.seed,
     this.padding,
     this.width,
     this.height,
@@ -102,7 +104,7 @@ class _MessageBubbleState extends State<MessageBubble>
     super.build(context);
 
     final bubblePadding = _getDefaultPadding();
-    final scheme = Utils.getBubbleColorScheme(context, style: widget.style, color: BubbleColor.seed);
+    final scheme = Utils.getBubbleColorScheme(context, style: widget.style, color: (widget.bubbleColor ?? BubbleColor.seed));
 
     final bool isSender = widget.message.isSender;
     final Color baseColor = isSender ? scheme.senderBubble : scheme.receiverBubble;
@@ -210,7 +212,7 @@ class _MessageBubbleState extends State<MessageBubble>
     required Color highlightedColor,
   }) {
     return RippleWell(
-      borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.message.isImage ? 10 : widget.borderRadius),
+      borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.message.isImage ? 5 : widget.borderRadius),
       materialColor: messageBubbleColor,
       onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
       onLongPress: widget.onLongPress,

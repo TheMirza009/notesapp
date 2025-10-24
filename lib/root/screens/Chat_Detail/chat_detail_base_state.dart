@@ -1,12 +1,17 @@
 
 import 'dart:io';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/enums/bubble_color.dart';
+import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Detail/screens/chat_detail_screen_divided.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen_state.dart';
+import 'package:notesapp/root/widgets/crop/crop_screen.dart';
 import 'package:notesapp/root/widgets/crop/croppyImage.dart';
 import 'package:notesapp/root/widgets/photo_view/croppy_example.dart';
 import 'package:photo_view/photo_view.dart';
@@ -219,6 +224,57 @@ abstract class ChatDetailBase extends ConsumerState<ChatDetailScreen> {
         );
       //  await ref.read(chatStateController.notifier).forwardMessage(original: message, targetChat: ref.read(chatListProvider).selectedChat!);
 
+    default:
+  }
+}
+
+void handleChatBackgroundAction(
+  BuildContext context,
+  WidgetRef ref,
+  String value,
+) async {
+  switch (value) {
+    case "chooseNew":
+      Navigator.push(
+        context,
+        CupertinoPageRoute(builder: (_) => CropScreen(isChatBackground: true)),
+      );
+      break;
+    case "clearBackground":
+      final Chat? selectedChat = ref.read(chatListProvider).selectedChat;
+      final isar = IsarDatabase.isar;
+      if (selectedChat == null) return;
+      final managedChat = await isar.chats.get(selectedChat.isarID);
+      if (managedChat == null) return;
+
+      // Update chat photo
+      await isar.writeTxn(() async {
+        managedChat.chatBackgroundPath = null;
+        await isar.chats.put(managedChat);
+      });
+
+      // Refresh chat in provider
+      ref.read(chatListProvider.notifier).refreshChat(managedChat.isarID);
+
+    default:
+  }
+}
+
+void handleBubbleColor(
+  BuildContext context,
+  WidgetRef ref,
+  String value,
+) async {
+  switch (value) {
+    case "seed":
+      ref.read(chatStateController.notifier).setBubbleColor(scheme: BubbleColor.seed);
+      break;
+    case "red":
+      ref.read(chatStateController.notifier).setBubbleColor(scheme: BubbleColor.red);
+      break;
+    case "amber":
+      ref.read(chatStateController.notifier).setBubbleColor(scheme: BubbleColor.amber);
+      break;
     default:
   }
 }

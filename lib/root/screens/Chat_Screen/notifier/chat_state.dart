@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 class ChatState {
@@ -10,6 +12,9 @@ class ChatState {
   final bool isRecording;
   final bool isEditing;
   final Message? anchorMessage;
+
+  // Styling
+  final BubbleColor? bubbleColor;
 
   // Optimized message subsets
   final Message? highlightedMessage;        // Only one highlighted at a time
@@ -25,6 +30,7 @@ class ChatState {
     this.isRecording = false,
     this.isEditing= false,
     this.showEmojis = false,
+    this.bubbleColor = BubbleColor.seed,
     this.anchorMessage,
     this.highlightedMessage,
     this.selectedMessages = const [],
@@ -38,6 +44,7 @@ class ChatState {
     bool? isLoading,
     bool? isRecording,
     bool? isEditing,
+    BubbleColor? bubbleColor,
     Message? anchorMessage,
     Message? highlightedMessage,
     List<Message>? selectedMessages,
@@ -49,6 +56,7 @@ class ChatState {
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
       isEditing: isEditing ?? this.isEditing,
+      bubbleColor: bubbleColor ?? this.bubbleColor,
       anchorMessage: anchorMessage,
       highlightedMessage: highlightedMessage,
       selectedMessages: selectedMessages ?? this.selectedMessages,

@@ -164,6 +164,49 @@ List<PopupMenuItem<String>> get chatScreenOptions => [
 ];
 
 /// Options: Chat Screen
+List<PopupMenuItem<String>> get chatBackgroundOptions => [
+  PopupMenuItem(
+    value: 'chooseNew',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.uploadImage),
+      text: "Choose new",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'clearBackground',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.trash1),
+      text: "Clear",
+    ),
+  ),
+];
+
+/// Options: Chat Screen
+List<PopupMenuItem<String>> get bubbleColor => [
+  PopupMenuItem(
+    value: 'seed',
+    child: buildOptionTile(
+      icon: Container(height: 20, width: 20, decoration: BoxDecoration(shape: BoxShape.circle, color: ThemeConstants.deeperSenderBlue),),
+      text: "Seed",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'red',
+    child: buildOptionTile(
+      icon: Container(height: 20, width: 20, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.red),),
+      text: "Red",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'amber',
+    child: buildOptionTile(
+      icon: Container(height: 20, width: 20, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.amber),),
+      text: "Amber",
+    ),
+  ),
+];
+
+/// Options: Chat Screen
 List<PopupMenuItem<String>> get galleryOptions => [
   PopupMenuItem(
     value: 'croppy',

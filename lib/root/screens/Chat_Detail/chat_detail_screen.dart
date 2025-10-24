@@ -154,135 +154,170 @@ class _ChatDetailScreenState extends ChatDetailBase {
                 // expanding the image; the Upload button performs the upload.
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _TabBarDelegate(
-                TabBar(
-                  indicatorSize: TabBarIndicatorSize.label,
-                  dividerColor: isLight ? ThemeConstants.homeSearchbarLight : ThemeConstants.darkAppbar,
-                  dividerHeight: 1,
-                  tabs: const [
-                    Tab(text: "Photos"),
-                    Tab(text: "Documents"),
-                  ],
+          SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _TabBarDelegate(
+                    TabBar(
+                      indicatorSize: TabBarIndicatorSize.label,
+                      dividerColor:
+                          isLight
+                              ? ThemeConstants.homeSearchbarLight
+                              : ThemeConstants.darkAppbar,
+                      dividerHeight: 1,
+                      tabs: const [Tab(text: "Photos"), Tab(text: "Documents")],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
-          body: TabBarView(
+              ],
+            body: TabBarView(
             children: [
               // Photos tab
               photoMessages.isEmpty
                   ? Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SvgPicture.string(
-                            IconPaths.catSitting,
-                            color: ThemeConstants.iconLight,
-                            height: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text("No Photos in chat yet"),
-                        ],
-                      ),
-                    )
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SvgPicture.string(
+                          IconPaths.catSitting,
+                          color: ThemeConstants.iconLight,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text("No Photos in chat yet"),
+                      ],
+                    ),
+                  )
                   : GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
-                      itemCount: photoMessages.length,
-                      itemBuilder: (context, index) {
-                        final media = photoMessages[index];
-                        final path = media.path;
-                        return Container(
-                          margin: const EdgeInsets.all(0.75),
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(5)),
-                          child: InkWell(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                  (_) => GalleryViewWrapper(
-                                    chatTitle: chat.title ?? '',
-                                    galleryItems: photoMessages,
-                                    initialIndex: index,
-                                    showOptions: true,
-                                    options: galleryOptions,
-                                    onOptionSelect: (value) => handleGalleryOptions(context, ref, value, photoMessages[index]),
-                                  ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                        ),
+                    itemCount: photoMessages.length,
+                    itemBuilder: (context, index) {
+                      final media = photoMessages[index];
+                      final path = media.path;
+                      return Container(
+                        margin: const EdgeInsets.all(0.75),
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: InkWell(
+                          onTap:
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => GalleryViewWrapper(
+                                        chatTitle: chat.title ?? '',
+                                        galleryItems: photoMessages,
+                                        initialIndex: index,
+                                        showOptions: true,
+                                        options: galleryOptions,
+                                        onOptionSelect:
+                                            (value) => handleGalleryOptions(
+                                              context,
+                                              ref,
+                                              value,
+                                              photoMessages[index],
+                                            ),
+                                      ),
                                 ),
                               ),
-                          child: FadeInDynamic.filePath(path, index: index, ),
-                          ),
-                        );
-                      },
-                    ),
+                          child: FadeInDynamic.filePath(path, index: index),
+                        ),
+                      );
+                    },
+                  ),
 
               // Documents tab
               docMessages.isEmpty
                   ? Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SvgPicture.string(
-                            IconPaths.catSitting,
-                            color: ThemeConstants.iconLight,
-                            height: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text("No Documents in chat yet"),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: docMessages.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == docMessages.length) {
-                          return const SizedBox(height: 100);
-                        }
-
-                        final doc = docMessages[index];
-                        return FadeInDynamic.widget(
-                          ListTile(
-                            onTap: () async {
-                              if (doc.path != null && doc.path!.isNotEmpty) {
-                                await OpenFile.open(doc.path);
-                              }
-                            },
-                            leading: const Icon(Icons.insert_drive_file, color: Colors.red),
-                            title: Text(doc.name ?? "Unknown file", overflow: TextOverflow.ellipsis, maxLines: 1),
-                            subtitle: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    if (doc.path != null && doc.path!.isNotEmpty)
-                                      FutureBuilder<String>(
-                                        future: Utils.getFileSize(doc.path!),
-                                        builder: (context, snapshot) {
-                                          if (snapshot.connectionState == ConnectionState.waiting) {
-                                            return const Text('Loading size...', style: ChatDetailBase.subStyle);
-                                          } else if (snapshot.hasError) {
-                                            return const Text('Size unknown', style: ChatDetailBase.subStyle);
-                                          } else {
-                                            return Text(snapshot.data ?? '', style: ChatDetailBase.subStyle);
-                                          }
-                                        },
-                                      ),
-                                    const SizedBox(width: 8),
-                                    Text(doc.extension?.toUpperCase() ?? "", style: ChatDetailBase.subStyle),
-                                  ],
-                                ),
-                                Text(doc.timeString ?? '', style: ChatDetailBase.subStyle),
-                              ],
-                            ),
-                          ),
-                          index: index,
-                          isImage: false,
-                        );
-                      },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.string(
+                          IconPaths.catSitting,
+                          color: ThemeConstants.iconLight,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text("No Documents in chat yet"),
+                      ],
                     ),
+                  )
+                  : ListView.builder(
+                    itemCount: docMessages.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == docMessages.length) {
+                        return const SizedBox(height: 100);
+                      }
+
+                      final doc = docMessages[index];
+                      return FadeInDynamic.widget(
+                        ListTile(
+                          onTap: () async {
+                            if (doc.path != null && doc.path!.isNotEmpty) {
+                              await OpenFile.open(doc.path);
+                            }
+                          },
+                          leading: const Icon(
+                            Icons.insert_drive_file,
+                            color: Colors.red,
+                          ),
+                          title: Text(
+                            doc.name ?? "Unknown file",
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          subtitle: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  if (doc.path != null && doc.path!.isNotEmpty)
+                                    FutureBuilder<String>(
+                                      future: Utils.getFileSize(doc.path!),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return const Text(
+                                            'Loading size...',
+                                            style: ChatDetailBase.subStyle,
+                                          );
+                                        } else if (snapshot.hasError) {
+                                          return const Text(
+                                            'Size unknown',
+                                            style: ChatDetailBase.subStyle,
+                                          );
+                                        } else {
+                                          return Text(
+                                            snapshot.data ?? '',
+                                            style: ChatDetailBase.subStyle,
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    doc.extension?.toUpperCase() ?? "",
+                                    style: ChatDetailBase.subStyle,
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                doc.timeString ?? '',
+                                style: ChatDetailBase.subStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                        index: index,
+                        isImage: false,
+                      );
+                    },
+                  ),
             ],
           ),
         ),

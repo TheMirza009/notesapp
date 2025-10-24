@@ -47,7 +47,7 @@ class MediaHandler {
     File file = File(pickedFile.path);
     debugPrint("✅ Picked file: ${file.path}");
 
-    if (isProfilePicture && !kisWindows) {
+    if ((useCroppy ?? false) && !kisWindows) {
       final croppedFile = (useCroppy ?? false) ? await _croppyImage(file, navigate: (navigateToCrop ?? false), showCircle: isProfilePicture) : await _cropImage(file); //_croppyImage(file);
       if (croppedFile != null) {
         debugPrint("✂️ Cropped file: ${croppedFile.path}");

@@ -104,6 +104,7 @@ class _MessageItemBuilder extends ConsumerWidget {
     final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == message.isarId)), );
     final isSelecting = ref.watch( chatStateController.select((s) => s.isSelecting));
     final isEditing = ref.watch( chatStateController.select((s) => s.isEditing));
+    final bubbleColor = ref.watch( chatStateController.select((s) => s.bubbleColor));
 
     debugPrint("🔃 Built message: ${message.text}");
 
@@ -121,6 +122,7 @@ class _MessageItemBuilder extends ConsumerWidget {
               isHighlighted: isHighlighted,
               topPadding: info.topPadding,
               bottomPadding: info.bottomPadding,
+              bubbleColor:  bubbleColor,
               // interactions
               onSwipe: () {
                 if (isEditing == false) {

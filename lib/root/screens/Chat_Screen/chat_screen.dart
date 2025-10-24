@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/bodies/chat_screen_glass_body.dart';
@@ -90,7 +93,7 @@ class ChatScreen extends ConsumerWidget {
         overlayHandler.hideReplyAnchor(instant: true);
         notifier.cancelAudioRecording();
       },
-      child: bubbleStyle == BubbleStyle.glass ? ChatScreenGlassBody() : _ChatScreenBody()
+      child: _ChatScreenBody()
     );
   }
 }
@@ -102,7 +105,8 @@ class _ChatScreenBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(chatStateController.notifier);
     final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
-    final backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
+    final appBackgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
+    final String? chatBackgroundImage = ref.read(chatListProvider).selectedChat?.chatBackgroundPath;
     final bool isEditing = ref.watch(chatStateController.select((s) => s.isEditing));
     return GestureDetector(
         onTap: () {
@@ -120,16 +124,24 @@ class _ChatScreenBody extends ConsumerWidget {
           backgroundColor: context.isLight ? const Color(0xFFE7ECF3) : const Color(0xFF23333F),
           shadowColor: Colors.transparent,
           toolbarOpacity: 0,
-          surfaceTintColor: backgroundColor,
+          surfaceTintColor: appBackgroundColor,
           elevation: 0,
           systemOverlayStyle: SystemUiOverlayStyle(
-            systemNavigationBarColor: backgroundColor,
+            systemNavigationBarColor: appBackgroundColor,
             statusBarColor: Colors.transparent,
           ),
         ),
           backgroundColor: Colors.transparent,
           body: Container(
-            decoration: BoxDecoration(gradient: backgroundGradient),
+            decoration: BoxDecoration(
+              image: chatBackgroundImage != null 
+                ? DecorationImage(
+                    image: FileImage(File(chatBackgroundImage)),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+              gradient: backgroundGradient
+              ),
             child: SafeArea(
               child: Column(
                 children: [

@@ -12,6 +12,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
+import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
@@ -1019,6 +1020,10 @@ class ChatStateNotifier extends Notifier<ChatState> {
               ),
         );
     }
+  }
+
+  void setBubbleColor({required BubbleColor scheme}) {
+    state = state.copyWith(bubbleColor: scheme);
   }
 
   @override

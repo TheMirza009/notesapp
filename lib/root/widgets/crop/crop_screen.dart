@@ -13,7 +13,8 @@ import 'package:notesapp/root/data/models/user_model.dart';
 
 class CropScreen extends ConsumerStatefulWidget {
   final bool? isChatPhoto;
-  const CropScreen({super.key, this.isChatPhoto = false});
+  final bool? isChatBackground;
+  const CropScreen({super.key, this.isChatPhoto = false, this.isChatBackground = false});
 
   @override
   ConsumerState<CropScreen> createState() => _CropScreenState();
@@ -38,7 +39,7 @@ class _CropScreenState extends ConsumerState<CropScreen> {
 
       // Step 1: Pick image
       final pickedMedia = await MediaHandler.pickImage(
-        isProfilePicture: true,
+        isProfilePicture: widget.isChatBackground == true ? false : true,
         useCroppy: true,
       );
 
@@ -56,6 +57,8 @@ class _CropScreenState extends ConsumerState<CropScreen> {
       // Step 2: Decide what to update
       if (widget.isChatPhoto == true) {
         debugPrint("💬 Updating chat photo...");
+        await _updateChatPhoto(pickedMedia);
+      } else if (widget.isChatBackground == true) {
         await _updateChatPhoto(pickedMedia);
       } else {
         debugPrint("👤 Updating user profile photo...");
@@ -136,7 +139,7 @@ class _CropScreenState extends ConsumerState<CropScreen> {
 
     // Update chat photo
     await isar.writeTxn(() async {
-      managedChat.chatPhotoPath = mediaToUseFinal.path;
+      widget.isChatBackground == true ? managedChat.chatBackgroundPath = mediaToUseFinal.path : managedChat.chatPhotoPath = mediaToUseFinal.path;
       await isar.chats.put(managedChat);
     });
 
