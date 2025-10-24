@@ -273,6 +273,7 @@ void handleBubbleColor(
       ref.read(chatStateController.notifier).setBubbleColor(scheme: BubbleColor.red);
       break;
     case "amber":
+      // ref.read(chatStateController.notifier).setBubbleColor(scheme: BubbleColor.amber);
       ref.read(chatStateController.notifier).setBubbleColor(scheme: BubbleColor.amber);
       break;
     default:

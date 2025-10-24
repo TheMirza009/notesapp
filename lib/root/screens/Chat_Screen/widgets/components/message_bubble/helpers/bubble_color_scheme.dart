@@ -102,4 +102,40 @@ class BubbleColorScheme {
         return context.isLight ? BubbleColorScheme.defaultLight() : BubbleColorScheme.defaultDark();
     }
   }
+
+ // ------------------------------------------------------------
+  // 🌈 New Factory: From Seed Color (Dynamic Color Generation)
+  // ------------------------------------------------------------
+  factory BubbleColorScheme.fromSeedColor(Color baseColor, {bool darkMode = false}) {
+    final hsl = HSLColor.fromColor(baseColor);
+
+    // Adjust tones based on light/dark mode
+    final sender = hsl.withLightness(
+      (darkMode ? (hsl.lightness * 0.6) : (hsl.lightness * 0.9)).clamp(0.0, 1.0),
+    );
+
+    final receiver = hsl.withLightness(
+      (darkMode ? (hsl.lightness * 0.35) : (hsl.lightness * 1.2)).clamp(0.0, 1.0),
+    );
+
+    final highlightSender = hsl.withLightness(
+      (darkMode ? (hsl.lightness * 0.8) : (hsl.lightness * 1.05)).clamp(0.0, 1.0),
+    );
+
+    final highlightReceiver = hsl.withLightness(
+      (darkMode ? (hsl.lightness * 0.7) : (hsl.lightness * 1.1)).clamp(0.0, 1.0),
+    );
+
+    final replyBg = hsl.withLightness(
+      (darkMode ? (hsl.lightness * 0.45) : (hsl.lightness * 1.15)).clamp(0.0, 1.0),
+    );
+
+    return BubbleColorScheme(
+      senderBubble: sender.toColor(),
+      receiverBubble: receiver.toColor(),
+      highlightedSender: highlightSender.toColor().withOpacity(0.9),
+      highlightedReceiver: highlightReceiver.toColor().withOpacity(0.9),
+      replyBackground: replyBg.toColor().withOpacity(0.8),
+    );
+  }
 }

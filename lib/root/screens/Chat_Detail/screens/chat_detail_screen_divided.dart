@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -20,6 +21,8 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Detail/screens/chat_media_screen.dart';
+import 'package:notesapp/root/screens/Chat_Detail/widgets/info_bottom_sheet.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
@@ -45,6 +48,9 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
   final ScrollController scrollController = ScrollController();
   bool isEditing = false;
   static const TextStyle subStyle = TextStyle(color: ThemeConstants.iconColorNeutral, fontSize: 13);
+  Offset position = Offset(0, 0);
+  final bubbleTileKey1 = GlobalKey();
+  final bubbleTileKey2 = GlobalKey();
 
   @override
   void initState() {
@@ -173,6 +179,7 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
     final isLight = context.isLight;
     const Color darkPrimary = Color(0xFF81D3DF);
     final Color shareColor = chat?.chatPhotoPath == null ? ThemeConstants.iconColorNeutral : darkPrimary;
+    final String colorName = ref.watch(chatStateController.select((s) => s.bubbleColor))!.name;
 
     if (chat == null) {
       return Scaffold(
@@ -182,6 +189,9 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
     }
 
     return Scaffold(
+      floatingActionButton: IconButton(
+        icon: Icon(Icons.info_outline_rounded),
+        onPressed: () => showChatInfoSheet(context, chat)),
       appBar: AppBar(
         elevation: 0,
         forceMaterialTransparency: true,
@@ -265,59 +275,87 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
 
           // Media Section ListTile
           _buildButtonTile(
+            icon: vectorBuild(IconPaths.imageStack, scale: 0.63, color: ThemeConstants.sacredSeed),
             title: "Chat Media",
             subtitle: "${photoMessages.length} photos • ${docMessages.length} documents",
             destination: ChatMediaScreen(chat: chat),
           ),
           _buildButtonTile(
-            icon: Icon(Icons.phone_android, color: ThemeConstants.sacredSeed,),
-            title: "Chat Background",
-            subtitle: "Choose your own image",
-            destination: CropScreen(isChatBackground: true),
-            onTap: () => CustomContextMenu.showMenuAt(
-                  context,
-                  position: Offset(300, 550),
-                  menuItems: chatBackgroundOptions,
-                  onSelected: (value) => handleChatBackgroundAction(context, ref, value),
-                  triangleHorizontalOffset: 120
-                ),
-          ),
-          _buildButtonTile(
-            icon: Icon(Icons.chat_bubble_outline_outlined, color: ThemeConstants.sacredSeed,),
+            key: bubbleTileKey1,
+            icon: vectorBuild(IconPaths.chatBubble1, scale: 0.63, color: ThemeConstants.sacredSeed),
             title: "Bubble Color",
-            subtitle: "Seed Color",
+            subtitle: "${colorName.toSentenceCase()} Color",
             destination: ChatMediaScreen(chat: chat),
-            onTap: () => CustomContextMenu.showMenuAt(
+            onTap: () {
+              // Compute global position of the tile
+              final RenderBox box = bubbleTileKey1.currentContext!.findRenderObject() as RenderBox;
+              final Offset globalPosition = box.localToGlobal(Offset.zero);
+              final Size size = box.size;
+          
+              // We want centerRight → x = right edge, y = vertical center
+              final Offset position = Offset(
+                globalPosition.dx + size.width,
+                globalPosition.dy + size.height / 1.1,
+              );
+              CustomContextMenu.showMenuAt(
                   context,
-                  position: Offset(300, 630),
+                  position: position, // Offset(300, 630),
                   menuItems: bubbleColor,
                   onSelected: (value) => handleBubbleColor(context, ref, value),
                   triangleHorizontalOffset: 120
-                ),
+                );
+            },
           ),
+          _buildButtonTile(
+            key: bubbleTileKey2,
+            icon: vectorBuild(IconPaths.phone2, scale: 0.63, color: ThemeConstants.sacredSeed),
+            title: "Chat Background",
+            subtitle: "Choose your own image",
+            destination: CropScreen(isChatBackground: true),
+            onTap: () {
+              // Compute global position of the tile
+              final RenderBox box = bubbleTileKey2.currentContext!.findRenderObject() as RenderBox;
+              final Offset globalPosition = box.localToGlobal(Offset.zero);
+              final Size size = box.size;
 
+              // We want centerRight → x = right edge, y = vertical center
+              final Offset position = Offset(
+                globalPosition.dx + size.width,
+                globalPosition.dy + size.height / 1.1,
+              );
+
+              CustomContextMenu.showMenuAt(
+                  context,
+                  position: position, // Offset(300, 550),
+                  menuItems: chatBackgroundOptions,
+                  onSelected: (value) => handleChatBackgroundAction(context, ref, value),
+                  triangleHorizontalOffset: 120
+                );
+            },
+          ),
           // const SizedBox(height: 100),
           const SizedBox(height: 100),
-          Container(
-            height: 129,
-            clipBehavior: Clip.none,
-            decoration: BoxDecoration(border: Border.all(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder), borderRadius: BorderRadius.circular(25)),
-            padding: EdgeInsets.only(top: 12),
-            child: Column(
-              children: [
-                // Divider(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkAppbar,),
-                const SizedBox(height: 10),
-                // Additional chat details can go here
-                _buildChatInfoSection(chat),
-              ],
-            ),
-          ),
+          // Container(
+          //   height: 129,
+          //   clipBehavior: Clip.none,
+          //   decoration: BoxDecoration(border: Border.all(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder), borderRadius: BorderRadius.circular(25)),
+          //   padding: EdgeInsets.only(top: 12),
+          //   child: Column(
+          //     children: [
+          //       // Divider(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkAppbar,),
+          //       const SizedBox(height: 10),
+          //       // Additional chat details can go here
+          //       _buildChatInfoSection(chat),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
   }
 
   Widget _buildButtonTile({
+    Key? key,
     required Widget destination,
     required String title,
     required String subtitle,
@@ -327,6 +365,7 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
     VoidCallback? onTap,
   }) {
     return Padding(
+      key: key,
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Card(
               elevation: 2,

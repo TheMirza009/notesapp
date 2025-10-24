@@ -4,6 +4,7 @@ import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
@@ -12,6 +13,9 @@ import 'package:notesapp/root/screens/Settings/widgets/emerging_circle.dart';
 import 'package:notesapp/root/screens/Settings/widgets/rounded_tile.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/theme_switch.dart';
+
+final GlobalKey tile1 = GlobalKey();
+final GlobalKey tile2 = GlobalKey();
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -27,13 +31,17 @@ class SettingsScreen extends ConsumerWidget {
         child: ListView(
           children: [
             RoundedTile(
+              key: tile1,
               margins: EdgeInsets.only(bottom: 10),
               leading: Icon(context.isLight ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
               title: Text("Theme"),
               onTap: () {
+                 // Compute global position of the tile
+                final Offset position = Utils.getObjectPosition(objectKey: tile1);
+
                 CustomContextMenu.showMenuAt(
                 context,
-                position:  Offset(context.screenWidth - 20, 120), // Offset(200, 120),
+                position: position, // Offset(context.screenWidth - 20, 120), // Offset(200, 120),
                 menuItems: themeOptions,
                 triangleHorizontalOffset: 180,
                 onSelected: (val) => handleThemeOptions(ref, val),
@@ -41,15 +49,17 @@ class SettingsScreen extends ConsumerWidget {
               },
             ),
             RoundedTile(
+              key: tile2,
               margins: EdgeInsets.only(bottom: 10),
               leading: Icon(Icons.chat),
               title: Text("Bubble Style"),
               onTap: () {
+                final Offset position = Utils.getObjectPosition(objectKey: tile2);
                 CustomContextMenu.showMenuAt(
                 context,
                 triangleHorizontalOffset: 180,
-                showTail: false,
-                position: Offset(context.screenWidth - 20, 190), // Offset(200, 120),
+                showTail: true,
+                position: position, // Offset(context.screenWidth - 20, 190), // Offset(200, 120),
                 menuItems: bubbleStyleOptions,
                 onSelected: (val) => handleBubbleStyle(ref, val),
               );
@@ -60,6 +70,19 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Offset getObjectPosition({required GlobalKey key, double? heightOffset}) {
+    final RenderBox box = key.currentContext!.findRenderObject() as RenderBox;
+    final Offset globalPosition = box.localToGlobal(Offset.zero);
+    final Size size = box.size;
+    
+    // We want centerRight → x = right edge, y = vertical center
+    final Offset position = Offset(
+      globalPosition.dx + size.width,
+      globalPosition.dy + size.height / (heightOffset ?? 1.5),
+    );
+    return position;
   }
 }
 

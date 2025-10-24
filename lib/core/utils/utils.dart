@@ -210,6 +210,19 @@ class Utils {
   );
 }
 
+static Offset getObjectPosition({required GlobalKey objectKey, double? heightOffset}) {
+    final RenderBox box = objectKey.currentContext!.findRenderObject() as RenderBox;
+    final Offset globalPosition = box.localToGlobal(Offset.zero);
+    final Size size = box.size;
+    
+    // We want centerRight → x = right edge, y = vertical center
+    final Offset position = Offset(
+      globalPosition.dx + size.width,
+      globalPosition.dy + size.height / (heightOffset ?? 1.5),
+    );
+    return position;
+  }
+
   static BubbleColorScheme getBubbleColorScheme(
     BuildContext context,
     {BubbleStyle? style,
