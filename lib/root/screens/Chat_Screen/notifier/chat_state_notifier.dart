@@ -915,6 +915,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
       await _chat!.messages.save();
       await _isar.chats.put(_chat!);
     });
+    allMessages = [];
     state = ChatState();
   }
 

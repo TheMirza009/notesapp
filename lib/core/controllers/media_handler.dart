@@ -18,7 +18,7 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
-import 'package:notesapp/root/widgets/photo_view/croppyImage.dart';
+import 'package:notesapp/root/widgets/crop/croppyImage.dart';
 import 'package:notesapp/root/widgets/photo_view/croppy_settings_modal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -278,7 +278,7 @@ class MediaHandler {
       }
 
       debugPrint("✂️ Starting crop for: $filePath");
-      final croppedFile = await _croppyImage(file, navigate: navigate);
+      final croppedFile = await _croppyImage(file, navigate: navigate, showCircle: isProfilePicture);
       if (croppedFile == null) {
         debugPrint("⚠️ cropAndSavePhoto: Cropper returned null");
         return null;

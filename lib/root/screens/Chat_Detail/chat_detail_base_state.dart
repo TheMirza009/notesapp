@@ -7,7 +7,7 @@ import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.d
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen_state.dart';
-import 'package:notesapp/root/widgets/photo_view/croppyImage.dart';
+import 'package:notesapp/root/widgets/crop/croppyImage.dart';
 import 'package:notesapp/root/widgets/photo_view/croppy_example.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:extended_image/extended_image.dart';
@@ -209,7 +209,7 @@ abstract class ChatDetailBase extends ConsumerState<ChatDetailScreen> {
           CupertinoPageRoute(builder: (_) => ProfileScreen()),
         );
       case 'croppy':
-        final media = await MediaHandler.cropAndSavePhoto(image.path!);
+        final media = await MediaHandler.cropAndSavePhoto(image.path!, isProfilePicture: false);
         if (media == null) return;
 
         final Message message = Message.fromCroppedImage(media);

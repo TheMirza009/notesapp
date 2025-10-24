@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
+import 'package:notesapp/root/widgets/crop/crop_screen.dart';
 
 class ChatDetailState {
   final Chat? chat;
@@ -103,33 +106,34 @@ class ChatDetailNotifier extends Notifier<ChatDetailState> {
   }
 
   Future<void> updateChatPhoto() async {
-    final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
-    if (pickedMedia == null || state.chat == null) return;
+    await Navigator.push(navigatorKey.currentContext!, MaterialPageRoute(builder: (_) => CropScreen(isChatPhoto: true)));
+    // final pickedMedia = await MediaHandler.pickImage(isProfilePicture: true);
+    // if (pickedMedia == null || state.chat == null) return;
 
-    // Check if this media already exists in DB by path
-    final existingMedia = await isar.medias.filter().pathEqualTo(pickedMedia.path).findFirst();
-    final mediaToUse = existingMedia ?? pickedMedia;
+    // // Check if this media already exists in DB by path
+    // final existingMedia = await isar.medias.filter().pathEqualTo(pickedMedia.path).findFirst();
+    // final mediaToUse = existingMedia ?? pickedMedia;
 
-    // Persist only if it's new
-    if (existingMedia == null) {
-      await isar.writeTxn(() async {
-        await isar.medias.put(mediaToUse);
-      });
-    }
+    // // Persist only if it's new
+    // if (existingMedia == null) {
+    //   await isar.writeTxn(() async {
+    //     await isar.medias.put(mediaToUse);
+    //   });
+    // }
 
-    // Always re-fetch the managed chat from Isar
-    final managedChat = await isar.chats.get(state.chat!.isarID);
-    if (managedChat == null) return;
+    // // Always re-fetch the managed chat from Isar
+    // final managedChat = await isar.chats.get(state.chat!.isarID);
+    // if (managedChat == null) return;
 
-    // Update chat with new photo path
-    await isar.writeTxn(() async {
-      managedChat.chatPhotoPath = mediaToUse.path;
-      await isar.chats.put(managedChat);
-    });
+    // // Update chat with new photo path
+    // await isar.writeTxn(() async {
+    //   managedChat.chatPhotoPath = mediaToUse.path;
+    //   await isar.chats.put(managedChat);
+    // });
 
-    // Update state and provider
-    ref.read(chatListProvider.notifier).refreshChat(managedChat.isarID);
-    state = state.copyWith(chat: managedChat);
+    // // Update state and provider
+    // ref.read(chatListProvider.notifier).refreshChat(managedChat.isarID);
+    // state = state.copyWith(chat: managedChat);
   }
 
 

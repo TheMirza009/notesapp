@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar_community/isar.dart';
@@ -7,12 +6,14 @@ import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/user_model.dart';
-import 'package:notesapp/root/widgets/photo_view/croppyImage.dart';
 
 class CropScreen extends ConsumerStatefulWidget {
-  const CropScreen({super.key});
+  final bool? isChatPhoto;
+  const CropScreen({super.key, this.isChatPhoto = false});
 
   @override
   ConsumerState<CropScreen> createState() => _CropScreenState();
@@ -52,30 +53,19 @@ class _CropScreenState extends ConsumerState<CropScreen> {
         _status = 'Processing image...';
       });
 
-      // Step 2: Crop and save the photo
-      // final croppedMedia = await MediaHandler.cropAndSavePhoto(
-      //   pickedMedia.path!,
-      //   isProfilePicture: true,
-      // );
+      // Step 2: Decide what to update
+      if (widget.isChatPhoto == true) {
+        debugPrint("💬 Updating chat photo...");
+        await _updateChatPhoto(pickedMedia);
+      } else {
+        debugPrint("👤 Updating user profile photo...");
+        await _updateUserProfile(pickedMedia);
+      }
 
-      // if (croppedMedia == null) {
-      //   debugPrint("❌ Failed to crop image");
-      //   _navigateBack();
-      //   return;
-      // }
-
-      debugPrint("✅ Cropped media: ${pickedMedia.path}");
-      setState(() {
-        _status = 'Updating profile...';
-      });
-
-      // Step 3: Update user profile with the cropped image
-      await _updateUserProfile(pickedMedia);
-
-      // Step 4: Precache the new profile image
+      // Step 3: Precache new image
       _precacheProfileImage(pickedMedia.path);
 
-      debugPrint("🎉 Profile photo updated successfully");
+      debugPrint("🎉 Image updated successfully");
       _navigateBack();
 
     } catch (e, stackTrace) {
@@ -88,45 +78,77 @@ class _CropScreenState extends ConsumerState<CropScreen> {
     }
   }
 
+  /// --- USER PROFILE UPDATE FLOW ---
   Future<void> _updateUserProfile(Media mediaToUse) async {
     final currentUser = ref.read(userController);
-    debugPrint("💳 Current User: ${currentUser.toString()}");
     if (currentUser == null) return;
 
-    // Check if this media already exists in DB by path
     final existingMedia = await IsarDatabase.isar.medias
         .filter()
         .pathEqualTo(mediaToUse.path)
         .findFirst();
-    
+
     final mediaToUseFinal = existingMedia ?? mediaToUse;
 
-    // Persist only if it's new
     if (existingMedia == null) {
       await IsarDatabase.isar.writeTxn(() async {
         await IsarDatabase.isar.medias.put(mediaToUseFinal);
       });
     }
 
-    // Always re-fetch the managed User from Isar
     final managedUser = await IsarDatabase.isar.users.get(currentUser.isarID);
-    debugPrint("🗄️ DB says user.photo = ${managedUser?.profilePhotoPath}");
-
     if (managedUser == null) return;
 
-    // Update user with new profile photo
     await IsarDatabase.isar.writeTxn(() async {
       managedUser.profilePhotoPath = mediaToUseFinal.path;
       await IsarDatabase.isar.users.put(managedUser);
     });
 
-    // Update state in provider
     await ref.read(userController.notifier).updateUser(managedUser);
+  }
+
+  /// --- CHAT PHOTO UPDATE FLOW ---
+  Future<void> _updateChatPhoto(Media mediaToUse) async {
+    final chatState = ref.read(chatListProvider);
+    final currentChat = chatState.selectedChat; // Assuming you have a selected chat stored
+
+    if (currentChat == null) {
+      debugPrint("⚠️ No chat selected, aborting updateChatPhoto");
+      return;
+    }
+
+    final isar = IsarDatabase.isar;
+
+    // Check if media exists
+    final existingMedia = await isar.medias.filter().pathEqualTo(mediaToUse.path).findFirst();
+    final mediaToUseFinal = existingMedia ?? mediaToUse;
+
+    // Store if new
+    if (existingMedia == null) {
+      await isar.writeTxn(() async {
+        await isar.medias.put(mediaToUseFinal);
+      });
+    }
+
+    // Refetch managed chat
+    final managedChat = await isar.chats.get(currentChat.isarID);
+    if (managedChat == null) return;
+
+    // Update chat photo
+    await isar.writeTxn(() async {
+      managedChat.chatPhotoPath = mediaToUseFinal.path;
+      await isar.chats.put(managedChat);
+    });
+
+    // Refresh chat in provider
+    ref.read(chatListProvider.notifier).refreshChat(managedChat.isarID);
+
+    // Update state if necessary
+    // chatState.setCurrentChat(managedChat);
   }
 
   void _precacheProfileImage(String? path) {
     if (path == null) return;
-
     try {
       precacheImage(FileImage(File(path)), context);
     } catch (e) {
@@ -154,20 +176,20 @@ class _CropScreenState extends ConsumerState<CropScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (_isProcessing)
-              CircularProgressIndicator(color: Colors.white)
+              const CircularProgressIndicator(color: Colors.white)
             else
-              Icon(Icons.error, color: Colors.white, size: 40),
-            SizedBox(height: 16),
+              const Icon(Icons.error, color: Colors.white, size: 40),
+            const SizedBox(height: 16),
             Text(
               _status,
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             if (!_isProcessing) ...[
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _navigateBack,
-                child: Text('Go Back'),
+                child: const Text('Go Back'),
               ),
             ],
           ],
