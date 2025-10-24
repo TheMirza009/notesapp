@@ -21,7 +21,8 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
   static final ThemeData _lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    textTheme: GoogleFonts.poppinsTextTheme().apply(
+    textTheme: const TextTheme().apply(
+      fontFamily: 'Poppins',
       bodyColor: ThemeConstants.textLight,
     ),
     dividerColor: ThemeConstants.homeDividerLight,
@@ -35,7 +36,8 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
   static final ThemeData _darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    textTheme: GoogleFonts.poppinsTextTheme().apply(
+    textTheme: const TextTheme().apply(
+      fontFamily: 'Poppins',
       bodyColor: ThemeConstants.textDark2,
     ),
     dividerColor: ThemeConstants.darkAppbar,
