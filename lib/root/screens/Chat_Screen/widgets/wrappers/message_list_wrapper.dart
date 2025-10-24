@@ -139,6 +139,9 @@ class _MessageItemBuilder extends ConsumerWidget {
               },
               onTap: () async {
                 if (!isEditing) {
+                  if (ref.read(overlayHandlerProvider).isAttachmentOpen) {
+                    ref.read(overlayHandlerProvider).closeAttachmentBoard();
+                  }
                   if (message.isImage) {
                   final allImages = ref.read(chatStateController).messages.imageMedias;
                   final initialIndex = allImages.indexOfMediaIsarID(message);
@@ -163,6 +166,9 @@ class _MessageItemBuilder extends ConsumerWidget {
                 }
               },
               onLongPress: (pos) {
+                if (ref.read(overlayHandlerProvider).isAttachmentOpen) {
+                    ref.read(overlayHandlerProvider).closeAttachmentBoard();
+                  }
                 final notifier = ref.read(chatStateController.notifier);
                 notifier.selectMessage(message);
                 notifier.searchFocusNode.unfocus();

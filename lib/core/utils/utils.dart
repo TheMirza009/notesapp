@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/root/data/enums/bubble_color.dart';
+import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/bubble_color_scheme.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -207,5 +210,24 @@ class Utils {
   );
 }
 
+  static BubbleColorScheme getBubbleColorScheme(
+    BuildContext context,
+    {BubbleStyle? style,
+    BubbleColor? color,
+  }) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
+    switch (style) {
+      case BubbleStyle.glass:
+        return isLight
+            ? BubbleColorScheme.glassLight()
+            : BubbleColorScheme.glassDark();
+      case BubbleStyle.opaque:
+        return BubbleColorScheme.getScheme(context, (color ?? BubbleColor.seed));
+      default:
+        return isLight
+            ? BubbleColorScheme.defaultLight()
+            : BubbleColorScheme.defaultDark();
+    }
+  }
 }

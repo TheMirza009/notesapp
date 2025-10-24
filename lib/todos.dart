@@ -24,7 +24,7 @@
 //// (P1): Filter homescreen chats
 //// (P1): Loading indicator for homescreen chatlist
 //// (P1): Convert ReplyAnchor to Overlay to fix animation issues
-//TODO (P1): Crop rotation is
+//// (P1): Crop rotation is
 //TODO (P1): Revamp overall MessageBar structure for unified text/media/reply handling.
 //TODO (P1): Ensure consistent state updates after forwarding, replying, or deleting messages.
 //TODO (P1): Fix transaction boundary issues when saving linked media or replies.

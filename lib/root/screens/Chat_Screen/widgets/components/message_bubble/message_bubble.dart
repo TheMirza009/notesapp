@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
+import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -51,7 +53,7 @@ class MessageBubble extends StatefulWidget {
   /// Style
   final BubbleStyle style;
   final bool? isHighlighted;
-  final bool? isSelected; 
+  final bool? isSelected;
 
   const MessageBubble({
     super.key,
@@ -85,31 +87,40 @@ class MessageBubble extends StatefulWidget {
   State<MessageBubble> createState() => _MessageBubbleState();
 }
 
-class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveClientMixin {
+class _MessageBubbleState extends State<MessageBubble>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive {
     final type = widget.message.media?.value?.type;
-    return type == Mediatype.image || type == Mediatype.audio || type == Mediatype.text;
+    return type == Mediatype.image ||
+        type == Mediatype.audio ||
+        type == Mediatype.text;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     final bubblePadding = _getDefaultPadding();
-    final bubbleColor = _getBubbleColor(context);
-    final glassColor = _getGlassColor();
+    final scheme = Utils.getBubbleColorScheme(context, style: widget.style, color: BubbleColor.seed);
+
+    final bool isSender = widget.message.isSender;
+    final Color baseColor = isSender ? scheme.senderBubble : scheme.receiverBubble;
+    final Color highlightedColor = isSender ? scheme.highlightedSender : scheme.highlightedReceiver;
+    final Color replyBg = scheme.replyBackground;
 
     Widget styleBuilder(BubbleStyle style) {
       return switch (style) {
         BubbleStyle.glass => glassBubble(
-          glassColor: glassColor,
-          glassPadding: bubblePadding,
-        ),
+            glassColor: baseColor,
+            glassPadding: bubblePadding,
+          ),
         BubbleStyle.opaque => opaqueBubble(
-          messageBubbleColor: bubbleColor,
-          bubblePadding: bubblePadding,
-          isHighlighted: widget.isHighlighted ?? false,
-        ),
+            messageBubbleColor: baseColor,
+            bubblePadding: bubblePadding,
+            isHighlighted: widget.isHighlighted ?? false,
+            highlightedColor: highlightedColor,
+          ),
       };
     }
 
@@ -120,12 +131,14 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
       child: Stack(
         children: [
           AnimatedAlign(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOutQuint,
-            alignment:  widget.message.isSender ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: widget.message.isSender
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
             child: AnimatedPadding(
-              duration: Duration(milliseconds: 300),
-            curve: Curves.easeInOutQuint,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutQuint,
               padding: EdgeInsets.only(
                 left: widget.message.isSender ? 45.0 : 8,
                 right: widget.message.isSender ? 8 : 45,
@@ -133,20 +146,26 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
                 bottom: widget.bottomPadding ?? 5,
               ),
               child: Column(
-                crossAxisAlignment: widget.message.isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: widget.message.isSender
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
                 children: [
                   if (widget.message.replyingTo.value != null)
                     ReplyWrapper(
                       replyMessage: widget.message.replyingTo.value!,
-                      backgroundColor: Colors.blueGrey.withOpacity(context.isLight ? 0.1 : 0.07),
-                      iconColor: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark,
-                      onTap: widget.onReplyTap ?? () {
-                        debugPrint("Reply tapped");
-                        final media = widget.message.replyingTo.value!.media.value;
-                        if (media != null) {
-                          debugPrint("Media path: ${media.path}");
-                        }
-                      },
+                      backgroundColor: replyBg,
+                      iconColor: context.isLight
+                          ? ThemeConstants.textLight
+                          : ThemeConstants.textDark,
+                      onTap: widget.onReplyTap ??
+                          () {
+                            debugPrint("Reply tapped");
+                            final media =
+                                widget.message.replyingTo.value!.media.value;
+                            if (media != null) {
+                              debugPrint("Media path: ${media.path}");
+                            }
+                          },
                     ),
                   styleBuilder(widget.style),
                 ],
@@ -154,14 +173,14 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
             ),
           ),
 
-          // Full-width selection overlay
+          // Selection overlay
           if (widget.isSelecting)
             Positioned.fill(
               child: GestureDetector(
                 onTap: widget.onTapWhileSelecting,
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 5),
-                  color: widget.isSelected ?? false
+                  color: (widget.isSelected ?? false)
                       ? Colors.blue.withValues(alpha: 0.2)
                       : Colors.transparent,
                 ),
@@ -172,76 +191,58 @@ class _MessageBubbleState extends State<MessageBubble> with AutomaticKeepAliveCl
     );
   }
 
-  // ------------------------
+  // -------------------------------------------------------
   EdgeInsets _getDefaultPadding() {
-    return widget.message.isImage
-        ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10)
-        : widget.message.isDocument ? const EdgeInsets.all(4) : const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
+    if (widget.message.isImage) {
+      return const EdgeInsets.symmetric(horizontal: 10, vertical: 10);
+    } else if (widget.message.isDocument) {
+      return const EdgeInsets.all(4);
+    } else {
+      return const EdgeInsets.symmetric(horizontal: 15, vertical: 10);
+    }
   }
 
-  Color _getBubbleColor(BuildContext context) {
-    return widget.message.isSender
-        ? (context.isLight
-            ? ThemeConstants.senderBlue
-            : ThemeConstants.senderBlueDark)
-        : (context.isLight
-            ? ThemeConstants.hometoolbarLight3
-            : ThemeConstants.darkIconBorder);
-  }
-
-  Color _getHighlightedBubbleColor(BuildContext context) {
-    return widget.message.isSender
-        ? (context.isLight
-            ? const Color(0xFFF5FBFF)
-            : const Color(0xFF5A9CC0))
-        : (context.isLight
-            ? const Color(0xFFFFFFFF)
-            : const Color(0xFF677F8D));
-  }
-
-  Color _getGlassColor() {
-    return widget.message.isSender
-        ? Colors.blue.withValues(alpha: 0.15)
-        : Colors.white.withValues(alpha: 0.15);
-  }
-
-  // ------------------------
+  // -------------------------------------------------------
   Widget opaqueBubble({
     required Color messageBubbleColor,
     required EdgeInsets bubblePadding,
     required bool isHighlighted,
+    required Color highlightedColor,
   }) {
     return RippleWell(
-          borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
-          materialColor: messageBubbleColor,
-          onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
-          onLongPress: widget.onLongPress,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(widget.borderRadius),
-              color: isHighlighted ? _getHighlightedBubbleColor(context) : Colors.transparent,
-              boxShadow: [
-                 BoxShadow(
-                  color: Colors.white.withOpacity(
-                    isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0,
-                  ),
-                  blurRadius: 16,
-                  spreadRadius: 2,
-                ),
-              ],
-              // border: Border.all( // width: isHighlighted ? 1.5 : 0, // color: isHighlighted ? Colors.white : Colors.transparent, // ),
+      borderRadius:
+          widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
+      materialColor: messageBubbleColor,
+      onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          color: isHighlighted ? highlightedColor : messageBubbleColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withOpacity(
+                isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0,
+              ),
+              blurRadius: 16,
+              spreadRadius: 2,
             ),
-            child: Padding(
-        padding: bubblePadding,
-        child: MessageContentBuilder(message: widget.message), // <— use cached child
-          ),
-        )
+          ],
+        ),
+        child: Padding(
+          padding: bubblePadding,
+          child: MessageContentBuilder(message: widget.message),
+        ),
+      ),
     );
   }
 
-  Widget glassBubble({required Color glassColor, required EdgeInsets glassPadding}) {
+  Widget glassBubble({
+    required Color glassColor,
+    required EdgeInsets glassPadding,
+  }) {
     return RippleWell(
       borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
       materialColor: widget.rippleColor,
