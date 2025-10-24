@@ -76,7 +76,7 @@ class HomescreenState extends HomeScreenBaseState {
             backgroundColor: headerColor,
             shadowColor: Colors.transparent,
             toolbarHeight: 65,
-            title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
+            title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontFamily: "Poppins", fontWeight: FontWeight.w500)),
             leading: Padding(padding: const EdgeInsets.only(left: 12), child: circularAvatar(isLight)),
             actions: [
               CustomContextMenu(

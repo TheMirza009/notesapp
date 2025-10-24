@@ -89,6 +89,7 @@ class ChatAppBar extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
+                          fontFamily: "Poppins",
                           fontSize: isSelecting! ? 23 : 22, // ThemeConstants.screenWidth * (isSelecting! ? 0.05 : 0.045),
                           fontWeight: FontWeight.w500,
                           color: textcolor,

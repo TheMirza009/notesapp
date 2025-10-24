@@ -36,7 +36,14 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
   static final ThemeData _darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    textTheme: const TextTheme().apply(
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(fontFamily: 'Poppins'),
+  bodyMedium: TextStyle(fontFamily: 'Poppins'),
+  bodySmall: TextStyle(fontFamily: 'Poppins'),
+  titleLarge: TextStyle(fontFamily: 'Poppins'),
+  titleMedium: TextStyle(fontFamily: 'Poppins'),
+  titleSmall: TextStyle(fontFamily: 'Poppins'),
+    ).apply(
       fontFamily: 'Poppins',
       bodyColor: ThemeConstants.textDark2,
     ),
