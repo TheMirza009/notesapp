@@ -194,7 +194,7 @@ class _MessageBubbleState extends State<MessageBubble>
   // -------------------------------------------------------
   EdgeInsets _getDefaultPadding() {
     if (widget.message.isImage) {
-      return const EdgeInsets.symmetric(horizontal: 10, vertical: 10);
+      return const EdgeInsets.symmetric(horizontal: 5, vertical: 5);
     } else if (widget.message.isDocument) {
       return const EdgeInsets.all(4);
     } else {
@@ -210,8 +210,7 @@ class _MessageBubbleState extends State<MessageBubble>
     required Color highlightedColor,
   }) {
     return RippleWell(
-      borderRadius:
-          widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
+      borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.message.isImage ? 10 : widget.borderRadius),
       materialColor: messageBubbleColor,
       onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
       onLongPress: widget.onLongPress,
