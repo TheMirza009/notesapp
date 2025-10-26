@@ -23,11 +23,21 @@ import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
 import 'package:open_file/open_file.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-class MessageListWrapper extends ConsumerWidget {
+class MessageListWrapper extends ConsumerStatefulWidget {
   const MessageListWrapper({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MessageListWrapper> createState() => _MessageListWrapperState();
+}
+
+class _MessageListWrapperState extends ConsumerState<MessageListWrapper> with AutomaticKeepAliveClientMixin {
+  
+  @override 
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     final notifier = ref.read(chatStateController.notifier);
     final messages = ref.watch( chatStateController.select((s) => s.messages));
     final isLoading = ref.watch(chatStateController.notifier).isLoading;
@@ -47,6 +57,9 @@ class MessageListWrapper extends ConsumerWidget {
                 itemScrollController: notifier.itemScrollController,
                 itemPositionsListener: notifier.itemPositionsListener,
                 itemCount: messages.length + 1,
+                addAutomaticKeepAlives: true,    // ✅
+                addRepaintBoundaries: true,      // ✅
+                addSemanticIndexes: true,        // ✅
                 // physics: ref.watch(chatStateController.select((s) => s.isEditing))
                 //     ? const NeverScrollableScrollPhysics() // 🚫 disables scroll
                 //     : const BouncingScrollPhysics(),  
@@ -56,7 +69,7 @@ class MessageListWrapper extends ConsumerWidget {
                   }
             
                   final message = messages[index]; // 👈 Get the message directly
-                  return ProviderScope(
+                   return ProviderScope(
                     overrides: [
                       // messageIdProvider.overrideWith((_) => messageId),
                       messageProvider.overrideWithValue(message), // 👈 Pass the message instead of finding it later
@@ -79,7 +92,9 @@ class _MessageItemBuilder extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // final message = ref.watch(messageProvider);
     final message = ref.watch(messageProvider);
+    final messageIsarId = message.isarId;
     final bubbleStyle = ref.watch(settingsController)?.selectedBubbleStyle ?? BubbleStyle.opaque;
 
     if (message == null) {
@@ -99,9 +114,9 @@ class _MessageItemBuilder extends ConsumerWidget {
     }
 
     // 👇 Watch only derived info for this index
-    final info = ref.watch( chatStateController.select((s) => s.messages.layoutInfoById(message.isarId)));
-    final isHighlighted = ref.watch( chatStateController.select((s) => s.highlightedMessage?.isarId == message.isarId), );
-    final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == message.isarId)), );
+    final info = ref.watch( chatStateController.select((s) => s.messages.layoutInfoById(messageIsarId)));
+    final isHighlighted = ref.watch( chatStateController.select((s) => s.highlightedMessage?.isarId == messageIsarId), );
+    final isSelected = ref.watch( chatStateController.select((s) => s.selectedMessages.any((m) => m.isarId == messageIsarId)),);
     final isSelecting = ref.watch( chatStateController.select((s) => s.isSelecting));
     final isEditing = ref.watch( chatStateController.select((s) => s.isEditing));
     final bubbleColor = ref.watch( chatStateController.select((s) => s.bubbleColor));
@@ -112,79 +127,76 @@ class _MessageItemBuilder extends ConsumerWidget {
       children: [
         if (info.showDateChip) DateChip(message.time),
         RepaintBoundary(
-          child: AbsorbPointer(
-            absorbing: isEditing,
-            child: MessageBubble(
-              style: bubbleStyle,
-              message: message,
-              isSelecting: isSelecting,
-              isSelected: isSelected,
-              isHighlighted: isHighlighted,
-              topPadding: info.topPadding,
-              bottomPadding: info.bottomPadding,
-              bubbleColor:  bubbleColor,
-              // interactions
-              onSwipe: () {
-                if (isEditing == false) {
-                  ref.read(overlayHandlerProvider).showReplyAnchor(context); // show hidden
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    ref.read(chatStateController.notifier).setAnchorMessage(message, context); // trigger slide
-                  });
-                }
-              },
-              onTapWhileSelecting: () {
-                if (isEditing == false) {
-                  isSelected
-                  ? ref.read(chatStateController.notifier).unselectMessage(message)
-                  : ref.read(chatStateController.notifier).selectMessage(message);
-                }
-              },
-              onTap: () async {
-                if (!isEditing) {
-                  if (ref.read(overlayHandlerProvider).isAttachmentOpen) {
-                    ref.read(overlayHandlerProvider).closeAttachmentBoard();
-                  }
-                  if (message.isImage) {
-                  final allImages = ref.read(chatStateController).messages.imageMedias;
-                  final initialIndex = allImages.indexOfMediaIsarID(message);
-                  debugPrint( "📷❓ASPECT RATIO:  ${(message.media.value?.aspectRatio).toString()}" ?? "COULD NOT GET");
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => GalleryViewWrapper(
-                        galleryItems: allImages,
-                        initialIndex: initialIndex,
-                        showOptions: true,
-                        options: galleryOptions,
-                        onOptionSelect: (value) => handleGalleryOptions(context, ref, value, allImages[initialIndex]),
-                      ),
-                    ),
-                  );
-                } else if (message.isDocument) {
-                  await OpenFile.open(message.media!.value!.path!);
-                } else {
-                  ref.read(chatStateController.notifier).toggleSender(message);
-                }
-                }
-              },
-              onLongPress: (pos) {
+          child: MessageBubble(
+            style: bubbleStyle,
+            message: message,
+            isSelecting: isSelecting,
+            isSelected: isSelected,
+            isHighlighted: isHighlighted,
+            topPadding: info.topPadding,
+            bottomPadding: info.bottomPadding,
+            bubbleColor:  bubbleColor,
+            // interactions
+            onSwipe: () {
+              if (isEditing == false) {
+                ref.read(overlayHandlerProvider).showReplyAnchor(context); // show hidden
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref.read(chatStateController.notifier).setAnchorMessage(message, context); // trigger slide
+                });
+              }
+            },
+            onTapWhileSelecting: () {
+              if (isEditing == false) {
+                isSelected
+                ? ref.read(chatStateController.notifier).unselectMessage(message)
+                : ref.read(chatStateController.notifier).selectMessage(message);
+              }
+            },
+            onTap: () async {
+              if (!isEditing) {
                 if (ref.read(overlayHandlerProvider).isAttachmentOpen) {
-                    ref.read(overlayHandlerProvider).closeAttachmentBoard();
-                  }
-                final notifier = ref.read(chatStateController.notifier);
-                notifier.selectMessage(message);
-                notifier.searchFocusNode.unfocus();
-                notifier.keyboardFocusNode.unfocus();
-                CustomContextMenu.showMenuAt(
+                  ref.read(overlayHandlerProvider).closeAttachmentBoard();
+                }
+                if (message.isImage) {
+                final allImages = ref.read(chatStateController).messages.imageMedias;
+                final initialIndex = allImages.indexOfMediaIsarID(message);
+                debugPrint( "📷❓ASPECT RATIO:  ${(message.media.value?.aspectRatio).toString()}" ?? "COULD NOT GET");
+                Navigator.push(
                   context,
-                  position: pos,
-                  triangleHorizontalOffset: message.isSender ? 120 : 40,
-                  menuItems: messageHoldOptions(isMedia: (message.isImage || message.isDocument || message.isAudio) ),
-                  onSelected: (val) => notifier.handleMessageMenuAction(val, message, context),
+                  MaterialPageRoute(
+                    builder: (_) => GalleryViewWrapper(
+                      galleryItems: allImages,
+                      initialIndex: initialIndex,
+                      showOptions: true,
+                      options: galleryOptions,
+                      onOptionSelect: (value) => handleGalleryOptions(context, ref, value, allImages[initialIndex]),
+                    ),
+                  ),
                 );
-              },
-              onReplyTap: () => ref.read(chatStateController.notifier).scrollToMessage(message.replyingTo.value!.isarId),
-            ),
+              } else if (message.isDocument) {
+                await OpenFile.open(message.media!.value!.path!);
+              } else {
+                ref.read(chatStateController.notifier).toggleSender(message);
+              }
+              }
+            },
+            onLongPress: (pos) {
+              if (ref.read(overlayHandlerProvider).isAttachmentOpen) {
+                  ref.read(overlayHandlerProvider).closeAttachmentBoard();
+                }
+              final notifier = ref.read(chatStateController.notifier);
+              notifier.selectMessage(message);
+              notifier.searchFocusNode.unfocus();
+              notifier.keyboardFocusNode.unfocus();
+              CustomContextMenu.showMenuAt(
+                context,
+                position: pos,
+                triangleHorizontalOffset: message.isSender ? 120 : 40,
+                menuItems: messageHoldOptions(isMedia: (message.isImage || message.isDocument || message.isAudio) ),
+                onSelected: (val) => notifier.handleMessageMenuAction(val, message, context),
+              );
+            },
+            onReplyTap: () => ref.read(chatStateController.notifier).scrollToMessage(message.replyingTo.value!.isarId),
           ),
         ),
       ],

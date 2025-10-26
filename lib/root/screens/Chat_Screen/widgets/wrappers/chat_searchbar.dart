@@ -4,11 +4,21 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 
-class ChatSearchBar extends ConsumerWidget {
+class ChatSearchBar extends ConsumerStatefulWidget {
   const ChatSearchBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChatSearchBar> createState() => _ChatSearchBarState();
+}
+
+class _ChatSearchBarState extends ConsumerState<ChatSearchBar> with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     debugPrint("🔄 Searchbar rebuilt");
     final notifier = ref.read(chatStateController.notifier);
     final isSearching = ref.watch(chatStateController.select((s) => s.isSearching));

@@ -3,19 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/components/attachment_board.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/bottom_message_bar.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/record_bar.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/attachment_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 
-class BottomMessageBarWrapper extends ConsumerWidget {
+class BottomMessageBarWrapper extends ConsumerStatefulWidget {
   const BottomMessageBarWrapper({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BottomMessageBarWrapper> createState() => _BottomMessageBarWrapperState();
+}
+
+class _BottomMessageBarWrapperState extends ConsumerState<BottomMessageBarWrapper> with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     final notifier = ref.read(chatStateController.notifier);
     final isRecording = ref.watch(chatStateController.select((s) => s.isRecording));
     final isEditing = ref.watch(chatStateController.select((s) => s.isEditing));

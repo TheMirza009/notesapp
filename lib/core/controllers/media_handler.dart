@@ -22,7 +22,6 @@ import 'package:notesapp/root/widgets/crop/croppyImage.dart';
 import 'package:notesapp/root/widgets/photo_view/croppy_settings_modal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart'; // uncomment if using compression
 
 class MediaHandler {
   static final ImagePicker _picker = ImagePicker();
@@ -499,14 +498,14 @@ class MediaHandler {
   }
 
   /// (Optional) Compress image before saving (stub)
-  static Future<File?> _compressImage(File file) async {
-    final XFile? result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      "${file.parent.path}/compressed_${file.uri.pathSegments.last}",
-      quality: 70,
-    );
+  // static Future<File?> _compressImage(File file) async {
+  //   final XFile? result = await FlutterImageCompress.compressAndGetFile(
+  //     file.absolute.path,
+  //     "${file.parent.path}/compressed_${file.uri.pathSegments.last}",
+  //     quality: 70,
+  //   );
 
-    return result != null ? File(result.path) : null;
-  }
+  //   return result != null ? File(result.path) : null;
+  // }
 }
 

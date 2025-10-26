@@ -46,11 +46,21 @@ import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 
 final StateProvider<bool> isNewChat = StateProvider((_) => false);
 
-class ChatScreen extends ConsumerWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     // final notifier = ref.read(chatMessagesController.notifier);
     final overlayHandler = ref.read(overlayHandlerProvider);
     final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;

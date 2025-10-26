@@ -264,38 +264,45 @@ class ChatStateNotifier extends Notifier<ChatState> {
     }
   }
 
-  /// Load a batch of messages and their media concurrently with a pool
-  Future<List<Message>> _loadMessageBatch(
-    List<int> ids, {
-    int concurrency = 4,
-  }) async {
-    final messages = await _isar.messages.getAll(ids);
-    final validMessages = messages.whereType<Message>().toList();
+  /// ✅ Load messages AND pre-decode all blurhashes
+Future<List<Message>> _loadMessageBatch(
+  List<int> ids, {
+  int concurrency = 4,
+}) async {
+  final messages = await _isar.messages.getAll(ids);
+  final validMessages = messages.whereType<Message>().toList();
 
-    // Load all media in parallel - let the system handle scheduling
-    await Future.wait(
-      validMessages.map((message) async {
-        try {
-          await message.media.load();
+  // ✅ Collect all blurhashes to decode
+  final hashesToDecode = <MapEntry<String, double>>[];
 
-          final media = message.media.value;
-          if (media == null || media.path == null) return;
+  // Load media
+  await Future.wait(
+    validMessages.map((message) async {
+      try {
+        await message.media.load();
 
-          // ✅ Optional: prefetch the blurHash string into memory
-          // (Generation handled in ImageMessageView and MediaHandler)
-          if (media.blurHash != null && media.aspectRatio != null) {
-            unawaited(
-              BlurHashService.warmup(media.blurHash, media.aspectRatio!),
-            );
-          }
-        } catch (e) {
-          debugPrint('⚠️ Failed to load media for message ${message.id}: $e');
+        final media = message.media.value;
+        if (media == null) return;
+
+        // Collect blurhash for batch decode
+        if (media.blurHash != null && media.aspectRatio != null) {
+          hashesToDecode.add(MapEntry(media.blurHash!, media.aspectRatio!));
         }
-      }),
-    );
+      } catch (e) {
+        debugPrint('⚠️ Failed to load media: $e');
+      }
+    }),
+  );
 
-    return validMessages;
+  // ✅ CRITICAL: Pre-decode all blurhashes BEFORE returning
+  if (hashesToDecode.isNotEmpty) {
+    debugPrint('🎨 Pre-decoding ${hashesToDecode.length} blurhashes...');
+    await BlurHashService.batchDecode(hashesToDecode);
+    debugPrint('✅ Blurhashes decoded!');
   }
+
+  return validMessages;
+}
 
   /// Progressive background loading with append/prepend logic
   Future<void> _loadRemainingMessagesInBatches(
@@ -588,55 +595,68 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
   /// Function to delete selected messages from chat
   Future<void> deleteSelected() async {
-    final selected = state.selectedMessages;
-    if (selected.isEmpty) return;
+  final selected = state.selectedMessages;
+  if (selected.isEmpty) return;
 
-    // We will collect media references to inspect after the txn.
-    final List<Media> mediaToCheck = [];
-
+  try {
+    final mediaToCheck = <Media>[];
+    
+    // ✅ Single transaction for all deletions
     await _isar.writeTxn(() async {
-      for (final m in selected) {
-        final managedMsg = await _isar.messages.get(m.isarId);
-        if (managedMsg != null) {
-          await managedMsg.media.load();
-          if (managedMsg.media.value != null) {
-            mediaToCheck.add(managedMsg.media.value!);
-          }
+      // Collect media first
+      final managedMessages = await _isar.messages.getAll(
+        selected.map((m) => m.isarId).toList(),
+      );
+      
+      for (final msg in managedMessages.whereType<Message>()) {
+        await msg.media.load().catchError((_) {});
+        if (msg.media.value != null) {
+          mediaToCheck.add(msg.media.value!);
         }
-        await _isar.messages.delete(m.isarId);
+      }
 
-        if (_chat != null) {
-          final managedChat = await _isar.chats.get(_chat!.isarID);
-          if (managedChat != null) {
-            await managedChat.messages.load();
-            managedChat.messages.removeWhere((mm) => mm.isarId == m.isarId);
-            await managedChat.messages.save();
-            await _isar.chats.put(managedChat);
-            _chat = managedChat;
-          }
+      // Batch delete messages
+      await _isar.messages.deleteAll(
+        selected.map((m) => m.isarId).toList(),
+      );
+
+      // Update chat links in single operation
+      if (_chat != null) {
+        final managedChat = await _isar.chats.get(_chat!.isarID);
+        if (managedChat != null) {
+          await managedChat.messages.load();
+          
+          final toRemoveIds = selected.map((m) => m.isarId).toSet();
+          managedChat.messages.removeWhere((m) => toRemoveIds.contains(m.isarId));
+          
+          await managedChat.messages.save();
+          await _isar.chats.put(managedChat);
+          _chat = managedChat;
         }
       }
     });
 
-    // Outside txn: for each media, check usage and delete files off main isolate
-    for (final media in mediaToCheck) {
-      if (media.type != Mediatype.text) {
-        final usedByOthers = await _isMediaUsedByOthers(media.path);
-        if (!usedByOthers) {
-          try {
-            await compute(_backgroundDeleteMedia, media.path ?? '');
-          } catch (_) {
-            await MediaHandler.deleteMedia(media);
+    // Clean up media in parallel (outside transaction)
+    await Future.wait(
+      mediaToCheck.map((media) async {
+        if (media.type != Mediatype.text) {
+          final usedByOthers = await _isMediaUsedByOthers(media.path);
+          if (!usedByOthers) {
+            compute(_backgroundDeleteMedia, media.path ?? '')
+                .catchError((_) => MediaHandler.deleteMedia(media));
           }
         }
-      }
-    }
+      }),
+      eagerError: false,
+    );
 
-    unSelectAllMessages();
     allMessages.removeWhere((m) => selected.contains(m));
-    state = state.clearSelection().copyWith(messages: allMessages);
+    state = state.copyWith(messages: [...allMessages], selectedMessages: []);
+  } catch (e) {
+    debugPrint('❌ Error deleting selected: $e');
+    Utils.showGlobalSnackBar('Failed to delete messages', Colors.red);
   }
-
+}
   /// Function to change the message sender position
   void toggleSender(Message message) async {
     message.isSender = !message.isSender;

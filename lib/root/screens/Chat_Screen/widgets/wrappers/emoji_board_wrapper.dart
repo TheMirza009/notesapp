@@ -4,11 +4,21 @@ import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.d
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/emoji_board.dart';
 
 
-class EmojiBoardWrapper extends ConsumerWidget {
+class EmojiBoardWrapper extends ConsumerStatefulWidget {
   const EmojiBoardWrapper({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmojiBoardWrapper> createState() => _EmojiBoardWrapperState();
+}
+
+class _EmojiBoardWrapperState extends ConsumerState<EmojiBoardWrapper> with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     debugPrint("🔄 Emoji board rebuilt");
 
     final notifier = ref.read(chatStateController.notifier);

@@ -25,6 +25,7 @@ import 'package:notesapp/root/screens/Chat_Detail/widgets/info_bottom_sheet.dart
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
+import 'package:notesapp/root/screens/Test/thread_test_screen.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/crop/crop_screen.dart';
 import 'package:photo_view/photo_view.dart';
@@ -191,7 +192,12 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
     return Scaffold(
       floatingActionButton: IconButton(
         icon: Icon(Icons.info_outline_rounded),
-        onPressed: () => showChatInfoSheet(context, chat)),
+        onPressed:
+            () => Navigator.push(
+              context,
+              CupertinoPageRoute(builder: (_) => ThreadTestScreen()),
+            ),
+      ), // showChatInfoSheet(context, chat)),
       appBar: AppBar(
         elevation: 0,
         forceMaterialTransparency: true,

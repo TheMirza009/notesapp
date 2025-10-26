@@ -26,6 +26,7 @@ Widget buildOptionTile({
       Text(
         text,
         style: TextStyle(
+          fontFamily: "Poppins",
           fontWeight: FontWeight.w400,
           fontSize: 16,
           color: textColor

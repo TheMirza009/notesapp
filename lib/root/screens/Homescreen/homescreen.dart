@@ -57,10 +57,12 @@ class HomescreenState extends HomeScreenBaseState {
         }
       },
       child: ParentSlideWrapper(
-        overlay: ProfileScreen(
-          leading: IconButton(
-            onPressed: () => setState(() => isSliding = false),
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+        overlay: RepaintBoundary(
+          child: ProfileScreen(
+            leading: IconButton(
+              onPressed: () => setState(() => isSliding = false),
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+            ),
           ),
         ),
         trigger: isSliding,

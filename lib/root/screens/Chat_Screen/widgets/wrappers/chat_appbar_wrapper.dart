@@ -8,11 +8,21 @@ import 'package:notesapp/root/screens/Chat_Detail/screens/chat_detail_screen_div
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/chat_appbar.dart';
 
-class ChatAppBarWrapper extends ConsumerWidget {
+class ChatAppBarWrapper extends ConsumerStatefulWidget {
   const ChatAppBarWrapper({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChatAppBarWrapper> createState() => _ChatAppBarWrapperState();
+}
+
+class _ChatAppBarWrapperState extends ConsumerState<ChatAppBarWrapper> with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
     debugPrint("🔃 Chat App Bar rebuilt");
 
     final chatController = ref.watch(chatStateController.notifier);

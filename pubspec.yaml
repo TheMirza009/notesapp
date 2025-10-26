@@ -15,7 +15,6 @@ dependencies:
   # UI
   chat_bubbles: ^1.7.0
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.3.2
   iconify_flutter: ^0.0.7
   svg_flutter: ^0.0.1
 
@@ -27,7 +26,6 @@ dependencies:
 
   # Media handling
   file_picker: ^10.3.3
-  flutter_image_compress: ^2.4.0
   image_cropper: ^11.0.0
   image_picker: ^1.1.2
   mime: ^2.0.0
@@ -49,7 +47,6 @@ dependencies:
   typeset: ^2.3.0
   url_launcher: ^6.3.2
   camera: ^0.11.2
-  color_filter_extension: ^1.0.1
   record: ^6.1.2
 
   # Voice / Audio

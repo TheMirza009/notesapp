@@ -210,6 +210,12 @@ class Utils {
   );
 }
 
+static Size getObjectSize({required GlobalKey objectKey}) {
+  final RenderBox box = objectKey.currentContext!.findRenderObject() as RenderBox;
+    final Size size = box.size;
+    return size;
+}
+
 static Offset getObjectPosition({required GlobalKey objectKey, double? heightOffset}) {
     final RenderBox box = objectKey.currentContext!.findRenderObject() as RenderBox;
     final Offset globalPosition = box.localToGlobal(Offset.zero);
