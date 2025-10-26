@@ -1,18 +1,19 @@
-
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message_view.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/ripple_well.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/swipable.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_content_builder.dart';
@@ -21,23 +22,15 @@ import 'package:notesapp/root/widgets/glass_container.dart';
 
 class MessageBubble extends StatefulWidget {
   final Message message;
-
-  /// Selection state
   final bool isSelecting;
   final VoidCallback? onTapWhileSelecting;
-
-  /// Dismissible
   final Widget? dismissBackground;
   final void Function()? onSwipe;
-
-  /// RippleWell props
   final void Function()? onTap;
   final void Function()? onReplyTap;
   final void Function(Offset)? onLongPress;
   final BorderRadius? rippleBorderRadius;
   final Color? rippleColor;
-
-  /// GlassContainer props
   final double blurX;
   final double blurY;
   final double borderRadius;
@@ -49,8 +42,6 @@ class MessageBubble extends StatefulWidget {
   final double? height;
   final double? topPadding;
   final double? bottomPadding;
-
-  /// Style
   final BubbleStyle style;
   final BubbleColor? bubbleColor;
   final bool? isHighlighted;
@@ -91,110 +82,32 @@ class MessageBubble extends StatefulWidget {
 
 class _MessageBubbleState extends State<MessageBubble>
     with AutomaticKeepAliveClientMixin {
+  
+  // Cache color scheme - recompute only when style/color changes
+  _BubbleColors? _cachedColors;
+  BubbleStyle? _lastStyle;
+  BubbleColor? _lastBubbleColor;
+  Brightness? _lastBrightness;
+  bool? _lastIsSender; // Add this line
+
   @override
   bool get wantKeepAlive {
-    final type = widget.message.media?.value?.type;
+    // Safe access with null checks - computed every time but that's fine for a getter
+    final mediaValue = widget.message.media.value;
+    if (mediaValue == null) return false;
+    
+    final type = mediaValue.type;
     return type == Mediatype.image ||
         type == Mediatype.audio ||
         type == Mediatype.text;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-
-    final bubblePadding = _getDefaultPadding();
-    final scheme = Utils.getBubbleColorScheme(context, style: widget.style, color: (widget.bubbleColor ?? BubbleColor.seed));
-
-    final bool isSender = widget.message.isSender;
-    final Color baseColor = isSender ? scheme.senderBubble : scheme.receiverBubble;
-    final Color highlightedColor = isSender ? scheme.highlightedSender : scheme.highlightedReceiver;
-    final Color replyBg = scheme.replyBackground;
-
-    Widget styleBuilder(BubbleStyle style) {
-      return switch (style) {
-        BubbleStyle.glass => glassBubble(
-            glassColor: baseColor,
-            glassPadding: bubblePadding,
-          ),
-        BubbleStyle.opaque => opaqueBubble(
-            messageBubbleColor: baseColor,
-            bubblePadding: bubblePadding,
-            isHighlighted: widget.isHighlighted ?? false,
-            highlightedColor: highlightedColor,
-          ),
-      };
-    }
-
-    return Swipeable(
-      isSender: widget.message.isSender,
-      isSelecting: widget.isSelecting,
-      onSwiped: widget.onSwipe,
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOutQuint,
-            alignment: widget.message.isSender
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
-            child: AnimatedPadding(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOutQuint,
-              padding: EdgeInsets.only(
-                left: widget.message.isSender ? 45.0 : 8,
-                right: widget.message.isSender ? 8 : 45,
-                top: widget.topPadding ?? 5,
-                bottom: widget.bottomPadding ?? 5,
-              ),
-              child: Column(
-                crossAxisAlignment: widget.message.isSender
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
-                children: [
-                  if (widget.message.replyingTo.value != null)
-                    ReplyWrapper(
-                      replyMessage: widget.message.replyingTo.value!,
-                      backgroundColor: replyBg,
-                      iconColor: context.isLight
-                          ? ThemeConstants.textLight
-                          : ThemeConstants.textDark,
-                      onTap: widget.onReplyTap ??
-                          () {
-                            debugPrint("Reply tapped");
-                            final media =
-                                widget.message.replyingTo.value!.media.value;
-                            if (media != null) {
-                              debugPrint("Media path: ${media.path}");
-                            }
-                          },
-                    ),
-                  styleBuilder(widget.style),
-                ],
-              ),
-            ),
-          ),
-
-          // Selection overlay
-          if (widget.isSelecting)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: widget.onTapWhileSelecting,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  color: (widget.isSelected ?? false)
-                      ? Colors.blue.withValues(alpha: 0.2)
-                      : Colors.transparent,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------
-  EdgeInsets _getDefaultPadding() {
+  // Computed properties (no late initialization needed)
+  bool get _isSender => widget.message.isSender;
+  
+  bool get _hasReply => widget.message.replyingTo.value != null;
+  
+  EdgeInsets get _bubblePadding {
     if (widget.message.isImage) {
       return const EdgeInsets.symmetric(horizontal: 5, vertical: 5);
     } else if (widget.message.isDocument) {
@@ -204,62 +117,394 @@ class _MessageBubbleState extends State<MessageBubble>
     }
   }
 
-  // -------------------------------------------------------
-  Widget opaqueBubble({
-    required Color messageBubbleColor,
-    required EdgeInsets bubblePadding,
-    required bool isHighlighted,
-    required Color highlightedColor,
-  }) {
+  _BubbleColors _getColors(BuildContext context) {
+  final currentBrightness = Theme.of(context).brightness;
+  final currentStyle = widget.style;
+  final currentBubbleColor = widget.bubbleColor ?? BubbleColor.seed;
+  final currentIsSender = _isSender; // Add this line
+
+  // Return cached colors if nothing changed
+  if (_cachedColors != null &&
+      _lastStyle == currentStyle &&
+      _lastBubbleColor == currentBubbleColor &&
+      _lastBrightness == currentBrightness &&
+      _lastIsSender == currentIsSender) { // Add this check
+    return _cachedColors!;
+  }
+
+  // Recompute and cache
+  final scheme = Utils.getBubbleColorScheme(
+    context,
+    style: currentStyle,
+    color: currentBubbleColor,
+  );
+
+  _lastStyle = currentStyle;
+  _lastBubbleColor = currentBubbleColor;
+  _lastBrightness = currentBrightness;
+  _lastIsSender = currentIsSender; // Cache this too
+  
+  _cachedColors = _BubbleColors(
+    baseColor: currentIsSender ? scheme.senderBubble : scheme.receiverBubble,
+    highlightedColor: currentIsSender ? scheme.highlightedSender : scheme.highlightedReceiver,
+    replyBg: scheme.replyBackground,
+  );
+
+  return _cachedColors!;
+}
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    final colors = _getColors(context);
+    final isHighlighted = widget.isHighlighted ?? false;
+    final isSelected = widget.isSelected ?? false;
+
+    return widget.message.media.value?.type == Mediatype.thread ?
+    ThreadMessageView(
+          message: widget.message,
+          strings: widget.message.text.safeDecode(),
+          onTap: widget.onTap!,
+          onLongPress: widget.onLongPress,
+        )
+    : Swipeable(
+      isSender: _isSender,
+      isSelecting: widget.isSelecting,
+      onSwiped: widget.onSwipe,
+      child: Stack(
+        children: [
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutQuint,
+            alignment: _isSender ? Alignment.centerRight : Alignment.centerLeft,
+            child: AnimatedPadding(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutQuint,
+              padding: EdgeInsets.only(
+                left: _isSender ? 45.0 : 8,
+                right: _isSender ? 8 : 45,
+                top: widget.topPadding ?? 5,
+                bottom: widget.bottomPadding ?? 5,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: _isSender
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  if (_hasReply)
+                    _ReplySection(
+                      message: widget.message,
+                      replyBg: colors.replyBg,
+                      isLight: context.isLight,
+                      onReplyTap: widget.onReplyTap,
+                    ),
+                  _BubbleContent(
+                    style: widget.style,
+                    message: widget.message,
+                    colors: colors,
+                    isHighlighted: isHighlighted,
+                    bubblePadding: _bubblePadding,
+                    borderRadius: widget.borderRadius,
+                    rippleBorderRadius: widget.rippleBorderRadius,
+                    rippleColor: widget.rippleColor,
+                    isSelecting: widget.isSelecting,
+                    onTapWhileSelecting: widget.onTapWhileSelecting,
+                    onTap: widget.onTap,
+                    onLongPress: widget.onLongPress,
+                    blurX: widget.blurX,
+                    blurY: widget.blurY,
+                    borderWidth: widget.borderWidth,
+                    borderColor: widget.borderColor,
+                    backgroundColor: widget.backgroundColor,
+                    width: widget.width,
+                    height: widget.height,
+                    isLight: context.isLight,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (widget.isSelecting)
+            _SelectionOverlay(
+              isSelected: isSelected,
+              onTap: widget.onTapWhileSelecting,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Immutable color holder for caching
+class _BubbleColors {
+  final Color baseColor;
+  final Color highlightedColor;
+  final Color replyBg;
+
+  const _BubbleColors({
+    required this.baseColor,
+    required this.highlightedColor,
+    required this.replyBg,
+  });
+}
+
+// Separate widget to prevent unnecessary rebuilds
+class _ReplySection extends StatelessWidget {
+  final Message message;
+  final Color replyBg;
+  final bool isLight;
+  final VoidCallback? onReplyTap;
+
+  const _ReplySection({
+    required this.message,
+    required this.replyBg,
+    required this.isLight,
+    this.onReplyTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ReplyWrapper(
+      replyMessage: message.replyingTo.value!,
+      backgroundColor: replyBg,
+      iconColor: isLight ? ThemeConstants.textLight : ThemeConstants.textDark,
+      onTap: onReplyTap ?? () {
+        debugPrint("Reply tapped");
+        final media = message.replyingTo.value!.media.value;
+        if (media != null) {
+          debugPrint("Media path: ${media.path}");
+        }
+      },
+    );
+  }
+}
+
+// Separate widget for bubble content to enable const optimization
+class _BubbleContent extends StatelessWidget {
+  final BubbleStyle style;
+  final Message message;
+  final _BubbleColors colors;
+  final bool isHighlighted;
+  final EdgeInsets bubblePadding;
+  final double borderRadius;
+  final BorderRadius? rippleBorderRadius;
+  final Color? rippleColor;
+  final bool isSelecting;
+  final VoidCallback? onTapWhileSelecting;
+  final VoidCallback? onTap;
+  final void Function(Offset)? onLongPress;
+  final double blurX;
+  final double blurY;
+  final double borderWidth;
+  final Color borderColor;
+  final Color? backgroundColor;
+  final double? width;
+  final double? height;
+  final bool isLight;
+
+  const _BubbleContent({
+    required this.style,
+    required this.message,
+    required this.colors,
+    required this.isHighlighted,
+    required this.bubblePadding,
+    required this.borderRadius,
+    required this.rippleBorderRadius,
+    required this.rippleColor,
+    required this.isSelecting,
+    required this.onTapWhileSelecting,
+    required this.onTap,
+    required this.onLongPress,
+    required this.blurX,
+    required this.blurY,
+    required this.borderWidth,
+    required this.borderColor,
+    required this.backgroundColor,
+    required this.width,
+    required this.height,
+    required this.isLight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (style) {
+      BubbleStyle.glass => _GlassBubble(
+          message: message,
+          colors: colors,
+          bubblePadding: bubblePadding,
+          borderRadius: borderRadius,
+          rippleBorderRadius: rippleBorderRadius,
+          rippleColor: rippleColor,
+          isSelecting: isSelecting,
+          onTapWhileSelecting: onTapWhileSelecting,
+          onTap: onTap,
+          onLongPress: onLongPress,
+          blurX: blurX,
+          blurY: blurY,
+          borderWidth: borderWidth,
+          borderColor: borderColor,
+          backgroundColor: backgroundColor,
+          width: width,
+          height: height,
+        ),
+      BubbleStyle.opaque => _OpaqueBubble(
+          message: message,
+          colors: colors,
+          isHighlighted: isHighlighted,
+          bubblePadding: bubblePadding,
+          borderRadius: borderRadius,
+          rippleBorderRadius: rippleBorderRadius,
+          isSelecting: isSelecting,
+          onTapWhileSelecting: onTapWhileSelecting,
+          onTap: onTap,
+          onLongPress: onLongPress,
+          isLight: isLight,
+        ),
+    };
+  }
+}
+
+class _OpaqueBubble extends StatelessWidget {
+  final Message message;
+  final _BubbleColors colors;
+  final bool isHighlighted;
+  final EdgeInsets bubblePadding;
+  final double borderRadius;
+  final BorderRadius? rippleBorderRadius;
+  final bool isSelecting;
+  final VoidCallback? onTapWhileSelecting;
+  final VoidCallback? onTap;
+  final void Function(Offset)? onLongPress;
+  final bool isLight;
+
+  const _OpaqueBubble({
+    required this.message,
+    required this.colors,
+    required this.isHighlighted,
+    required this.bubblePadding,
+    required this.borderRadius,
+    required this.rippleBorderRadius,
+    required this.isSelecting,
+    required this.onTapWhileSelecting,
+    required this.onTap,
+    required this.onLongPress,
+    required this.isLight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return RippleWell(
-      borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.message.isImage ? 5 : widget.borderRadius),
-      materialColor: messageBubbleColor,
-      onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
-      onLongPress: widget.onLongPress,
+      borderRadius: rippleBorderRadius ?? 
+        BorderRadius.circular(message.isImage ? 5 : borderRadius),
+      materialColor: colors.baseColor,
+      onTap: isSelecting ? onTapWhileSelecting : onTap,
+      onLongPress: onLongPress,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-          color: isHighlighted ? highlightedColor : messageBubbleColor,
-          boxShadow: [
+          borderRadius: BorderRadius.circular(borderRadius),
+          color: isHighlighted ? colors.highlightedColor : colors.baseColor,
+          boxShadow: isHighlighted ? [
             BoxShadow(
-              color: Colors.white.withOpacity(
-                isHighlighted ? (context.isLight ? 0.9 : 0.3) : 0.0,
-              ),
+              color: Colors.white.withOpacity(isLight ? 0.9 : 0.3),
               blurRadius: 16,
               spreadRadius: 2,
             ),
-          ],
+          ] : null,
         ),
         child: Padding(
           padding: bubblePadding,
-          child: MessageContentBuilder(message: widget.message),
+          child: MessageContentBuilder(message: message),
         ),
       ),
     );
   }
+}
 
-  Widget glassBubble({
-    required Color glassColor,
-    required EdgeInsets glassPadding,
-  }) {
+class _GlassBubble extends StatelessWidget {
+  final Message message;
+  final _BubbleColors colors;
+  final EdgeInsets bubblePadding;
+  final double borderRadius;
+  final BorderRadius? rippleBorderRadius;
+  final Color? rippleColor;
+  final bool isSelecting;
+  final VoidCallback? onTapWhileSelecting;
+  final VoidCallback? onTap;
+  final void Function(Offset)? onLongPress;
+  final double blurX;
+  final double blurY;
+  final double borderWidth;
+  final Color borderColor;
+  final Color? backgroundColor;
+  final double? width;
+  final double? height;
+
+  const _GlassBubble({
+    required this.message,
+    required this.colors,
+    required this.bubblePadding,
+    required this.borderRadius,
+    required this.rippleBorderRadius,
+    required this.rippleColor,
+    required this.isSelecting,
+    required this.onTapWhileSelecting,
+    required this.onTap,
+    required this.onLongPress,
+    required this.blurX,
+    required this.blurY,
+    required this.borderWidth,
+    required this.borderColor,
+    required this.backgroundColor,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return RippleWell(
-      borderRadius: widget.rippleBorderRadius ?? BorderRadius.circular(widget.borderRadius),
-      materialColor: widget.rippleColor,
-      onTap: widget.isSelecting ? widget.onTapWhileSelecting : widget.onTap,
-      onLongPress: widget.onLongPress,
+      borderRadius: rippleBorderRadius ?? BorderRadius.circular(borderRadius),
+      materialColor: rippleColor,
+      onTap: isSelecting ? onTapWhileSelecting : onTap,
+      onLongPress: onLongPress,
       child: GlassContainer(
-        blurX: widget.blurX,
-        blurY: widget.blurY,
-        borderRadius: widget.borderRadius,
-        borderWidth: widget.borderWidth,
-        borderColor: widget.borderColor,
-        backgroundColor: widget.backgroundColor ?? glassColor,
-        padding: glassPadding,
-        width: widget.width,
-        height: widget.height,
-        child: MessageContentBuilder(message: widget.message),
+        blurX: blurX,
+        blurY: blurY,
+        borderRadius: borderRadius,
+        borderWidth: borderWidth,
+        borderColor: borderColor,
+        backgroundColor: backgroundColor ?? colors.baseColor,
+        padding: bubblePadding,
+        width: width,
+        height: height,
+        child: MessageContentBuilder(message: message),
+      ),
+    );
+  }
+}
+
+class _SelectionOverlay extends StatelessWidget {
+  final bool isSelected;
+  final VoidCallback? onTap;
+
+  const _SelectionOverlay({
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          color: isSelected
+              ? Colors.blue.withValues(alpha: 0.2)
+              : Colors.transparent,
+        ),
       ),
     );
   }

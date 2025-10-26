@@ -11,6 +11,7 @@ class ChatState {
   final bool isLoading;
   final bool isRecording;
   final bool isEditing;
+  final bool isThreading;
   final Message? anchorMessage;
 
   // Styling
@@ -19,6 +20,7 @@ class ChatState {
   // Optimized message subsets
   final Message? highlightedMessage;        // Only one highlighted at a time
   final List<Message> selectedMessages;     // Can have multiple
+  final List<String> activeThreadStrings;     
 
   /// Derived flag: true if any message is selected
   bool get isSelecting => selectedMessages.isNotEmpty;
@@ -30,10 +32,12 @@ class ChatState {
     this.isRecording = false,
     this.isEditing= false,
     this.showEmojis = false,
+    this.isThreading = false,
     this.bubbleColor = BubbleColor.seed,
     this.anchorMessage,
     this.highlightedMessage,
     this.selectedMessages = const [],
+    this.activeThreadStrings = const [],
   });
 
   /// CopyWith for immutability
@@ -44,10 +48,12 @@ class ChatState {
     bool? isLoading,
     bool? isRecording,
     bool? isEditing,
+    bool? isThreading,
     BubbleColor? bubbleColor,
     Message? anchorMessage,
     Message? highlightedMessage,
     List<Message>? selectedMessages,
+    List<String>? activeThreadStrings,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -56,10 +62,12 @@ class ChatState {
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
       isEditing: isEditing ?? this.isEditing,
+      isThreading: isThreading ?? this.isThreading,
       bubbleColor: bubbleColor ?? this.bubbleColor,
       anchorMessage: anchorMessage,
       highlightedMessage: highlightedMessage,
       selectedMessages: selectedMessages ?? this.selectedMessages,
+      activeThreadStrings: activeThreadStrings ?? this.activeThreadStrings,
     );
   }
 
@@ -109,6 +117,21 @@ class ChatState {
   /// Clear highlight
   ChatState clearHighlight() {
     return copyWith(highlightedMessage: null);
+  }
+
+  /// Add a thread to the active thread list
+  ChatState startThreading() {
+    return copyWith(isThreading: true, activeThreadStrings: const ["_Start typing your first thread tile_"], anchorMessage: anchorMessage);
+  }
+
+  /// Add a thread to the active thread list
+  ChatState addThread(String text) {
+    return copyWith(activeThreadStrings: [...activeThreadStrings, text], anchorMessage: anchorMessage);
+  }
+
+  /// Clear threading state
+  ChatState clearThreads() {
+    return copyWith(activeThreadStrings: const [], isThreading: false);
   }
 
   /// Check if a message is selected

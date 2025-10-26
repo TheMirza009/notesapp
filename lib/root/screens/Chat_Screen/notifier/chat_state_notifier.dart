@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
@@ -59,6 +60,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     ref.keepAlive();
     keyboardFocusNode.addListener(() {
       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
+      scrollToBottomIfLastMessageVisible();
     });
 
     final selectedChat = ref.watch(
@@ -69,6 +71,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     _chat = selectedChat;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _hydrateMessages();
+      _setupKeyboardAutoScroll();
     });
     return ChatState(); // empty initial
   }
@@ -899,13 +902,13 @@ Future<List<Message>> _loadMessageBatch(
   // Section: Scroll helpers
   // =====================================================
 
-  void scrollToBottom() {
+  void scrollToBottom({Curve? curve, Duration? duration}) {
     if (!itemScrollController.isAttached) return;
 
     itemScrollController.scrollTo(
       index: state.messages.length - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      duration: duration ?? const Duration(milliseconds: 300),
+      curve: curve ?? Curves.easeOut,
       alignment: 0.0,
     );
   }
@@ -960,6 +963,267 @@ Future<List<Message>> _loadMessageBatch(
 
     if (isInit) ref.read(chatListProvider.notifier).removeChat(managedChat);
   }
+
+  // ===============================================
+  // KEYBOARD METHODS
+  // ===============================================
+
+  /// Method to push chat up (or scroll to bottom) if last child is visible
+  void _setupKeyboardAutoScroll() {
+    // Listen to keyboard focus changes
+    debugPrint("⌨️ Keybaord setup");
+    keyboardFocusNode.addListener(() {
+      if (keyboardFocusNode.hasFocus) {
+        // When keyboard gains focus, check if we should scroll to bottom
+        scrollToBottomIfLastMessageVisible();
+      }
+    });
+  }
+
+  bool _isLastMessageVisible() {
+    final positions = itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty || state.messages.isEmpty) return false;
+
+    final lastIndex = state.messages.length - 1;
+    final maxVisibleIndex = positions
+        .map((pos) => pos.index)
+        .reduce((a, b) => a > b ? a : b);
+
+    // Consider last message visible if it's within the last few messages
+    debugPrint("⌨️ LAST MESSAGE ${maxVisibleIndex >= lastIndex - 2}");
+    return maxVisibleIndex >= lastIndex - 2;
+  }
+
+  void scrollToBottomIfLastMessageVisible() {
+    if (state.messages.isEmpty) return;
+
+    // Double-check after a full layout cycle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Check positions again after layout
+      final positions = itemPositionsListener.itemPositions.value;
+      if (positions.isEmpty) return;
+
+      final lastIndex = state.messages.length - 1;
+      final maxVisibleIndex = positions
+          .map((pos) => pos.index)
+          .reduce((a, b) => a > b ? a : b);
+
+      final threshold = (state.messages.length * 0.1).ceil();
+      final shouldScroll = maxVisibleIndex >= lastIndex - threshold;
+
+      if (shouldScroll) {
+        // One more frame to ensure keyboard layout is complete
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollToBottom(
+            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 300),
+          );
+        });
+      }
+    });
+  }
+
+  // ===============================================
+  // THREAD METHODS
+  // ===============================================
+
+  /// Start thread creating
+  void createThread() async {
+  await deleteInitMessage();
+
+  // ✅ Safely get thread title or provide fallback
+  final threadTitle = state.activeThreadStrings.isNotEmpty
+      ? state.activeThreadStrings.first
+      : "_Start typing your first thread_";
+
+  // ✅ Create media of type thread
+  final threadMedia = Media.thread(threadTitle);
+
+  // ✅ Create message and link the media
+  final newMessage = Message()
+    ..text = threadTitle
+    ..time = DateTime.now()
+    ..isSender = true
+    ..media.value = threadMedia; // Assuming Message has IsarLink<Media> media;
+
+  // Optional UI updates
+  keyboardFocusNode.requestFocus();
+  scrollToBottom();
+
+  allMessages.add(newMessage);
+
+  // ✅ Update state immutably
+  state = state.startThreading();
+  state = state.copyWith(messages: List.unmodifiable(allMessages));
+  }
+
+void onTyping(String text) {
+    // Clone existing thread strings
+    final currentThreads = List<String>.from(state.activeThreadStrings);
+
+    // Determine the effective value to store for this entry:
+    final effective =
+        text.trim().isEmpty ? "_Start typing your first thread_" : text;
+
+    if (currentThreads.isEmpty) {
+      currentThreads.add(effective);
+    } else {
+      currentThreads[currentThreads.length - 1] = effective;
+    }
+
+    // Encode threads as JSON (this is what ThreadMessageView expects)
+    final threadsJson = jsonEncode(currentThreads);
+
+    // Update the active thread message as well (so widget.message.text is valid JSON)
+    if (state.isThreading && state.messages.isNotEmpty) {
+      final lastMessage = state.messages.last;
+
+      // Build updated message with JSON text
+      final updatedMessage = lastMessage.copyWith(text: threadsJson);
+
+      // Keep media metadata in sync if it's a thread-type media
+      if (updatedMessage.media.value?.type == Mediatype.thread) {
+        updatedMessage.media.value = updatedMessage.media.value?.copyWith(
+          name: threadsJson,
+        );
+      }
+
+      // Replace last message immutably (this triggers UI rebuild)
+      final updatedMessages = [
+        ...state.messages.sublist(0, state.messages.length - 1),
+        updatedMessage,
+      ];
+
+      // Commit both activeThreadStrings and messages atomically
+      state = state.copyWith(
+        activeThreadStrings: List.unmodifiable(currentThreads),
+        messages: List.unmodifiable(updatedMessages),
+      );
+    } else {
+      // Edge case: no thread message yet — just update activeThreadStrings
+      state = state.copyWith(
+        activeThreadStrings: List.unmodifiable(currentThreads),
+      );
+    }
+  }
+
+
+
+  void ensureThreadTitlePlaceholder() {
+    // If there are no threads, or the first thread string is empty,
+    // make sure we have a placeholder title.
+    final threads = List<String>.from(state.activeThreadStrings);
+
+    if (threads.isEmpty || threads.first.trim().isEmpty) {
+      threads
+        ..clear()
+        ..add("_Start typing your first thread_");
+
+      state = state.copyWith(activeThreadStrings: List.unmodifiable(threads));
+    }
+  }
+
+
+
+  
+void addThread(String text) {
+  // Clone current thread strings
+  keyboardController.clear();
+  final currentThreads = List<String>.from(state.activeThreadStrings);
+
+  // Append new thread entry
+  final newEntry = text.trim().isEmpty
+      ? "_Start typing your first thread_"
+      : text;
+  currentThreads.add(newEntry);
+
+  // Encode updated threads as JSON
+  final threadsJson = jsonEncode(currentThreads);
+
+  // Update the active message if we're threading
+  if (state.isThreading && state.messages.isNotEmpty) {
+    final lastMessage = state.messages.last;
+
+    // Update message and its linked media
+    final updatedMessage = lastMessage.copyWith(
+      text: threadsJson,
+    );
+
+    if (updatedMessage.media.value?.type == Mediatype.thread) {
+      updatedMessage.media.value =
+          updatedMessage.media.value?.copyWith(name: threadsJson);
+    }
+
+    // Replace last message immutably
+    final updatedMessages = [
+      ...state.messages.sublist(0, state.messages.length - 1),
+      updatedMessage,
+    ];
+
+    // Commit changes
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+      messages: List.unmodifiable(updatedMessages),
+    );
+  } else {
+    // Edge case: no thread message yet
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+    );
+  }
+}
+
+void removeThread() {
+  // Clone threads
+  final currentThreads = List<String>.from(state.activeThreadStrings);
+
+  // Remove the last one safely
+  if (currentThreads.isNotEmpty) {
+    currentThreads.removeLast();
+  }
+
+  // Ensure at least one placeholder remains
+  if (currentThreads.isEmpty) {
+    currentThreads.add("_Start typing your first thread_");
+  }
+
+  // Encode to JSON
+  final threadsJson = jsonEncode(currentThreads);
+
+  // Update last message immutably
+  if (state.isThreading && state.messages.isNotEmpty) {
+    final lastMessage = state.messages.last;
+
+    final updatedMessage = lastMessage.copyWith(text: threadsJson);
+
+    if (updatedMessage.media.value?.type == Mediatype.thread) {
+      updatedMessage.media.value =
+          updatedMessage.media.value?.copyWith(name: threadsJson);
+    }
+
+    final updatedMessages = [
+      ...state.messages.sublist(0, state.messages.length - 1),
+      updatedMessage,
+    ];
+
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+      messages: List.unmodifiable(updatedMessages),
+    );
+  } else {
+    state = state.copyWith(activeThreadStrings: List.unmodifiable(currentThreads));
+  }
+}
+
+
+  void cancelThread() {
+    state = state.clearThreads();
+  }
+
+
+  // ===============================================
+  // CONTEXT MENUS
+  // ===============================================
 
   /// Context menu actions
   void handleMessageMenuAction(String action, Message message, BuildContext? context) async {

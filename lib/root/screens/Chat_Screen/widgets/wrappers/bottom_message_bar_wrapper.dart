@@ -34,6 +34,7 @@ class _BottomMessageBarWrapperState extends ConsumerState<BottomMessageBarWrappe
         keyboardController: notifier.keyboardController,
         onFieldTap: () {
           notifier.hideEmojiPicker();
+          notifier.scrollToBottomIfLastMessageVisible();
           overlayHandler.closeAttachmentBoard();
         },
         onEmojiTap: () {

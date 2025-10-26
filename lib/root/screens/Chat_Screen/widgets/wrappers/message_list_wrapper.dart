@@ -30,7 +30,8 @@ class MessageListWrapper extends ConsumerStatefulWidget {
   ConsumerState<MessageListWrapper> createState() => _MessageListWrapperState();
 }
 
-class _MessageListWrapperState extends ConsumerState<MessageListWrapper> with AutomaticKeepAliveClientMixin {
+class _MessageListWrapperState extends ConsumerState<MessageListWrapper> 
+  with AutomaticKeepAliveClientMixin  {
   
   @override 
   bool get wantKeepAlive => true;
@@ -57,8 +58,6 @@ class _MessageListWrapperState extends ConsumerState<MessageListWrapper> with Au
                 itemScrollController: notifier.itemScrollController,
                 itemPositionsListener: notifier.itemPositionsListener,
                 itemCount: messages.length + 1,
-                addAutomaticKeepAlives: true,    // ✅
-                addRepaintBoundaries: true,      // ✅
                 addSemanticIndexes: true,        // ✅
                 // physics: ref.watch(chatStateController.select((s) => s.isEditing))
                 //     ? const NeverScrollableScrollPhysics() // 🚫 disables scroll

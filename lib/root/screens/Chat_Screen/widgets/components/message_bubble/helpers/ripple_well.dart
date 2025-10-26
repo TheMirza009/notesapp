@@ -12,6 +12,10 @@ class RippleWell extends StatefulWidget {
   final EdgeInsetsGeometry? margin;
   final BoxDecoration? decoration;
 
+  final double? height;
+  final double? width;
+  final bool? animated;
+
   const RippleWell({
     super.key,
     required this.child,
@@ -22,6 +26,9 @@ class RippleWell extends StatefulWidget {
     this.padding,
     this.margin,
     this.decoration,
+    this.height,
+    this.width,
+    this.animated = false,
   });
 
   @override
@@ -33,8 +40,12 @@ class _RippleWellState extends State<RippleWell> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+
+    return dynamicContainer(
+      animated: widget.animated ?? false,
       margin: widget.margin,
+      width: widget.width,
+      height: widget.height,
       child: Material(
         color: widget.materialColor ?? Colors.transparent,
         borderRadius: widget.borderRadius ?? BorderRadius.circular(10),
@@ -61,3 +72,22 @@ class _RippleWellState extends State<RippleWell> {
     );
   }
 }
+
+Widget dynamicContainer({required Widget child, required bool animated, double? height, double? width, EdgeInsetsGeometry? margin}) {
+      if (animated) {
+        return AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOutQuint,
+          height: height,
+          width: width,
+          margin: margin,
+          child: child,
+        );
+      } else {
+        return Container(
+          height: height,
+          width: width,
+          margin: margin,
+          child: child);
+      }
+    }

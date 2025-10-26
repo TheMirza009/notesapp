@@ -20,7 +20,14 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
   static final ThemeData _lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    textTheme: const TextTheme().apply(
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(fontFamily: 'Poppins'),
+      bodyMedium: TextStyle(fontFamily: 'Poppins'),
+      bodySmall: TextStyle(fontFamily: 'Poppins'),
+      titleLarge: TextStyle(fontFamily: 'Poppins'),
+      titleMedium: TextStyle(fontFamily: 'Poppins'),
+      titleSmall: TextStyle(fontFamily: 'Poppins'),
+    ).apply(
       fontFamily: 'Poppins',
       bodyColor: ThemeConstants.textLight,
     ),
@@ -37,15 +44,12 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
     brightness: Brightness.dark,
     textTheme: const TextTheme(
       bodyLarge: TextStyle(fontFamily: 'Poppins'),
-  bodyMedium: TextStyle(fontFamily: 'Poppins'),
-  bodySmall: TextStyle(fontFamily: 'Poppins'),
-  titleLarge: TextStyle(fontFamily: 'Poppins'),
-  titleMedium: TextStyle(fontFamily: 'Poppins'),
-  titleSmall: TextStyle(fontFamily: 'Poppins'),
-    ).apply(
-      fontFamily: 'Poppins',
-      bodyColor: ThemeConstants.textDark2,
-    ),
+      bodyMedium: TextStyle(fontFamily: 'Poppins'),
+      bodySmall: TextStyle(fontFamily: 'Poppins'),
+      titleLarge: TextStyle(fontFamily: 'Poppins'),
+      titleMedium: TextStyle(fontFamily: 'Poppins'),
+      titleSmall: TextStyle(fontFamily: 'Poppins'),
+    ).apply(fontFamily: 'Poppins', bodyColor: ThemeConstants.textDark2),
     dividerColor: ThemeConstants.darkAppbar,
      colorScheme: ColorScheme.fromSeed(
       brightness: Brightness.dark,

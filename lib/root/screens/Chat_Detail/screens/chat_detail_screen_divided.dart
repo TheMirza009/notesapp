@@ -192,12 +192,12 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
     return Scaffold(
       floatingActionButton: IconButton(
         icon: Icon(Icons.info_outline_rounded),
-        onPressed:
-            () => Navigator.push(
-              context,
-              CupertinoPageRoute(builder: (_) => ThreadTestScreen()),
-            ),
-      ), // showChatInfoSheet(context, chat)),
+        onPressed: () => showChatInfoSheet(context, chat)
+            // () => Navigator.push(
+            //   context,
+            //   CupertinoPageRoute(builder: (_) => ThreadTestScreen()),
+            // ),
+      ), // 
       appBar: AppBar(
         elevation: 0,
         forceMaterialTransparency: true,

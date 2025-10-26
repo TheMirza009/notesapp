@@ -67,6 +67,17 @@ class Media {
     return media;
   }
 
+  factory Media.thread(String title) {
+    final media = Media();
+    media.name = "Thread_${DateTime.now().millisecondsSinceEpoch}";
+    media.extension = "thread";
+    media.type = Mediatype.thread;
+    media.path = null;
+    media.fileSize = title.length; // Optional metadata
+    return media;
+  }
+
+
   static Mediatype _detectType(String ext) {
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(ext)) return Mediatype.image;
     if (['mp4', 'mov', 'mkv', 'avi'].contains(ext)) return Mediatype.video;

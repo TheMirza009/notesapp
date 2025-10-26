@@ -98,7 +98,7 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.list, color: Colors.amber, size: iconSize),
                 title: "Thread",
-                onPressed: onThreadPressed,
+                onPressed: onThreadPressed ?? () => notifier.createThread(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.bar_chart, color: Colors.cyan, size: iconSize),

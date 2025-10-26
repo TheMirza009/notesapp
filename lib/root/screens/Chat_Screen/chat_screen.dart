@@ -129,6 +129,7 @@ class _ChatScreenBody extends ConsumerWidget {
         },
         child: Scaffold(
           extendBodyBehindAppBar: true,
+          resizeToAvoidBottomInset: true,
         appBar: AppBar(
           toolbarHeight: 0,
           backgroundColor: context.isLight ? const Color(0xFFE7ECF3) : const Color(0xFF23333F),

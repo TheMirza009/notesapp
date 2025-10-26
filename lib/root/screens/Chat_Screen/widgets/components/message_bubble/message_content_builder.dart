@@ -16,6 +16,7 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/audio_message_view.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/document_message_view.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/image_message_view.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message_view.dart';
 import 'package:notesapp/root/widgets/voice_message/components/voice_controller.dart';
 import 'package:notesapp/root/widgets/voice_message/components/voice_message_view.dart';
 import 'package:typeset/typeset.dart';
