@@ -1,8 +1,5 @@
-import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
@@ -12,8 +9,7 @@ import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message_view.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message/thread_message_view.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/ripple_well.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/swipable.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_content_builder.dart';
@@ -46,6 +42,7 @@ class MessageBubble extends StatefulWidget {
   final BubbleColor? bubbleColor;
   final bool? isHighlighted;
   final bool? isSelected;
+  final Function()? onThreadCleared;
 
   const MessageBubble({
     super.key,
@@ -57,6 +54,7 @@ class MessageBubble extends StatefulWidget {
     this.onSwipe,
     this.onTap,
     this.onLongPress,
+    this.onThreadCleared,
     this.rippleBorderRadius,
     this.rippleColor,
     this.blurX = 25,
@@ -166,6 +164,9 @@ class _MessageBubbleState extends State<MessageBubble>
           strings: widget.message.text.safeDecode(),
           onTap: widget.onTap!,
           onLongPress: widget.onLongPress,
+          onClearPressed: (index) {
+            widget.onThreadCleared?.call(); // Fixed: properly invoke the callback
+          },
         )
     : Swipeable(
       isSender: _isSender,

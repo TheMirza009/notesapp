@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message_view.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message/thread_message_view.dart';
 
 
 // final Message message = Message()
