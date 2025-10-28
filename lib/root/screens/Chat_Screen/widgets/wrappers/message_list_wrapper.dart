@@ -196,7 +196,7 @@ class _MessageItemBuilder extends ConsumerWidget {
               );
             },
             onReplyTap: () => ref.read(chatStateController.notifier).scrollToMessage(message.replyingTo.value!.isarId),
-            onThreadCleared: () => ref.read(chatStateController.notifier).removeThread(),
+            onThreadCleared: () => ref.read(chatStateController.notifier).removeLastThread(),
           ),
         ),
       ],

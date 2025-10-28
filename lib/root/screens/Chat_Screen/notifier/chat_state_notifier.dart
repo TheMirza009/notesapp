@@ -1132,9 +1132,7 @@ void addThread(String text) {
   final currentThreads = List<String>.from(state.activeThreadStrings);
 
   // Append new thread entry
-  final newEntry = text.trim().isEmpty
-      ? "_Start typing your first thread_"
-      : text;
+  final newEntry = text.trim().isEmpty ? "_Start typing your first thread_" : text;
   currentThreads.add(newEntry);
 
   // Encode updated threads as JSON
@@ -1173,7 +1171,7 @@ void addThread(String text) {
   }
 }
 
-void removeThread() {
+void removeLastThread() {
   // Clone threads
   final currentThreads = List<String>.from(state.activeThreadStrings);
 

@@ -158,17 +158,43 @@ class _MessageBubbleState extends State<MessageBubble>
     final isHighlighted = widget.isHighlighted ?? false;
     final isSelected = widget.isSelected ?? false;
 
-    return widget.message.media.value?.type == Mediatype.thread ?
-    ThreadMessageView(
-          message: widget.message,
-          strings: widget.message.text.safeDecode(),
-          onTap: widget.onTap!,
-          onLongPress: widget.onLongPress,
-          onClearPressed: (index) {
-            widget.onThreadCleared?.call(); // Fixed: properly invoke the callback
-          },
-        )
-    : Swipeable(
+    if (widget.message.media.value?.type == Mediatype.thread) {
+      return Swipeable(
+        isSender: _isSender,
+        isSelecting: widget.isSelecting,
+        onSwiped: widget.onSwipe,
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutQuint,
+          alignment: _isSender ? Alignment.centerRight : Alignment.centerLeft,
+          child: Stack(
+            children: [
+              ThreadMessageView(
+                message: widget.message,
+                strings: widget.message.text.safeDecode(),
+                padding: EdgeInsets.only(
+                left: 8,
+                right: 8,
+                top: widget.topPadding ?? 5,
+                bottom: widget.bottomPadding ?? 5,
+              ),
+                onTap: widget.onTap!,
+                onLongPress: widget.onLongPress,
+                onClearPressed: (index) {
+                  widget.onThreadCleared?.call(); // Fixed: properly invoke the callback
+                },
+              ),
+              if (widget.isSelecting)
+            _SelectionOverlay(
+              isSelected: isSelected,
+              onTap: widget.onTapWhileSelecting,
+            ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Swipeable(
       isSender: _isSender,
       isSelecting: widget.isSelecting,
       onSwiped: widget.onSwipe,
@@ -234,6 +260,7 @@ class _MessageBubbleState extends State<MessageBubble>
         ],
       ),
     );
+    }
   }
 }
 
