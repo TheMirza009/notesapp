@@ -102,20 +102,15 @@ class Media {
       case Mediatype.unknown:
         return true; // These types don't require additional metadata
       case Mediatype.contact:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return true;
       case Mediatype.location:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return true;
       case Mediatype.chart:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return true;
       case Mediatype.thread:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return true;
       case Mediatype.scan:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return true;
     }
   }
 

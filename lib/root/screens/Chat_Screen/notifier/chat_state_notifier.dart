@@ -13,6 +13,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
@@ -60,7 +61,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     ref.keepAlive();
     keyboardFocusNode.addListener(() {
       if (keyboardFocusNode.hasFocus) hideEmojiPicker();
-      scrollToBottomIfLastMessageVisible();
+      // scrollToBottomIfLastMessageVisible();
     });
 
     final selectedChat = ref.watch(
@@ -1029,35 +1030,38 @@ Future<List<Message>> _loadMessageBatch(
 
   /// Start thread creating
   void createThread() async {
-  await deleteInitMessage();
+    await deleteInitMessage();
 
-  // ✅ Safely get thread title or provide fallback
-  final threadTitle = state.activeThreadStrings.isNotEmpty
-      ? state.activeThreadStrings.first
-      : "_Start typing your first thread_";
+    // ✅ Safely get thread title or provide fallback
+    final threadTitle =
+        state.activeThreadStrings.isNotEmpty
+            ? state.activeThreadStrings.first
+            : "_Start typing your first thread_";
 
-  // ✅ Create media of type thread
-  final threadMedia = Media.thread(threadTitle);
+    // ✅ Create media of type thread
+    final threadMedia = Media.thread(threadTitle);
 
-  // ✅ Create message and link the media
-  final newMessage = Message()
-    ..text = threadTitle
-    ..time = DateTime.now()
-    ..isSender = true
-    ..media.value = threadMedia; // Assuming Message has IsarLink<Media> media;
+    // ✅ Create message and link the media
+    final newMessage =
+        Message()
+          ..text = threadTitle
+          ..time = DateTime.now()
+          ..isSender = true
+          ..media.value =
+              threadMedia; // Assuming Message has IsarLink<Media> media;
 
-  // Optional UI updates
-  keyboardFocusNode.requestFocus();
-  scrollToBottom();
+    // Optional UI updates
+    keyboardFocusNode.requestFocus();
+    scrollToBottom();
 
-  allMessages.add(newMessage);
+    allMessages.add(newMessage);
 
-  // ✅ Update state immutably
-  state = state.startThreading();
-  state = state.copyWith(messages: List.unmodifiable(allMessages));
+    // ✅ Update state immutably
+    state = state.startThreading();
+    state = state.copyWith(messages: List.unmodifiable(allMessages));
   }
 
-void onTyping(String text) {
+  void onTyping(String text) {
     // Clone existing thread strings
     final currentThreads = List<String>.from(state.activeThreadStrings);
 
@@ -1107,8 +1111,6 @@ void onTyping(String text) {
     }
   }
 
-
-
   void ensureThreadTitlePlaceholder() {
     // If there are no threads, or the first thread string is empty,
     // make sure we have a placeholder title.
@@ -1123,102 +1125,193 @@ void onTyping(String text) {
     }
   }
 
+  void addThread(String text) {
+    // Clone current thread strings
+    keyboardController.clear();
+    final currentThreads = List<String>.from(state.activeThreadStrings);
 
+    // Append new thread entry
+    final newEntry =
+        text.trim().isEmpty ? "_Start typing your first thread_" : text;
+    currentThreads.add(newEntry);
 
+    // Encode updated threads as JSON
+    final threadsJson = jsonEncode(currentThreads);
+
+    // Update the active message if we're threading
+    if (state.isThreading && state.messages.isNotEmpty) {
+      final lastMessage = state.messages.last;
+
+      // Update message and its linked media
+      final updatedMessage = lastMessage.copyWith(text: threadsJson);
+
+      if (updatedMessage.media.value?.type == Mediatype.thread) {
+        updatedMessage.media.value = updatedMessage.media.value?.copyWith(
+          name: threadsJson,
+        );
+      }
+
+      // Replace last message immutably
+      final updatedMessages = [
+        ...state.messages.sublist(0, state.messages.length - 1),
+        updatedMessage,
+      ];
+
+      // Commit changes
+      state = state.copyWith(
+        activeThreadStrings: List.unmodifiable(currentThreads),
+        messages: List.unmodifiable(updatedMessages),
+      );
+    } else {
+      // Edge case: no thread message yet
+      state = state.copyWith(
+        activeThreadStrings: List.unmodifiable(currentThreads),
+      );
+    }
+  }
+
+  void removeLastThread() async {
+    // Clone threads
+    final currentThreads = List<String>.from(state.activeThreadStrings);
+
+    if (currentThreads.isNotEmpty && currentThreads.first == "_Start typing your first thread_") {
+      await cancelThread();
+      return;
+    }
+
+    // Remove the last one safely
+    if (currentThreads.isNotEmpty) {
+      currentThreads.removeLast();
+    }
+
+    // Ensure at least one placeholder remains
+    if (currentThreads.isEmpty) {
+      currentThreads.add("_Start typing your first thread_");
+    }
+
+    // Encode to JSON
+    final threadsJson = jsonEncode(currentThreads);
+
+    // Update last message immutably
+    if (state.isThreading && state.messages.isNotEmpty) {
+      final lastMessage = state.messages.last;
+
+      final updatedMessage = lastMessage.copyWith(text: threadsJson);
+
+      if (updatedMessage.media.value?.type == Mediatype.thread) {
+        updatedMessage.media.value = updatedMessage.media.value?.copyWith(
+          name: threadsJson,
+        );
+      }
+
+      final updatedMessages = [
+        ...state.messages.sublist(0, state.messages.length - 1),
+        updatedMessage,
+      ];
+
+      state = state.copyWith(
+        activeThreadStrings: List.unmodifiable(currentThreads),
+        messages: List.unmodifiable(updatedMessages),
+      );
+    } else {
+      state = state.copyWith(
+        activeThreadStrings: List.unmodifiable(currentThreads),
+      );
+    }
+  }
+
+  Future<void> cancelThread() async {
+    final lastThread = allMessages.getLastThread();
+    if (lastThread != null && !_isPlaceholderThread(lastThread)) {
+      debugPrint('📝 Thread has user content - not auto-cancelling');
+      return;
+    }
+    
+    state = state.copyWith(cancelledThread: lastThread);
+    keyboardController.clear();
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    if (lastThread == null) {
+      state = state.copyWith(
+        messages: List.unmodifiable(allMessages),
+        activeThreadStrings: [],
+        cancelledThread: null,
+      );
+      return;
+    }
+
+    allMessages.remove(lastThread);
+    state = state.copyWith(
+      messages: List.unmodifiable(allMessages),
+      activeThreadStrings: [],
+      isThreading: false,
+      cancelledThread: null,
+    );
+  }
+
+  bool _isPlaceholderThread(Message? thread) {
+    if (thread == null) return false;
+    final decodedText = thread.text.safeDecode();
+    return thread.text == "_Start typing your first thread_" ||
+        (decodedText.isNotEmpty && decodedText.first == "_Start typing your first thread_");
+  }
+Future<void> saveThread() async {
+  final lastThread = allMessages.getLastThread();
+  if (lastThread == null) return;
   
-void addThread(String text) {
-  // Clone current thread strings
+  if (state.activeThreadStrings.length == 1 &&
+      state.activeThreadStrings.first == "_Start typing your first thread_") {
+    debugPrint('📝 Empty thread not being saved.');
+    return;
+  }
+
+  // ✅ DEBUG: Check what's being saved
+  debugPrint('💾 Saving thread with content: ${state.activeThreadStrings}');
+  debugPrint('📝 Last thread text before update: ${lastThread.text}');
+
+  // ✅ Create updated thread with current content
+  final updatedThread = lastThread.copyWith(
+    text: jsonEncode(state.activeThreadStrings), // Update with current threads
+  );
+
+  // ✅ Update media name as well to keep in sync
+  final updatedMedia = lastThread.media.value?.copyWith(
+    name: jsonEncode(state.activeThreadStrings),
+  );
+
+  Media? persistedMedia;
+  if (updatedMedia != null) {
+    persistedMedia = await _persistMedia(updatedMedia);
+  }
+
+  final savedMessage = await _createAndAttachMessage(
+    message: updatedThread, // ✅ Use the UPDATED thread, not the original
+    persistedMedia: persistedMedia,
+    replyingTo: lastThread.replyingTo.value,
+  );
+
+  // ✅ Replace the old thread with the updated one in allMessages
+  final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
+  if (threadIndex != -1) {
+    allMessages[threadIndex] = updatedThread;
+  }
+
+  highlightMessageTemporarily(updatedThread);
   keyboardController.clear();
-  final currentThreads = List<String>.from(state.activeThreadStrings);
+  state = state.copyWith(
+    messages: List.unmodifiable(allMessages),
+    activeThreadStrings: [],
+    cancelledThread: null,
+    isThreading: false,
+  );
 
-  // Append new thread entry
-  final newEntry = text.trim().isEmpty ? "_Start typing your first thread_" : text;
-  currentThreads.add(newEntry);
-
-  // Encode updated threads as JSON
-  final threadsJson = jsonEncode(currentThreads);
-
-  // Update the active message if we're threading
-  if (state.isThreading && state.messages.isNotEmpty) {
-    final lastMessage = state.messages.last;
-
-    // Update message and its linked media
-    final updatedMessage = lastMessage.copyWith(
-      text: threadsJson,
-    );
-
-    if (updatedMessage.media.value?.type == Mediatype.thread) {
-      updatedMessage.media.value =
-          updatedMessage.media.value?.copyWith(name: threadsJson);
-    }
-
-    // Replace last message immutably
-    final updatedMessages = [
-      ...state.messages.sublist(0, state.messages.length - 1),
-      updatedMessage,
-    ];
-
-    // Commit changes
-    state = state.copyWith(
-      activeThreadStrings: List.unmodifiable(currentThreads),
-      messages: List.unmodifiable(updatedMessages),
-    );
-  } else {
-    // Edge case: no thread message yet
-    state = state.copyWith(
-      activeThreadStrings: List.unmodifiable(currentThreads),
-    );
-  }
+  debugPrint('✅ Thread saved successfully: ${updatedThread.text}');
 }
 
-void removeLastThread() {
-  // Clone threads
-  final currentThreads = List<String>.from(state.activeThreadStrings);
+void editThread(Message thread) {
+  state = state.copyWith(activeEditingThread: thread, activeThreadStrings: thread.text.safeDecode(), isThreading: true);
 
-  // Remove the last one safely
-  if (currentThreads.isNotEmpty) {
-    currentThreads.removeLast();
-  }
-
-  // Ensure at least one placeholder remains
-  if (currentThreads.isEmpty) {
-    currentThreads.add("_Start typing your first thread_");
-  }
-
-  // Encode to JSON
-  final threadsJson = jsonEncode(currentThreads);
-
-  // Update last message immutably
-  if (state.isThreading && state.messages.isNotEmpty) {
-    final lastMessage = state.messages.last;
-
-    final updatedMessage = lastMessage.copyWith(text: threadsJson);
-
-    if (updatedMessage.media.value?.type == Mediatype.thread) {
-      updatedMessage.media.value =
-          updatedMessage.media.value?.copyWith(name: threadsJson);
-    }
-
-    final updatedMessages = [
-      ...state.messages.sublist(0, state.messages.length - 1),
-      updatedMessage,
-    ];
-
-    state = state.copyWith(
-      activeThreadStrings: List.unmodifiable(currentThreads),
-      messages: List.unmodifiable(updatedMessages),
-    );
-  } else {
-    state = state.copyWith(activeThreadStrings: List.unmodifiable(currentThreads));
-  }
 }
-
-
-  void cancelThread() {
-    state = state.clearThreads();
-  }
-
-
   // ===============================================
   // CONTEXT MENUS
   // ===============================================

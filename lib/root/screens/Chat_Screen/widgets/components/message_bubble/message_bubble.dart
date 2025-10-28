@@ -193,7 +193,8 @@ class _MessageBubbleState extends State<MessageBubble>
           ),
         ),
       );
-    } else {
+    } else 
+    {
       return Swipeable(
       isSender: _isSender,
       isSelecting: widget.isSelecting,

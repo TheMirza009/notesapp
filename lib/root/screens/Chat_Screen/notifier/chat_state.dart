@@ -13,6 +13,8 @@ class ChatState {
   final bool isEditing;
   final bool isThreading;
   final Message? anchorMessage;
+  final Message? cancelledThread;
+  final Message? activeEditingThread;
 
   // Styling
   final BubbleColor? bubbleColor;
@@ -36,6 +38,8 @@ class ChatState {
     this.bubbleColor = BubbleColor.seed,
     this.anchorMessage,
     this.highlightedMessage,
+    this.cancelledThread,
+    this.activeEditingThread,
     this.selectedMessages = const [],
     this.activeThreadStrings = const [],
   });
@@ -52,6 +56,8 @@ class ChatState {
     BubbleColor? bubbleColor,
     Message? anchorMessage,
     Message? highlightedMessage,
+    Message? cancelledThread,
+    Message? activeEditingThread,
     List<Message>? selectedMessages,
     List<String>? activeThreadStrings,
   }) {
@@ -66,6 +72,8 @@ class ChatState {
       bubbleColor: bubbleColor ?? this.bubbleColor,
       anchorMessage: anchorMessage,
       highlightedMessage: highlightedMessage,
+      cancelledThread: cancelledThread,
+      activeEditingThread: activeEditingThread,
       selectedMessages: selectedMessages ?? this.selectedMessages,
       activeThreadStrings: activeThreadStrings ?? this.activeThreadStrings,
     );

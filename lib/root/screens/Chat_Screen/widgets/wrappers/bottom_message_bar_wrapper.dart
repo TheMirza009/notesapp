@@ -87,6 +87,7 @@ class _BottomMessageBarWrapperState extends ConsumerState<BottomMessageBarWrappe
         },
         onSend: notifier.sendMessage,
         onImagePasted: (bytes) => notifier.pickImage(imageBytes: bytes),
+        onSendThread: notifier.saveThread,
       ),
     );
   }

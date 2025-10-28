@@ -165,7 +165,33 @@ extension MessageGalleryExtensions on List<Message> {
           .toList();
 }
 
-
-
-
+extension ThreadExtensions on List<Message> {
+  /// 🔍 Get the last thread message in the list (most efficient)
+  Message? getLastThread() {
+    for (int i = length - 1; i >= 0; i--) {
+      if (this[i].isThread) {
+        return this[i];
+      }
+    }
+    return null;
+  }
+  
+  /// 🔍 Get all thread messages
+  List<Message> get threads => where((message) => message.isThread).toList();
+  
+  /// 🔍 Check if list contains any thread messages
+  bool get hasThreads => any((message) => message.isThread);
+  
+  /// 🔍 Get thread messages count
+  int get threadCount => where((message) => message.isThread).length;
+  
+  /// 🔍 Remove the last thread message
+  List<Message> removeLastThread() {
+    final lastThread = getLastThread();
+    if (lastThread != null) {
+      return where((message) => message != lastThread).toList();
+    }
+    return List<Message>.from(this);
+  }
+}
 

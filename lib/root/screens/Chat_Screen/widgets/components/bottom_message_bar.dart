@@ -15,6 +15,7 @@ class BottomMessageBar extends ConsumerStatefulWidget {
   final VoidCallback onEmojiTap;
   final VoidCallback onAttachmentTap;
   final VoidCallback onMicTap;
+  final VoidCallback onSendThread;
   final Function(String) onSend;
   final Function(String) onEdit;
   final Function(String)? onSubmitted;
@@ -30,6 +31,7 @@ class BottomMessageBar extends ConsumerStatefulWidget {
     required this.onMicTap,
     required this.onSend,
     required this.onEdit,
+    required this.onSendThread,
     this.onSubmitted,
     this.onImagePasted,
     this.keyboardController,
@@ -165,6 +167,7 @@ class _BottomMessageBarState extends ConsumerState<BottomMessageBar> {
               isThreading: isThreading,
               isLight: isLight,
               onMicTap: widget.onMicTap,
+              onSendThread: widget.onSendThread,
               onSend: (text) {
                 isEditing ? widget.onEdit(text) : widget.onSend(text);
                 messageController.clear();
@@ -320,6 +323,7 @@ class _SendMicIconSwitcher extends StatelessWidget {
   final bool isThreading;
   final bool isLight;
   final VoidCallback onMicTap;
+  final VoidCallback onSendThread;
   final Function(String) onSend;
 
   const _SendMicIconSwitcher({
@@ -330,6 +334,7 @@ class _SendMicIconSwitcher extends StatelessWidget {
     required this.isLight,
     required this.onMicTap,
     required this.onSend,
+    required this.onSendThread,
   });
 
   @override
@@ -358,6 +363,7 @@ class _SendMicIconSwitcher extends StatelessWidget {
                   isThreading: isThreading,
                   isLight: isLight,
                   onMicTap: onMicTap,
+                  onSendThread: onSendThread,
                   isFieldEmpty: messageController.text.isEmpty,
                 )
               : isThreading
@@ -367,6 +373,7 @@ class _SendMicIconSwitcher extends StatelessWidget {
                       isThreading: isThreading,
                       isLight: isLight,
                       onMicTap: onMicTap,
+                      onSendThread: onSendThread,
                       isFieldEmpty: messageController.text.isEmpty,
                     )
                   : IconButton(
@@ -391,6 +398,7 @@ class _MicButton extends StatelessWidget {
   final bool isLight;
   final bool isFieldEmpty;
   final VoidCallback onMicTap;
+  final VoidCallback onSendThread;
 
   const _MicButton({
     super.key,
@@ -398,6 +406,7 @@ class _MicButton extends StatelessWidget {
     required this.isThreading,
     required this.isLight,
     required this.onMicTap,
+    required this.onSendThread,
     required this.isFieldEmpty,
   });
 
@@ -425,7 +434,7 @@ class _MicButton extends StatelessWidget {
           ),
           if (isThreading)
             IconButton(
-              onPressed: () => debugPrint("Send Thread"),
+              onPressed: onSendThread,
               icon: Transform.translate(
                 offset: const Offset(-5, 3),
                 child: vectorBuild(

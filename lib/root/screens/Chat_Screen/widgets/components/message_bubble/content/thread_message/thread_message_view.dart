@@ -15,7 +15,7 @@ import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:typeset/typeset.dart';
 
 /// Thread-style stacked message bubbles with visual connectors
-class ThreadMessageView extends StatelessWidget {
+class ThreadMessageView extends ConsumerWidget {
   final Message message;
   final List<String> strings;
   final VoidCallback onTap;
@@ -36,48 +36,60 @@ class ThreadMessageView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (strings.isEmpty) return const SizedBox.shrink();
 
     final isSender = message.isSender;
     final totalWidth = _calculateWidth(context) + edgePadding;
-
-    return AnimatedAlign(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutQuint,
-      alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOutQuint,
-        padding:
-            padding ??
-            EdgeInsets.only(
-              left: isSender ? 0 : 8, // Remove 45px padding
-              right: isSender ? 8 : 0, // Remove 45px padding
-              top: 12,
-              bottom: 12,
-            ),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOut,
-            width: totalWidth + 45, // Add 45px for button space
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: List.generate(strings.length, (i) {
-                return _ThreadItem(
-                  text: strings[i],
-                  index: i,
-                  total: strings.length,
-                  isSender: isSender,
-                  onTap: onTap,
-                  onLongPress: onLongPress ?? (offset) => _showContextMenu(context, offset),
-                  onClearPressed: onClearPressed,
-                );
-              }),
+    final bool isCancelled = ref.watch(
+      chatStateController.select((s) => s.cancelledThread?.isarId == message.isarId)
+    );
+    return AnimatedSlide(
+      duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+        offset: (isCancelled ?? false) ? Offset(isSender ? 0.1 : -0.1, 0) : Offset.zero,
+      child: AnimatedOpacity(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+        opacity: (isCancelled ?? false) ? 0 : 1,
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutQuint,
+          alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutQuint,
+            padding:
+                padding ??
+                EdgeInsets.only(
+                  left: isSender ? 0 : 8, // Remove 45px padding
+                  right: isSender ? 8 : 0, // Remove 45px padding
+                  top: 12,
+                  bottom: 12,
+                ),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+                width: totalWidth + 45, // Add 45px for button space
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: List.generate(strings.length, (i) {
+                    return _ThreadItem(
+                      text: strings[i],
+                      index: i,
+                      total: strings.length,
+                      isSender: isSender,
+                      onTap: onTap,
+                      onLongPress: onLongPress ?? (offset) => _showContextMenu(context, offset),
+                      onClearPressed: onClearPressed,
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),
@@ -147,7 +159,7 @@ class _ThreadItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the ChatStateController to determine if we're threading
     final isThreading = ref.watch(chatStateController.select((s) => s.isThreading));
-
+    // final isActiveThread = ref.watch(chatStateController.select((s) => s.activeEditingThread.text == ThreadMessageView.strings))
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(

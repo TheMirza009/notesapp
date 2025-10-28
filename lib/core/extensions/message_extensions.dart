@@ -13,4 +13,8 @@ extension MessageX on Message {
   bool get isAudio {
     return media.value?.type == Mediatype.audio;
   }
+  
+  bool get isThread {
+    return media.value?.type == Mediatype.thread;
+  }
 }
