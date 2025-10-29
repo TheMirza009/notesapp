@@ -28,6 +28,7 @@ class ThemeConstants {
   static const attachmentLightBG = Color(0xFFDFDFDD);
   static const attachmentBorderLight =  Color(0xFFCCCCC9);
   static const Color deeperSenderBlue = Color(0xFF72AED1);
+  static const Color recieverLight =  Color(0xFFAFC0C9);
 
   /// Chat Bubble padding
   static const bubblePaddingHorizontal = 16.0; // Define horizontal padding

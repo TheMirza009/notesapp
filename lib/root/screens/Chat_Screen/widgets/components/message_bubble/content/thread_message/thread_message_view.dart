@@ -23,12 +23,18 @@ class ThreadMessageView extends ConsumerWidget {
   final void Function(int)? onClearPressed;
   final double edgePadding;
   final EdgeInsetsGeometry? padding;
+  final Color tileColor;
+  final Color highlightedColor;
+  final bool isHighlighted;
 
   const ThreadMessageView({
     super.key,
     required this.message,
     required this.strings,
     required this.onTap,
+    required this.tileColor,
+    required this.highlightedColor,
+    required this.isHighlighted,
     this.onLongPress,
     this.onClearPressed,
     this.edgePadding = 80.0,
@@ -79,6 +85,8 @@ class ThreadMessageView extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: List.generate(strings.length, (i) {
                     return _ThreadItem(
+                      isHighlighted: isHighlighted,
+                      color: isHighlighted ? highlightedColor : tileColor,
                       text: strings[i],
                       index: i,
                       total: strings.length,
@@ -137,9 +145,11 @@ class _ThreadItem extends ConsumerWidget {
   final int index;
   final int total;
   final bool isSender;
+  final bool isHighlighted;
   final VoidCallback onTap;
   final void Function(Offset) onLongPress;
   final void Function(int)? onClearPressed;
+  final Color color;
 
   const _ThreadItem({
     required this.text,
@@ -148,6 +158,8 @@ class _ThreadItem extends ConsumerWidget {
     required this.isSender,
     required this.onTap,
     required this.onLongPress,
+    required this.color,
+    required this.isHighlighted,
     this.onClearPressed,
   });
 
@@ -215,6 +227,8 @@ class _ThreadItem extends ConsumerWidget {
                   children: [
                     // ✅ Wrap _ThreadTile in a Consumer to reactively rebuild
                     _ThreadTile(
+                      isHighlighted: isHighlighted,
+                      color: color,
                       text: text,
                       showTime: isLast,
                       isSender: isSender,
@@ -285,10 +299,12 @@ class _ThreadTile extends StatelessWidget {
   final String text;
   final bool showTime;
   final bool isSender;
+  final bool isHighlighted;
   final int current;
   final int total;
   final VoidCallback onTap;
   final void Function(Offset) onLongPress;
+  final Color color;
 
   const _ThreadTile({
     required this.text,
@@ -298,13 +314,15 @@ class _ThreadTile extends StatelessWidget {
     required this.total,
     required this.onTap,
     required this.onLongPress,
+    required this.color,
+    required this.isHighlighted,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = context.isLight
-        ? (isSender ? ThemeConstants.senderBlue : Colors.grey)
-        : (isSender ? ThemeConstants.senderBlueDark : Colors.blueGrey);
+    final defaultcolor = context.isLight
+        ? (isSender ? ThemeConstants.senderBlue : const Color(0xFFAFC0C9))
+        : (isSender ? ThemeConstants.senderBlueDark : ThemeConstants.darkIconBorder);
     const initString = "_Start typing your first thread_";
 
     return RippleWell(
@@ -312,8 +330,10 @@ class _ThreadTile extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(15),
-      materialColor: color,
-      child: Container(
+      materialColor: color ?? defaultcolor,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOutQuint,
         width: double.infinity,
         padding: const EdgeInsets.only(
           left: 25,
@@ -323,7 +343,14 @@ class _ThreadTile extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          color: color,
+          color: color ?? defaultcolor,
+          boxShadow: [
+            BoxShadow(
+              color: isHighlighted ? Colors.white.withValues(alpha: context.isLight ? 0.9 : 0.3) : Colors.transparent,
+              blurRadius: isHighlighted ? 16 : 0,
+              spreadRadius: isHighlighted ? 2 : 0,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

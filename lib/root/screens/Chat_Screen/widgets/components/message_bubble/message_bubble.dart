@@ -170,6 +170,9 @@ class _MessageBubbleState extends State<MessageBubble>
           child: Stack(
             children: [
               ThreadMessageView(
+                tileColor: colors.baseColor,
+                highlightedColor: colors.highlightedColor,
+                isHighlighted: isHighlighted,
                 message: widget.message,
                 strings: widget.message.text.safeDecode(),
                 padding: EdgeInsets.only(
