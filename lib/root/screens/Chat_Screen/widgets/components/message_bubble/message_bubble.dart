@@ -423,10 +423,12 @@ class _OpaqueBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseColor = colors.baseColor;
+    final highlightColor = colors.highlightedColor;
     return RippleWell(
-      borderRadius: rippleBorderRadius ?? 
-        BorderRadius.circular(message.isImage ? 5 : borderRadius),
-      materialColor: colors.baseColor,
+      animated: true,
+      borderRadius: rippleBorderRadius ??  BorderRadius.circular(message.isImage ? 5 : borderRadius),
+      materialColor: baseColor,
       onTap: isSelecting ? onTapWhileSelecting : onTap,
       onLongPress: onLongPress,
       child: AnimatedContainer(
@@ -434,14 +436,14 @@ class _OpaqueBubble extends StatelessWidget {
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius),
-          color: isHighlighted ? colors.highlightedColor : colors.baseColor,
-          boxShadow: isHighlighted ? [
+          color: isHighlighted ? highlightColor : Colors.transparent, //baseColor, // baseColor,
+          boxShadow: [
             BoxShadow(
-              color: Colors.white.withOpacity(isLight ? 0.9 : 0.3),
-              blurRadius: 16,
-              spreadRadius: 2,
+              color: isHighlighted ? Colors.white.withValues(alpha: isLight ? 0.9 : 0.3) : Colors.transparent,
+              blurRadius: isHighlighted ? 16 : 0,
+              spreadRadius: isHighlighted ? 2 : 0,
             ),
-          ] : null,
+          ],
         ),
         child: Padding(
           padding: bubblePadding,
