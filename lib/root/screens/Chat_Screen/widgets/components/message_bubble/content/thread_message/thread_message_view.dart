@@ -44,11 +44,21 @@ class ThreadMessageView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<String> strings = message.text.safeDecode();
+   // ✅ Check if this is the active editing thread
+    final activeThread = ref.watch(
+      chatStateController.select((s) => s.activeEditingThread),
+    );
+    final isActiveThread = activeThread?.isarId == message.isarId;
+    
+    // ✅ Use live strings if editing, otherwise decode from message
+    final List<String> strings = isActiveThread
+        ? ref.watch(chatStateController.select((s) => s.activeThreadStrings))
+        : message.text.safeDecode();
+
     if (strings.isEmpty) return const SizedBox.shrink();
 
     final isSender = message.isSender;
-    final totalWidth = _calculateWidth(context) + edgePadding;
+    final totalWidth = _calculateWidth(context, strings) + edgePadding;
     final isCancelled = ref.watch(
       chatStateController.select((s) => s.cancelledThread?.isarId == message.isarId),
     );
@@ -113,11 +123,11 @@ class ThreadMessageView extends ConsumerWidget {
     );
   }
 
-  double _calculateWidth(BuildContext context) {
+   double _calculateWidth(BuildContext context, List<String> strings) {
     final textStyle = DefaultTextStyle.of(context).style;
     double maxWidth = 0;
 
-    for (final text in message.text.safeDecode()) {
+    for (final text in strings) {
       final tp = TextPainter(
         text: TextSpan(text: text, style: textStyle),
         textDirection: TextDirection.ltr,
@@ -201,7 +211,8 @@ class _ThreadItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isThreading = ref.watch(chatStateController.select((s) => s.isThreading));
-    final isActive = ref.watch(chatStateController.select((s) => s.activeEditingThread))?.isarId == message.isarId ?? false;
+    final activeThread = ref.watch(chatStateController.select((s) => s.activeEditingThread));
+    final isActive = activeThread?.isarId == message.isarId;
 
     return Padding(
       padding: EdgeInsets.only(bottom: config.isLast ? 0 : 10),

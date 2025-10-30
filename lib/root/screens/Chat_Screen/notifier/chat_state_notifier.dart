@@ -1096,10 +1096,11 @@ void onTyping(String text) {
 
   final threadsJson = jsonEncode(currentThreads);
 
-  if (state.isThreading && state.messages.isNotEmpty) {
-    final lastThread = state.activeEditingThread;
-    if (lastThread == null || lastThread.isarId == 0) return;
+  if (state.isThreading && state.activeEditingThread != null) {
+    final lastThread = state.activeEditingThread!;
+    if (lastThread.isarId == 0) return;
 
+    // ✅ Create updated message
     final updatedMessage = lastThread.copyWith(text: threadsJson);
 
     if (updatedMessage.media.value?.type == Mediatype.thread) {
@@ -1108,21 +1109,17 @@ void onTyping(String text) {
       );
     }
 
-    // ✅ Update BOTH state.messages AND allMessages
-    final updatedMessages = state.messages.map((message) {
-      return message.isarId == lastThread.isarId ? updatedMessage : message;
-    }).toList();
-
-    // ✅ Also update allMessages (the authoritative list)
+    // ✅ Update allMessages (authoritative list)
     final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
     if (threadIndex != -1) {
       allMessages[threadIndex] = updatedMessage;
     }
 
+    // ✅ Update state with BOTH strings AND the updated message
     state = state.copyWith(
-      activeEditingThread: lastThread,
       activeThreadStrings: List.unmodifiable(currentThreads),
-      messages: List.unmodifiable(updatedMessages),
+      activeEditingThread: updatedMessage, // ✅ Update the reference
+      messages: List.unmodifiable(allMessages),
     );
   } else {
     state = state.copyWith(
@@ -1195,84 +1192,75 @@ void onTyping(String text) {
   }
 
   void removeLastThread() async {
-    // Clone threads
-    final currentThreads = List<String>.from(state.activeThreadStrings);
+  final currentThreads = List<String>.from(state.activeThreadStrings);
 
-    if (currentThreads.isNotEmpty && currentThreads.first == "_Start typing your first thread_") {
-      await cancelThread();
-      return;
-    }
-
-    // Remove the last one safely
-    if (currentThreads.isNotEmpty) {
-      currentThreads.removeLast();
-    }
-
-    // Ensure at least one placeholder remains
-    if (currentThreads.isEmpty) {
-      currentThreads.add("_Start typing your first thread_");
-    }
-
-    // Encode to JSON
-    final threadsJson = jsonEncode(currentThreads);
-
-    // Update last message immutably
-    if (state.isThreading && state.messages.isNotEmpty) {
-      final lastThread = state.activeEditingThread;
-      if (lastThread == null) return;
-
-      final updatedMessage = lastThread.copyWith(text: threadsJson);
-
-      if (updatedMessage.media.value?.type == Mediatype.thread) {
-        updatedMessage.media.value = updatedMessage.media.value?.copyWith(
-          name: threadsJson,
-        );
-      }
-
-      // Replace last message immutably
-      final updatedMessages =
-          state.messages.map((message) {
-            return message.isarId == lastThread.isarId
-                ? updatedMessage
-                : message;
-          }).toList();
-
-      state = state.copyWith(
-        activeThreadStrings: List.unmodifiable(currentThreads),
-        messages: List.unmodifiable(updatedMessages),
-      );
-    } else {
-      state = state.copyWith(
-        activeThreadStrings: List.unmodifiable(currentThreads),
-      );
-    }
+  if (currentThreads.isNotEmpty && currentThreads.first == "_Start typing your first thread_") {
+    await cancelThread();
+    return;
   }
+
+  if (currentThreads.isNotEmpty) {
+    currentThreads.removeLast();
+  }
+
+  if (currentThreads.isEmpty) {
+    currentThreads.add("_Start typing your first thread_");
+  }
+
+  final threadsJson = jsonEncode(currentThreads);
+
+  if (state.isThreading && state.activeEditingThread != null) {
+    final lastThread = state.activeEditingThread!;
+
+    final updatedMessage = lastThread.copyWith(text: threadsJson);
+
+    if (updatedMessage.media.value?.type == Mediatype.thread) {
+      updatedMessage.media.value = updatedMessage.media.value?.copyWith(
+        name: threadsJson,
+      );
+    }
+
+    // ✅ Persist to Isar
+    await _isar.writeTxn(() async {
+      await _isar.messages.put(updatedMessage);
+      if (updatedMessage.media.value != null) {
+        await _isar.medias.put(updatedMessage.media.value!);
+      }
+    });
+
+    // Update allMessages
+    final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
+    if (threadIndex != -1) {
+      allMessages[threadIndex] = updatedMessage;
+    }
+
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+      messages: List.unmodifiable(allMessages),
+    );
+  } else {
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+    );
+  }
+}
 
   Future<void> cancelThread() async {
     final lastThread = state.activeEditingThread;
     if (lastThread == null) return;
-    // if (lastThread != null && !_isPlaceholderThread(lastThread)) {
-    //   debugPrint('📝 Thread has user content - not auto-cancelling');
-    //   return;
-    // }
-    
+
     state = state.copyWith(cancelledThread: lastThread);
     keyboardController.clear();
+
     await Future.delayed(const Duration(milliseconds: 300));
-    if (lastThread.isarId != null) {
-      await deleteMessage(lastThread);
-    }
-    if (lastThread == null) {
-      state = state.copyWith(
-        messages: List.unmodifiable(allMessages),
-        activeThreadStrings: [],
-        activeEditingThread: null,
-        cancelledThread: null,
-      );
-      return;
+
+    // ✅ Delete from Isar
+    if (lastThread.isarId != 0) {
+      await deleteMessage(lastThread); // This already persists to Isar
     }
 
-    allMessages.remove(lastThread);
+    allMessages.removeWhere((m) => m.isarId == lastThread.isarId);
+
     state = state.copyWith(
       messages: List.unmodifiable(allMessages),
       activeThreadStrings: [],
@@ -1378,6 +1366,8 @@ void editThread(Message thread) {
       case 'copy':
         if (message.isImage) {
           Utils.copyImageFromPath(message.media.value!.path);
+        } else if (message.isThread) {
+          Utils.copyTextToClipboard(message.text.formatThread());
         } else {
           Utils.copyTextToClipboard(message.text);
         }

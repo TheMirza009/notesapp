@@ -25,4 +25,14 @@ extension StringCaseX on String {
       return ["_Start typing your first thread_"];
     }
   }
+
+  /// Method to parse Array of Strings to single Human-readable text
+  String formatThread() {
+    final threads = safeDecode();
+    return threads
+        .asMap()
+        .entries
+        .map((entry) => '${entry.value}\n${entry.key + 1}/${threads.length}')
+        .join('\n\n|\n\n');
+  }
 }

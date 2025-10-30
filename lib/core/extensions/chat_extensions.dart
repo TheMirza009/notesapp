@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -12,9 +13,11 @@ extension ChatX on Chat {
     final bool isPhoto = lastMessage.media.value?.type == Mediatype.image && (lastMessage.text.isEmpty ?? true);
     final bool isVideo = lastMessage.media.value?.type == Mediatype.video && (lastMessage.text.isEmpty ?? true);
     final bool isDocument = lastMessage.media.value?.type == Mediatype.document && (lastMessage.text.isEmpty ?? true);
+    final bool isThread= lastMessage.media.value?.type == Mediatype.thread && (lastMessage.text.isEmpty ?? true);
     if (isPhoto) return "📷 Photo";
     if (isVideo) return "📽️ Video";
     if (isDocument) return "📄 Document";
+    if (isThread) return "🧵 ${lastMessage.text.formatThread()}";
     return lastMessage.text ?? noMessages;
   }
 
