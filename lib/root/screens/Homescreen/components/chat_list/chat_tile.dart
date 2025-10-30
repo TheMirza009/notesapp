@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
-import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
+import 'package:notesapp/root/screens/Homescreen/components/chat_list/doc_icon.dart';
 
 class ChatTile extends StatelessWidget {
   final String title;

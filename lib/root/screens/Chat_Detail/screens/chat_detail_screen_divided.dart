@@ -23,7 +23,7 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Detail/screens/chat_media_screen.dart';
 import 'package:notesapp/root/screens/Chat_Detail/widgets/info_bottom_sheet.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
+import 'package:notesapp/root/screens/Homescreen/components/chat_list/doc_icon.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
 import 'package:notesapp/root/screens/Test/thread_test_screen.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';

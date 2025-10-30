@@ -70,11 +70,28 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (selectedChat == null) return ChatState();
 
     _chat = selectedChat;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _hydrateMessages();
-      _setupKeyboardAutoScroll();
-    });
-    return ChatState(); // empty initial
+  
+  // Listen for message to highlight
+  final messageToHighlight = ref.watch(
+    chatListProvider.select((s) => s.messageToHighlight),
+  );
+  
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!isLoading) {
+      hydrateMessages().then((_) {
+        // After hydration, check if we need to scroll to a message
+        if (messageToHighlight != null) {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            scrollToMessage(messageToHighlight.isarId);
+            ref.read(chatListProvider.notifier).clearHighlight();
+          });
+        }
+      });
+    }
+    _setupKeyboardAutoScroll();
+  });
+  
+  return ChatState();
   }
 
   // =====================================================
@@ -193,7 +210,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
   // Section: Messages CRUD (refactored to reuse helpers)
   // =====================================================
 
-  Future<void> _hydrateMessages({
+  Future<void> hydrateMessages({
     bool ascending = true, // true → load oldest first, false → newest first
     int visibleCount = 15, // how many messages to load instantly
     int batchSize = 20, // how many to load per background batch

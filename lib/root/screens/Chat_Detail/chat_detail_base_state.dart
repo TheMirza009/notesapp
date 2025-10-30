@@ -27,7 +27,7 @@ import 'package:notesapp/root/data/models/media_model.dart' show Media;
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
-import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
+import 'package:notesapp/root/screens/Homescreen/components/chat_list/doc_icon.dart';
 
 /// ---------------------------------------------------------------------------
 /// ChatDetailBase

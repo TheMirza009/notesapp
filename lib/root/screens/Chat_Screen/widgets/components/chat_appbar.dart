@@ -4,7 +4,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
-import 'package:notesapp/root/screens/Homescreen/components/doc_icon.dart';
+import 'package:notesapp/root/screens/Homescreen/components/chat_list/doc_icon.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 
 class ChatAppBar extends StatelessWidget {

@@ -12,7 +12,7 @@ import 'package:notesapp/root/screens/Chat_Forward/notifier/selected_chat_notifi
 import 'package:notesapp/root/screens/Chat_Forward/widgets/blurred_appbar.dart';
 import 'package:notesapp/root/screens/Chat_Forward/widgets/selection_check.dart';
 import 'package:notesapp/root/screens/Chat_Forward/widgets/send_button.dart';
-import 'package:notesapp/root/screens/Homescreen/components/chat_tile.dart';
+import 'package:notesapp/root/screens/Homescreen/components/chat_list/chat_tile.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 
 class ChatForwardScreen extends ConsumerWidget {
