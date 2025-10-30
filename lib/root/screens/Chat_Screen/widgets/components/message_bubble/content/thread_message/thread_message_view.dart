@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/core/extensions/time_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -17,12 +18,13 @@ import 'package:typeset/typeset.dart';
 /// Thread-style stacked message bubbles with visual connectors
 class ThreadMessageView extends ConsumerWidget {
   final Message message;
-  final List<String> strings;
   final VoidCallback onTap;
   final void Function(Offset)? onLongPress;
   final void Function(int)? onClearPressed;
   final double edgePadding;
   final EdgeInsetsGeometry? padding;
+
+  // colors
   final Color tileColor;
   final Color highlightedColor;
   final bool isHighlighted;
@@ -30,7 +32,6 @@ class ThreadMessageView extends ConsumerWidget {
   const ThreadMessageView({
     super.key,
     required this.message,
-    required this.strings,
     required this.onTap,
     required this.tileColor,
     required this.highlightedColor,
@@ -43,21 +44,23 @@ class ThreadMessageView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final List<String> strings = message.text.safeDecode();
     if (strings.isEmpty) return const SizedBox.shrink();
 
     final isSender = message.isSender;
     final totalWidth = _calculateWidth(context) + edgePadding;
-    final bool isCancelled = ref.watch(
-      chatStateController.select((s) => s.cancelledThread?.isarId == message.isarId)
+    final isCancelled = ref.watch(
+      chatStateController.select((s) => s.cancelledThread?.isarId == message.isarId),
     );
+
     return AnimatedSlide(
-      duration: Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-        offset: (isCancelled ?? false) ? Offset(isSender ? 0.1 : -0.1, 0) : Offset.zero,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      offset: isCancelled ? Offset(isSender ? 0.1 : -0.1, 0) : Offset.zero,
       child: AnimatedOpacity(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
-        opacity: (isCancelled ?? false) ? 0 : 1,
+        opacity: isCancelled ? 0 : 1,
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOutQuint,
@@ -65,11 +68,10 @@ class ThreadMessageView extends ConsumerWidget {
           child: AnimatedPadding(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOutQuint,
-            padding:
-                padding ??
+            padding: padding ??
                 EdgeInsets.only(
-                  left: isSender ? 0 : 8, // Remove 45px padding
-                  right: isSender ? 8 : 0, // Remove 45px padding
+                  left: isSender ? 0 : 8,
+                  right: isSender ? 8 : 0,
                   top: 12,
                   bottom: 12,
                 ),
@@ -79,18 +81,24 @@ class ThreadMessageView extends ConsumerWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOut,
-                width: totalWidth + 45, // Add 45px for button space
+                width: totalWidth + 45,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: List.generate(strings.length, (i) {
                     return _ThreadItem(
-                      isHighlighted: isHighlighted,
-                      color: isHighlighted ? highlightedColor : tileColor,
-                      text: strings[i],
-                      index: i,
-                      total: strings.length,
-                      isSender: isSender,
+                      message: message,
+                      config: _ThreadItemConfig(
+                        text: strings[i],
+                        index: i,
+                        total: strings.length,
+                        isSender: isSender,
+                        colors: ThreadColors(
+                          tile: tileColor,
+                          highlighted: highlightedColor,
+                          isHighlighted: isHighlighted,
+                        ),
+                      ),
                       onTap: onTap,
                       onLongPress: onLongPress ?? (offset) => _showContextMenu(context, offset),
                       onClearPressed: onClearPressed,
@@ -109,7 +117,7 @@ class ThreadMessageView extends ConsumerWidget {
     final textStyle = DefaultTextStyle.of(context).style;
     double maxWidth = 0;
 
-    for (final text in strings) {
+    for (final text in message.text.safeDecode()) {
       final tp = TextPainter(
         text: TextSpan(text: text, style: textStyle),
         textDirection: TextDirection.ltr,
@@ -123,8 +131,7 @@ class ThreadMessageView extends ConsumerWidget {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    final minWidth = minWidthPainter.width;
-    return maxWidth < minWidth ? minWidth : maxWidth;
+    return maxWidth < minWidthPainter.width ? minWidthPainter.width : maxWidth;
   }
 
   void _showContextMenu(BuildContext context, Offset offset) {
@@ -137,82 +144,77 @@ class ThreadMessageView extends ConsumerWidget {
 }
 
 // ============================================================================
-// INDIVIDUAL THREAD ITEM
+// DATA CLASSES (Reduce parameter passing)
 // ============================================================================
 
-class _ThreadItem extends ConsumerWidget {
+class ThreadColors {
+  final Color tile;
+  final Color highlighted;
+  final bool isHighlighted;
+
+  const ThreadColors({
+    required this.tile,
+    required this.highlighted,
+    required this.isHighlighted,
+  });
+}
+
+class _ThreadItemConfig {
   final String text;
   final int index;
   final int total;
   final bool isSender;
-  final bool isHighlighted;
-  final VoidCallback onTap;
-  final void Function(Offset) onLongPress;
-  final void Function(int)? onClearPressed;
-  final Color color;
+  final ThreadColors colors;
 
-  const _ThreadItem({
+  const _ThreadItemConfig({
     required this.text,
     required this.index,
     required this.total,
     required this.isSender,
-    required this.onTap,
-    required this.onLongPress,
-    required this.color,
-    required this.isHighlighted,
-    this.onClearPressed,
+    required this.colors,
   });
 
   bool get isFirst => index == 0;
   bool get isLast => index == total - 1;
   bool get isSingle => total == 1;
+}
+
+// ============================================================================
+// INDIVIDUAL THREAD ITEM
+// ============================================================================
+
+class _ThreadItem extends ConsumerWidget {
+  final _ThreadItemConfig config;
+  final VoidCallback onTap;
+  final void Function(Offset) onLongPress;
+  final void Function(int)? onClearPressed;
+  final Message message;
+
+  const _ThreadItem({
+    required this.config,
+    required this.onTap,
+    required this.onLongPress,
+    required this.message,
+    this.onClearPressed,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the ChatStateController to determine if we're threading
     final isThreading = ref.watch(chatStateController.select((s) => s.isThreading));
-    // final isActiveThread = ref.watch(chatStateController.select((s) => s.activeEditingThread.text == ThreadMessageView.strings))
+    final isActive = ref.watch(chatStateController.select((s) => s.activeEditingThread))?.isarId == message.isarId ?? false;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: config.isLast ? 0 : 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left spacer (45px) - contains clear button for sender
-          if (isSender)
-            SizedBox(
-              width: 45,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                switchInCurve: Curves.easeOutBack,
-                switchOutCurve: Curves.easeInBack,
-                transitionBuilder: (child, animation) {
-                  final slideOffset = const Offset(-0.4, 0);
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: slideOffset,
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: RotationTransition(
-                        turns: Tween<double>(
-                          begin: -0.25,
-                          end: 0,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                  );
-                },
-                // Show button only if threading is active AND it’s the last item
-                child: (isThreading && isSender && isLast)
-                    ? _ClearButton(
-                        index: index,
-                        isSender: isSender,
-                        onPressed: onClearPressed,
-                      )
-                    : const SizedBox.shrink(),
-              ),
+          // Left clear button (for sender)
+          if (config.isSender)
+            _ClearButtonSpace(
+              show: isThreading && config.isLast && isActive,
+              isSender: true,
+              index: config.index,
+              onPressed: onClearPressed,
             ),
 
           // Main thread tile with connectors
@@ -225,63 +227,28 @@ class _ThreadItem extends ConsumerWidget {
                   alignment: Alignment.bottomLeft,
                   clipBehavior: Clip.none,
                   children: [
-                    // ✅ Wrap _ThreadTile in a Consumer to reactively rebuild
                     _ThreadTile(
-                      isHighlighted: isHighlighted,
-                      color: color,
-                      text: text,
-                      showTime: isLast,
-                      isSender: isSender,
-                      current: index + 1,
-                      total: total,
+                      message: message,
+                      config: config,
                       onTap: onTap,
                       onLongPress: onLongPress,
                     ),
-                    if (isSingle) const Ridge(),
-                    if (!isLast) const Thether(),
+                    if (config.isSingle) const Ridge(),
+                    if (!config.isLast) const Thether(),
                   ],
                 ),
-                if (!isFirst) const Thether(top: true),
+                if (!config.isFirst) const Thether(top: true),
               ],
             ),
           ),
 
-          // Right spacer (45px) - contains clear button for receiver
-          if (!isSender)
-            SizedBox(
-              width: 45,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                switchInCurve: Curves.easeOutBack,
-                switchOutCurve: Curves.easeInBack,
-                transitionBuilder: (child, animation) {
-                  final slideOffset = const Offset(0.4, 0);
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: slideOffset,
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: RotationTransition(
-                        turns: Tween<double>(
-                          begin: -0.25,
-                          end: 0,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                  );
-                },
-                // Show button only if threading is active AND it’s the last item
-                child: (isThreading && !isSender && isLast)
-                    ? _ClearButton(
-                        index: index,
-                        isSender: isSender,
-                        onPressed: onClearPressed,
-                      )
-                    : const SizedBox.shrink(),
-              ),
+          // Right clear button (for receiver)
+          if (!config.isSender)
+            _ClearButtonSpace(
+              show: isThreading && config.isLast,
+              isSender: false,
+              index: config.index,
+              onPressed: onClearPressed,
             ),
         ],
       ),
@@ -289,64 +256,102 @@ class _ThreadItem extends ConsumerWidget {
   }
 }
 
+// ============================================================================
+// CLEAR BUTTON SPACE (Animated wrapper)
+// ============================================================================
+
+class _ClearButtonSpace extends StatelessWidget {
+  final bool show;
+  final bool isSender;
+  final int index;
+  final void Function(int)? onPressed;
+
+  const _ClearButtonSpace({
+    required this.show,
+    required this.isSender,
+    required this.index,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 45,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOutBack,
+        switchOutCurve: Curves.easeInBack,
+        transitionBuilder: (child, animation) {
+          final slideOffset = Offset(isSender ? -0.4 : 0.4, 0);
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(begin: slideOffset, end: Offset.zero).animate(animation),
+              child: RotationTransition(
+                turns: Tween<double>(begin: -0.25, end: 0).animate(animation),
+                child: child,
+              ),
+            ),
+          );
+        },
+        child: show
+            ? _ClearButton(
+                key: ValueKey("clear_$index"),
+                index: index,
+                onPressed: onPressed,
+              )
+            : const SizedBox.shrink(),
+      ),
+    );
+  }
+}
 
 // ============================================================================
 // THREAD TILE (MESSAGE BUBBLE)
 // ============================================================================
 
-
 class _ThreadTile extends StatelessWidget {
-  final String text;
-  final bool showTime;
-  final bool isSender;
-  final bool isHighlighted;
-  final int current;
-  final int total;
+  final _ThreadItemConfig config;
   final VoidCallback onTap;
   final void Function(Offset) onLongPress;
-  final Color color;
+  final Message message;
 
   const _ThreadTile({
-    required this.text,
-    required this.showTime,
-    required this.isSender,
-    required this.current,
-    required this.total,
+    required this.config,
     required this.onTap,
     required this.onLongPress,
-    required this.color,
-    required this.isHighlighted,
+    required this.message,
   });
 
   @override
   Widget build(BuildContext context) {
-    final defaultcolor = context.isLight
-        ? (isSender ? ThemeConstants.senderBlue : const Color(0xFFAFC0C9))
-        : (isSender ? ThemeConstants.senderBlueDark : ThemeConstants.darkIconBorder);
+    final defaultColor = context.isLight
+        ? (config.isSender ? ThemeConstants.senderBlue : const Color(0xFFAFC0C9))
+        : (config.isSender ? ThemeConstants.senderBlueDark : ThemeConstants.darkIconBorder);
+    
     const initString = "_Start typing your first thread_";
+    final isHighlighted = config.colors.isHighlighted;
+    final color = config.colors.tile;
 
     return RippleWell(
       animated: true,
       onTap: onTap,
       onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(15),
-      materialColor: color ?? defaultcolor,
+      materialColor: color,
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOutQuint,
         width: double.infinity,
-        padding: const EdgeInsets.only(
-          left: 25,
-          right: 12,
-          top: 10,
-          bottom: 10,
-        ),
+        padding: const EdgeInsets.only(left: 25, right: 12, top: 10, bottom: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          color: color ?? defaultcolor,
+          color: isHighlighted ? config.colors.highlighted : Colors.transparent,
           boxShadow: [
             BoxShadow(
-              color: isHighlighted ? Colors.white.withValues(alpha: context.isLight ? 0.9 : 0.3) : Colors.transparent,
+              color: isHighlighted
+                  ? Colors.white.withValues(alpha: context.isLight ? 0.9 : 0.3)
+                  : Colors.transparent,
               blurRadius: isHighlighted ? 16 : 0,
               spreadRadius: isHighlighted ? 2 : 0,
             ),
@@ -362,10 +367,12 @@ class _ThreadTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: TypeSet(
-                    text,
+                    config.text,
                     style: TextStyle(
                       fontSize: 15,
-                      color: (text == initString) ? Colors.blueGrey : ( context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark ),
+                      color: (config.text == initString)
+                          ? Colors.blueGrey
+                          : (context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark),
                     ),
                     softWrap: true,
                   ),
@@ -373,7 +380,7 @@ class _ThreadTile extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: Text(
-                    "$current/$total",
+                    "${config.index + 1}/${config.total}",
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.7),
@@ -382,15 +389,12 @@ class _ThreadTile extends StatelessWidget {
                 ),
               ],
             ),
-            if (showTime)
+            if (config.isLast)
               Align(
                 alignment: Alignment.bottomRight,
                 child: Text(
-                  DateTime.now().to12HourString(),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
+                  message.time.to12HourString(),
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
                 ),
               ),
           ],
@@ -406,60 +410,23 @@ class _ThreadTile extends StatelessWidget {
 
 class _ClearButton extends StatelessWidget {
   final int index;
-  final bool isSender;
   final void Function(int)? onPressed;
 
   const _ClearButton({
     super.key,
     required this.index,
-    required this.isSender,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 400),
-        switchInCurve: Curves.easeOutBack,
-        switchOutCurve: Curves.easeInBack,
-        transitionBuilder: (child, animation) {
-          final slideOffset = !isSender
-              ? const Offset(-0.1, 0) // Slide from left for sender
-              : const Offset(0.1, 0);  // Slide from right for receiver
-
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: slideOffset,
-                end: Offset.zero,
-              ).animate(animation),
-              child: RotationTransition(
-                turns: Tween<double>(
-                  begin: -0.25, // -90 degrees
-                  end: 0,
-                ).animate(animation),
-                child: child,
-              ),
-            ),
-          );
-        },
-        child: IconButton(
-          key: ValueKey("clear_$index"),
-          icon: const Icon(
-            Icons.close_rounded,
-            size: 18,
-            color: Colors.white70,
-          ),
-          splashRadius: 18,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(
-            minWidth: 36,
-            minHeight: 36,
-          ),
-          onPressed: () => onPressed?.call(index),
-        ),
+      child: IconButton(
+        icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white70),
+        splashRadius: 18,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        onPressed: () => onPressed?.call(index),
       ),
     );
   }

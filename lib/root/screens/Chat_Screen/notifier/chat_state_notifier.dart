@@ -1030,86 +1030,90 @@ Future<List<Message>> _loadMessageBatch(
 
   /// Start thread creating
   void createThread() async {
-    await deleteInitMessage();
+  await deleteInitMessage();
 
-    // ✅ Safely get thread title or provide fallback
-    final threadTitle =
-        state.activeThreadStrings.isNotEmpty
-            ? state.activeThreadStrings.first
-            : "_Start typing your first thread_";
+  final threadTitle = state.activeThreadStrings.isNotEmpty
+      ? state.activeThreadStrings.first
+      : "_Start typing your first thread_";
 
-    // ✅ Create media of type thread
-    final threadMedia = Media.thread(threadTitle);
+  final threadMedia = Media.thread(threadTitle);
+  final persistedMedia = await _persistMedia(threadMedia);
 
-    // ✅ Create message and link the media
-    final newMessage =
-        Message()
-          ..text = threadTitle
-          ..time = DateTime.now()
-          ..isSender = true
-          ..media.value =
-              threadMedia; // Assuming Message has IsarLink<Media> media;
+  final newMessage = Message()
+    ..text = threadTitle
+    ..time = DateTime.now()
+    ..isSender = true;
 
-    // Optional UI updates
-    keyboardFocusNode.requestFocus();
-    scrollToBottom();
+  // ✅ Immediately persist to get isarId
+  final savedMessage = await _createAndAttachMessage(
+    message: newMessage,
+    persistedMedia: persistedMedia,
+    replyingTo: state.anchorMessage,
+  );
 
-    allMessages.add(newMessage);
+  if (savedMessage == null) return;
 
-    // ✅ Update state immutably
-    state = state.startThreading();
-    state = state.copyWith(messages: List.unmodifiable(allMessages));
+  keyboardFocusNode.requestFocus();
+  scrollToBottom();
+
+  allMessages.add(savedMessage);
+
+  // ✅ Use the persisted message with isarId
+  state = state.copyWith(
+    isThreading: true,
+    activeThreadStrings: [threadTitle],
+    activeEditingThread: savedMessage,  // ✅ Now has isarId
+    messages: List.unmodifiable(allMessages),
+  );
+}
+
+void onTyping(String text) {
+  final currentThreads = List<String>.from(state.activeThreadStrings);
+  final effective = text.trim().isEmpty ? "_Start typing your first thread_" : text;
+
+  if (currentThreads.isEmpty) {
+    currentThreads.add(effective);
+  } else {
+    currentThreads[currentThreads.length - 1] = effective;
   }
 
-  void onTyping(String text) {
-    // Clone existing thread strings
-    final currentThreads = List<String>.from(state.activeThreadStrings);
+  final threadsJson = jsonEncode(currentThreads);
 
-    // Determine the effective value to store for this entry:
-    final effective =
-        text.trim().isEmpty ? "_Start typing your first thread_" : text;
+  if (state.isThreading && state.messages.isNotEmpty) {
+    final lastThread = state.activeEditingThread;
+    if (lastThread == null || lastThread.isarId == 0) return;
 
-    if (currentThreads.isEmpty) {
-      currentThreads.add(effective);
-    } else {
-      currentThreads[currentThreads.length - 1] = effective;
-    }
+    final updatedMessage = lastThread.copyWith(text: threadsJson);
 
-    // Encode threads as JSON (this is what ThreadMessageView expects)
-    final threadsJson = jsonEncode(currentThreads);
-
-    // Update the active thread message as well (so widget.message.text is valid JSON)
-    if (state.isThreading && state.messages.isNotEmpty) {
-      final lastMessage = state.messages.last;
-
-      // Build updated message with JSON text
-      final updatedMessage = lastMessage.copyWith(text: threadsJson);
-
-      // Keep media metadata in sync if it's a thread-type media
-      if (updatedMessage.media.value?.type == Mediatype.thread) {
-        updatedMessage.media.value = updatedMessage.media.value?.copyWith(
-          name: threadsJson,
-        );
-      }
-
-      // Replace last message immutably (this triggers UI rebuild)
-      final updatedMessages = [
-        ...state.messages.sublist(0, state.messages.length - 1),
-        updatedMessage,
-      ];
-
-      // Commit both activeThreadStrings and messages atomically
-      state = state.copyWith(
-        activeThreadStrings: List.unmodifiable(currentThreads),
-        messages: List.unmodifiable(updatedMessages),
-      );
-    } else {
-      // Edge case: no thread message yet — just update activeThreadStrings
-      state = state.copyWith(
-        activeThreadStrings: List.unmodifiable(currentThreads),
+    if (updatedMessage.media.value?.type == Mediatype.thread) {
+      updatedMessage.media.value = updatedMessage.media.value?.copyWith(
+        name: threadsJson,
       );
     }
+
+    // ✅ Update BOTH state.messages AND allMessages
+    final updatedMessages = state.messages.map((message) {
+      return message.isarId == lastThread.isarId ? updatedMessage : message;
+    }).toList();
+
+    // ✅ Also update allMessages (the authoritative list)
+    final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
+    if (threadIndex != -1) {
+      allMessages[threadIndex] = updatedMessage;
+    }
+
+    state = state.copyWith(
+      activeEditingThread: lastThread,
+      activeThreadStrings: List.unmodifiable(currentThreads),
+      messages: List.unmodifiable(updatedMessages),
+    );
+  } else {
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+    );
   }
+}
+
 
   void ensureThreadTitlePlaceholder() {
     // If there are no threads, or the first thread string is empty,
@@ -1140,10 +1144,11 @@ Future<List<Message>> _loadMessageBatch(
 
     // Update the active message if we're threading
     if (state.isThreading && state.messages.isNotEmpty) {
-      final lastMessage = state.messages.last;
+      final activeThread = state.activeEditingThread;
+      if (activeThread == null) return;
 
       // Update message and its linked media
-      final updatedMessage = lastMessage.copyWith(text: threadsJson);
+      final updatedMessage = activeThread.copyWith(text: threadsJson);
 
       if (updatedMessage.media.value?.type == Mediatype.thread) {
         updatedMessage.media.value = updatedMessage.media.value?.copyWith(
@@ -1152,10 +1157,12 @@ Future<List<Message>> _loadMessageBatch(
       }
 
       // Replace last message immutably
-      final updatedMessages = [
-        ...state.messages.sublist(0, state.messages.length - 1),
-        updatedMessage,
-      ];
+      final updatedMessages =
+          state.messages.map((message) {
+            return message.isarId == activeThread.isarId
+                ? updatedMessage
+                : message;
+          }).toList();
 
       // Commit changes
       state = state.copyWith(
@@ -1194,9 +1201,10 @@ Future<List<Message>> _loadMessageBatch(
 
     // Update last message immutably
     if (state.isThreading && state.messages.isNotEmpty) {
-      final lastMessage = state.messages.last;
+      final lastThread = state.activeEditingThread;
+      if (lastThread == null) return;
 
-      final updatedMessage = lastMessage.copyWith(text: threadsJson);
+      final updatedMessage = lastThread.copyWith(text: threadsJson);
 
       if (updatedMessage.media.value?.type == Mediatype.thread) {
         updatedMessage.media.value = updatedMessage.media.value?.copyWith(
@@ -1204,10 +1212,13 @@ Future<List<Message>> _loadMessageBatch(
         );
       }
 
-      final updatedMessages = [
-        ...state.messages.sublist(0, state.messages.length - 1),
-        updatedMessage,
-      ];
+      // Replace last message immutably
+      final updatedMessages =
+          state.messages.map((message) {
+            return message.isarId == lastThread.isarId
+                ? updatedMessage
+                : message;
+          }).toList();
 
       state = state.copyWith(
         activeThreadStrings: List.unmodifiable(currentThreads),
@@ -1221,20 +1232,24 @@ Future<List<Message>> _loadMessageBatch(
   }
 
   Future<void> cancelThread() async {
-    final lastThread = allMessages.getLastThread();
-    if (lastThread != null && !_isPlaceholderThread(lastThread)) {
-      debugPrint('📝 Thread has user content - not auto-cancelling');
-      return;
-    }
+    final lastThread = state.activeEditingThread;
+    if (lastThread == null) return;
+    // if (lastThread != null && !_isPlaceholderThread(lastThread)) {
+    //   debugPrint('📝 Thread has user content - not auto-cancelling');
+    //   return;
+    // }
     
     state = state.copyWith(cancelledThread: lastThread);
     keyboardController.clear();
     await Future.delayed(const Duration(milliseconds: 300));
-    
+    if (lastThread.isarId != null) {
+      await deleteMessage(lastThread);
+    }
     if (lastThread == null) {
       state = state.copyWith(
         messages: List.unmodifiable(allMessages),
         activeThreadStrings: [],
+        activeEditingThread: null,
         cancelledThread: null,
       );
       return;
@@ -1244,6 +1259,7 @@ Future<List<Message>> _loadMessageBatch(
     state = state.copyWith(
       messages: List.unmodifiable(allMessages),
       activeThreadStrings: [],
+      activeEditingThread: null,
       isThreading: false,
       cancelledThread: null,
     );
@@ -1296,20 +1312,27 @@ Future<void> saveThread() async {
     allMessages[threadIndex] = updatedThread;
   }
 
-  highlightMessageTemporarily(updatedThread);
   keyboardController.clear();
   state = state.copyWith(
     messages: List.unmodifiable(allMessages),
     activeThreadStrings: [],
+    activeEditingThread: null,
     cancelledThread: null,
     isThreading: false,
   );
+  highlightMessageTemporarily(updatedThread);
 
   debugPrint('✅ Thread saved successfully: ${updatedThread.text}');
 }
 
 void editThread(Message thread) {
-  state = state.copyWith(activeEditingThread: thread, activeThreadStrings: thread.text.safeDecode(), isThreading: true);
+  unSelectAllMessages();
+  keyboardController.text = thread.text.safeDecode().last;
+    state = state.copyWith(
+      activeEditingThread: thread,
+      activeThreadStrings: thread.text.safeDecode(),
+      isThreading: true,
+    );
 
 }
   // ===============================================
@@ -1323,7 +1346,7 @@ void editThread(Message thread) {
         deleteMessage(message);
         break;
       case 'edit':
-        startEditingTextMessage(message);
+        message.isThread ? editThread(message) : startEditingTextMessage(message);
       case 'reply':
         unSelectAllMessages();
         ref.read(overlayHandlerProvider).showReplyAnchor(context ?? navigatorKey.currentContext!); // show hidden

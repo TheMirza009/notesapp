@@ -73,7 +73,7 @@ class ChatState {
       anchorMessage: anchorMessage,
       highlightedMessage: highlightedMessage,
       cancelledThread: cancelledThread,
-      activeEditingThread: activeEditingThread,
+      activeEditingThread: activeEditingThread ?? this.activeEditingThread,
       selectedMessages: selectedMessages ?? this.selectedMessages,
       activeThreadStrings: activeThreadStrings ?? this.activeThreadStrings,
     );
@@ -128,8 +128,13 @@ class ChatState {
   }
 
   /// Add a thread to the active thread list
-  ChatState startThreading() {
-    return copyWith(isThreading: true, activeThreadStrings: const ["_Start typing your first thread tile_"], anchorMessage: anchorMessage);
+  ChatState startThreading(Message thread) {
+    return copyWith(
+      isThreading: true,
+      activeThreadStrings: const ["_Start typing your first thread tile_"],
+      activeEditingThread: thread,
+      anchorMessage: anchorMessage,
+    );
   }
 
   /// Add a thread to the active thread list

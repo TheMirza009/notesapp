@@ -174,7 +174,6 @@ class _MessageBubbleState extends State<MessageBubble>
                 highlightedColor: colors.highlightedColor,
                 isHighlighted: isHighlighted,
                 message: widget.message,
-                strings: widget.message.text.safeDecode(),
                 padding: EdgeInsets.only(
                 left: 8,
                 right: 8,
