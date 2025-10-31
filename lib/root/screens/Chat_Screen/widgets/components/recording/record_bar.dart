@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/elapsed_timer.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/recording/siri_waves/inline_live_wave.dart';
 

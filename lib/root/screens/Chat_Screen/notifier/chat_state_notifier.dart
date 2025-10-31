@@ -1110,19 +1110,15 @@ Future<void> createThread() async {
   debugPrint('✅ New activeEditingThread created: ${savedMessage.isarId}');
   debugPrint('=== CREATE THREAD COMPLETED ===');
 }
-
-
 void onTyping(String text) async {
-  if (!state.isThreading || state.activeEditingThread == null) {
-    return;
-  }
+  if (!state.isThreading || state.activeEditingThread == null) return;
 
   final currentThreads = List<String>.from(state.activeThreadStrings);
   final effective = text.trim().isEmpty && currentThreads.isEmpty
       ? "_Start typing your first thread_"
       : text;
 
-  // Replace the last string in the thread list
+  // Update the last entry or add a new one
   if (currentThreads.isEmpty) {
     currentThreads.add(effective);
   } else {
@@ -1132,36 +1128,53 @@ void onTyping(String text) async {
   final threadsJson = jsonEncode(currentThreads);
   final lastThread = state.activeEditingThread!;
 
-  // ✅ Step 1: Load the *managed instance* from Isar
+  // ✅ Step 1: Load the managed instance from Isar
   final managedThread = await _isar.messages.get(lastThread.isarId);
   if (managedThread == null) {
     debugPrint('⚠️ Managed thread not found in DB for id ${lastThread.isarId}');
     return;
   }
 
-  // ✅ Step 2: Update text on the managed instance
-  managedThread.text = threadsJson;
-
-  // ✅ Step 3: Update linked media (if exists)
+  // ✅ Step 2: Try to load linked media safely
   await managedThread.media.load();
-  final media = managedThread.media.value;
-  if (media != null && media.type == Mediatype.thread) {
-    media.name = threadsJson;
+  var media = managedThread.media.value;
+
+  // 🧩 Step 3: Repair missing or detached media link
+  if (media == null) {
+    debugPrint('⚠️ Thread ${managedThread.isarId} lost media link — repairing...');
+    media = lastThread.media.value ?? Media.thread(threadsJson);
+
+    // Save and link media properly
     await _isar.writeTxn(() async {
-      await _isar.medias.put(media);
+      final id = await _isar.medias.put(media!);
+      managedThread.media.value = await _isar.medias.get(id);
+      await managedThread.media.save();
       await _isar.messages.put(managedThread);
     });
-  } else {
-    await _isar.writeTxn(() async {
-      await _isar.messages.put(managedThread);
-    });
+
+    debugPrint('🧩 Media link repaired for thread ${managedThread.isarId}');
   }
 
-  // ✅ Step 4: Update in-memory state
-  final index = allMessages.indexWhere((m) => m.isarId == managedThread.isarId);
-  if (index != -1) {
-    allMessages[index] = managedThread;
+  // ✅ Step 4: Update text + media
+  managedThread.text = threadsJson;
+  await managedThread.media.load(); // make sure it's reloaded
+
+  if (managedThread.media.value?.type == Mediatype.thread) {
+    managedThread.media.value!.name = threadsJson;
   }
+
+  // ✅ Step 5: Persist updates
+  await _isar.writeTxn(() async {
+    if (managedThread.media.value != null) {
+      await _isar.medias.put(managedThread.media.value!);
+      await managedThread.media.save();
+    }
+    await _isar.messages.put(managedThread);
+  });
+
+  // ✅ Step 6: Update in-memory state
+  final index = allMessages.indexWhere((m) => m.isarId == managedThread.isarId);
+  if (index != -1) allMessages[index] = managedThread;
 
   state = state.copyWith(
     activeThreadStrings: List.unmodifiable(currentThreads),
@@ -1169,8 +1182,9 @@ void onTyping(String text) async {
     messages: List.unmodifiable(allMessages),
   );
 
-  debugPrint('⌨️ Typing updated thread: ${managedThread.isarId} → $threadsJson');
+  debugPrint('⌨️ Typing updated thread (with repaired media): ${managedThread.isarId} → $threadsJson');
 }
+
 
   void ensureThreadTitlePlaceholder() {
     // If there are no threads, or the first thread string is empty,
@@ -1185,6 +1199,7 @@ void onTyping(String text) async {
       state = state.copyWith(activeThreadStrings: List.unmodifiable(threads));
     }
   }
+
 void addThread(String text) {
   // Clone current thread strings
   keyboardController.clear();

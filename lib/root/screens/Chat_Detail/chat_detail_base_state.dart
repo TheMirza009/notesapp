@@ -8,7 +8,7 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/screens/chat_detail_screen_divided.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/screens/Profile/profile_screen_state.dart';
 import 'package:notesapp/root/widgets/crop/crop_screen.dart';

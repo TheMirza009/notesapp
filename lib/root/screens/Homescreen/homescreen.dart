@@ -18,7 +18,7 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_5.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_5.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_list/doc_icon.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/parent_slide_wrapper.dart';

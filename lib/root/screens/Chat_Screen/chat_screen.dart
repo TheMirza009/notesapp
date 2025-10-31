@@ -20,7 +20,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_appbar_w
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/chat_searchbar.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/emoji_board_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
-import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier_o.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 
