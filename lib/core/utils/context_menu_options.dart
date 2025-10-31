@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
+import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
@@ -90,6 +91,24 @@ List<PopupMenuItem<String>> get homeScreenOptions => [
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.trash1),
       text: "Delete All",
+    ),
+  ),
+];
+
+/// Options: Home Screen
+List<PopupMenuItem<String>> chatTileOptions(Chat chat) => [
+  PopupMenuItem(
+    value: 'pin',
+    child: buildOptionTile(
+      icon: vectorBuild(chat.isPinned ? IconPaths.chatUnPinAlt : IconPaths.chatPinAlt),
+      text: chat.isPinned ? "Unpin Chat" : "Pin Chat",
+    ),
+  ),
+  PopupMenuItem(
+    value: 'delete',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.trash1),
+      text: "Delete Chat",
     ),
   ),
 ];

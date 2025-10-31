@@ -14,11 +14,10 @@ import 'package:notesapp/root/screens/Load_test/screens/slide_screen_test.dart';
 import 'package:notesapp/root/screens/Settings/settings_screen.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/custom_icon_dialogue.dart';
-
 import 'homescreen.dart';
 
 abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
-  final FocusNode searchFocusNode = FocusNode();
+  final FocusNode searchFocusNode = FocusNode(canRequestFocus: false);
   final TextEditingController searchController = TextEditingController();
   bool isSliding = false;
   ChatlistFilter filter = ChatlistFilter.oldestCreated;

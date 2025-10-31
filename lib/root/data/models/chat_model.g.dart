@@ -34,9 +34,10 @@ const ChatSchema = CollectionSchema(
       type: IsarType.string,
     ),
     r'date': PropertySchema(id: 3, name: r'date', type: IsarType.dateTime),
-    r'preview': PropertySchema(id: 4, name: r'preview', type: IsarType.string),
-    r'title': PropertySchema(id: 5, name: r'title', type: IsarType.string),
-    r'uuid': PropertySchema(id: 6, name: r'uuid', type: IsarType.string),
+    r'isPinned': PropertySchema(id: 4, name: r'isPinned', type: IsarType.bool),
+    r'preview': PropertySchema(id: 5, name: r'preview', type: IsarType.string),
+    r'title': PropertySchema(id: 6, name: r'title', type: IsarType.string),
+    r'uuid': PropertySchema(id: 7, name: r'uuid', type: IsarType.string),
   },
 
   estimateSize: _chatEstimateSize,
@@ -114,9 +115,10 @@ void _chatSerialize(
   writer.writeString(offsets[1], object.chatBackgroundPath);
   writer.writeString(offsets[2], object.chatPhotoPath);
   writer.writeDateTime(offsets[3], object.date);
-  writer.writeString(offsets[4], object.preview);
-  writer.writeString(offsets[5], object.title);
-  writer.writeString(offsets[6], object.uuid);
+  writer.writeBool(offsets[4], object.isPinned);
+  writer.writeString(offsets[5], object.preview);
+  writer.writeString(offsets[6], object.title);
+  writer.writeString(offsets[7], object.uuid);
 }
 
 Chat _chatDeserialize(
@@ -132,10 +134,11 @@ Chat _chatDeserialize(
   object.chatBackgroundPath = reader.readStringOrNull(offsets[1]);
   object.chatPhotoPath = reader.readStringOrNull(offsets[2]);
   object.date = reader.readDateTime(offsets[3]);
+  object.isPinned = reader.readBool(offsets[4]);
   object.isarID = id;
-  object.preview = reader.readString(offsets[4]);
-  object.title = reader.readStringOrNull(offsets[5]);
-  object.uuid = reader.readString(offsets[6]);
+  object.preview = reader.readString(offsets[5]);
+  object.title = reader.readStringOrNull(offsets[6]);
+  object.uuid = reader.readString(offsets[7]);
   return object;
 }
 
@@ -157,10 +160,12 @@ P _chatDeserializeProp<P>(
     case 3:
       return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -813,6 +818,14 @@ extension ChatQueryFilter on QueryBuilder<Chat, Chat, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Chat, Chat, QAfterFilterCondition> isPinnedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isPinned', value: value),
+      );
+    });
+  }
+
   QueryBuilder<Chat, Chat, QAfterFilterCondition> isarIDEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1441,6 +1454,18 @@ extension ChatQuerySortBy on QueryBuilder<Chat, Chat, QSortBy> {
     });
   }
 
+  QueryBuilder<Chat, Chat, QAfterSortBy> sortByIsPinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> sortByIsPinnedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.desc);
+    });
+  }
+
   QueryBuilder<Chat, Chat, QAfterSortBy> sortByPreview() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'preview', Sort.asc);
@@ -1524,6 +1549,18 @@ extension ChatQuerySortThenBy on QueryBuilder<Chat, Chat, QSortThenBy> {
   QueryBuilder<Chat, Chat, QAfterSortBy> thenByDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByIsPinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chat, Chat, QAfterSortBy> thenByIsPinnedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.desc);
     });
   }
 
@@ -1611,6 +1648,12 @@ extension ChatQueryWhereDistinct on QueryBuilder<Chat, Chat, QDistinct> {
     });
   }
 
+  QueryBuilder<Chat, Chat, QDistinct> distinctByIsPinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isPinned');
+    });
+  }
+
   QueryBuilder<Chat, Chat, QDistinct> distinctByPreview({
     bool caseSensitive = true,
   }) {
@@ -1664,6 +1707,12 @@ extension ChatQueryProperty on QueryBuilder<Chat, Chat, QQueryProperty> {
   QueryBuilder<Chat, DateTime, QQueryOperations> dateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'date');
+    });
+  }
+
+  QueryBuilder<Chat, bool, QQueryOperations> isPinnedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isPinned');
     });
   }
 

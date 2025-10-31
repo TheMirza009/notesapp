@@ -38,6 +38,31 @@ class Homescreen extends ConsumerStatefulWidget {
 }
 
 class HomescreenState extends HomeScreenBaseState {
+
+  final Map<int, GlobalKey> _chatKeys = {};
+  
+
+  GlobalKey _getChatKey(Chat chat) {
+    return _chatKeys.putIfAbsent(chat.isarID, () => GlobalKey());
+  }
+
+  
+  Future<void> _deleteChatWithFade(Chat chat) async {
+    final chatNotifier = ref.read(chatListProvider.notifier);
+    ref.read(chatListProvider.notifier).clearSearch();
+    // Trigger fade-out
+    setState(() => chatNotifier.isDeleting[chat.isarID] = true);
+    chatNotifier.applyFilter(filter);
+
+    // Wait for fade animation
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Now delete from database + state
+    await ref.read(chatListProvider.notifier).deleteChatWithUndo(chat);  //removeChat(chat);
+
+    // Clean up fade flag (in case the list is rebuilt later)
+    chatNotifier.isDeleting.remove(chat.isarID);
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -211,17 +236,33 @@ class HomescreenState extends HomeScreenBaseState {
                                 final matchingMessages = searchResults[chat] ?? [];
 
                                 return TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 0, end: 1),
+                                  tween: Tween(begin: chatNotifier.isDeleting[chat.isarID] == true ? 1.0 : 0.0, end: chatNotifier.isDeleting[chat.isarID] == true ? 0.0 : 1.0),
                                   duration: const Duration(milliseconds: 300),
                                   builder: (context, value, child) => Opacity(opacity: value, child: child),
                                   child: matchingMessages.isEmpty
                                     ? ChatTile(
+                                      key: _getChatKey(chat),
+                                      isPinned: chat.isPinned,
                                       title: chat.title ?? "New Note",
                                       subtitle: chat.loadLastMessageFull().getMessageDisplayText, // loadLastMessageTextFormatted(), //loadLastMessage(),
                                       chatPhotoPath: chat.chatPhotoPath,
                                       time: TimeFormat.formatChatTime( chat.date, ),
-                                      onDismissed: (_) => chatNotifier.removeChat( chat, ),
-                                      onTap: () async => await navigateToChatScreen( chat, ),
+                                      onDismissed: (_) async => await chatNotifier.deleteChatWithUndo(chat), // _deleteChatWithFade(chat),// chatNotifier.removeChat( chat, ),
+                                      onTap: () async => await navigateToChatScreen(chat),
+                                      onLongPress: () {
+                                        final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
+                                        CustomContextMenu.showMenuAt(
+                                          context,
+                                          position: position,
+                                          menuItems: chatTileOptions(chat),
+                                          onSelected: (value) {
+                                            if (value == "delete") {
+                                              _deleteChatWithFade(chat);
+                                            }
+                                            chatNotifier.handleChatHoldOptions(value, chat);
+                                            },
+                                        );
+                                      },
                                     )
                                     : Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,

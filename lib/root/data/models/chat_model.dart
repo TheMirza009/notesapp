@@ -19,6 +19,7 @@ class Chat {
   DateTime date = DateTime.now();
   String? chatPhotoPath;
   String? chatBackgroundPath;
+  bool isPinned = false;
 
   // Enum field for bubble style, default to opaque
   @enumerated
@@ -39,6 +40,7 @@ class Chat {
     IsarLinks<Message>? messages,
     List<Media>? media,
     BubbleStyle? bubbleStyle, // Add here
+    bool? isPinned,
   }) {
     final newChat = Chat()
       ..isarID = isarID
@@ -46,6 +48,7 @@ class Chat {
       ..title = title ?? this.title
       ..preview = preview ?? this.preview
       ..date = date ?? this.date
+      ..isPinned = isPinned ?? this.isPinned
       ..chatPhotoPath = chatPhotoPath ?? this.chatPhotoPath
       ..bubbleStyle = bubbleStyle ?? this.bubbleStyle;
 

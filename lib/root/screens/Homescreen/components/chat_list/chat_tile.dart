@@ -16,6 +16,7 @@ class ChatTile extends StatelessWidget {
   final VoidCallback? onLongPress;
   final  Function(DismissDirection)? onDismissed;
   final bool? isDismissible;
+  final bool? isPinned;
 
   // Constructor
   const ChatTile({
@@ -31,6 +32,7 @@ class ChatTile extends StatelessWidget {
     this.chatPhotoPath,
     this.trailing,
     this.isDismissible = true,
+    this.isPinned = false,
   });
 
   @override
@@ -100,7 +102,7 @@ class ChatTile extends StatelessWidget {
                               children: [
                                 // Title Text
                                 SizedBox(
-                                  width: ThemeConstants.screenWidth * ((trailing == null) ? 0.6 : 0.5), // Adjust width for title
+                                  width: ThemeConstants.screenWidth * ((trailing == null) ? 0.58 : 0.5), // Adjust width for title
                                   child: Text(
                                     title,
                                     style: TextStyle(
@@ -111,14 +113,47 @@ class ChatTile extends StatelessWidget {
                                   ),
                                 ),
                                 // Time Text
-                                if (trailing == null) Text(
-                                  time,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: ThemeConstants.subtitleLight,
-                                  ),
-                                ),
+                                if (trailing == null)
+                                  isPinned == true
+                                      ? Expanded(
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          key: const ValueKey('pinned'),
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.push_pin_rounded,
+                                              color: const Color.fromARGB(255, 91, 171, 208), //  ThemeConstants.sinisterSeed, // .subtitleLight .withValues(alpha: 0.8),
+                                              size: 16,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              time,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                color:
+                                                    ThemeConstants
+                                                        .subtitleLight,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                      : Align(
+                                        key: const ValueKey('unpinned'),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          time,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color:
+                                                ThemeConstants
+                                                    .subtitleLight,
+                                          ),
+                                        ),
+                                      ),
                               ],
                             ),
                             SizedBox(height: ThemeConstants.screenHeight * 0.002,),
