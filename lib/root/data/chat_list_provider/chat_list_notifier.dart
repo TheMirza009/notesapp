@@ -56,6 +56,9 @@ final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>(
 class ChatListNotifier extends StateNotifier<ChatListState> {
   List<Chat> _allChats = [];// master list, source of truth
   ChatlistFilter _currentFilter = ChatlistFilter.oldestCreated; // default
+  // Track pending deletions properly
+  final Map<int, _PendingDelete> _pendingDeletes = {};
+  final Map<int, bool> isDeleting = {};
   ChatListNotifier() : super(const ChatListState()) {
     loadChats();
   }
@@ -314,14 +317,15 @@ Future<void> togglePinChat(Chat chat) async {
   await updateChat(updatedChat);
   applyFilter(_currentFilter); // ✅ Re-apply filter to maintain order
 }
-  
-// Track pending deletions properly
-  final Map<int, _PendingDelete> _pendingDeletes = {};
-  final Map<int, bool> isDeleting = {};
-
 
   /// Main delete method with undo support
   Future<void> deleteChatWithUndo(Chat chat) async {
+    // Prevent duplicate deletions
+    if (_pendingDeletes.containsKey(chat.isarID)) {
+      debugPrint("⚠️ Chat ${chat.isarID} is already pending deletion");
+      return;
+    }
+
     final ctx = navigatorKey.currentContext;
     if (ctx == null) {
       // Fallback: delete immediately if no context
@@ -346,7 +350,7 @@ Future<void> togglePinChat(Chat chat) async {
     final snackBar = SnackBar(
       padding: const EdgeInsets.all(12),
       backgroundColor: ctx.isLight 
-        ? ThemeConstants.homeSubtitleLight 
+        ? ThemeConstants.hometoolbarLight2 
         : ThemeConstants.darkAppbar,
       content: Text(
         "Chat deleted",
@@ -360,14 +364,13 @@ Future<void> togglePinChat(Chat chat) async {
       duration: const Duration(seconds: 4),
       action: SnackBarAction(
         label: "Undo",
-        textColor: ThemeConstants.sinisterSeedHighlight,
+        textColor: ctx.isLight ? ThemeConstants.sinisterSeed : ThemeConstants.sinisterSeedHighlight,
         onPressed: () => _restoreChat(chat.isarID),
       ),
     );
 
     scaffold.showSnackBar(snackBar);
-// Wait for snackbar duration
-    await Future.delayed(const Duration(seconds: 4, milliseconds: 100));
+ await Future.delayed(const Duration(seconds: 4, milliseconds: 100));
 
     // Check if still pending (not restored)
     final pending = _pendingDeletes[chat.isarID];
@@ -441,14 +444,21 @@ Future<void> togglePinChat(Chat chat) async {
   Future<void> _commitDelete(int chatId) async {
     final pending = _pendingDeletes[chatId];
     if (pending == null) {
-      debugPrint("⚠️ Cannot commit delete for chat $chatId - not found");
+      debugPrint("ℹ️ Cannot commit delete for chat $chatId - already cleaned up");
       return;
     }
 
-    // Check if already restored
+    // Check if already restored (user clicked undo just before commit)
     if (pending.isRestored) {
-      debugPrint("⚠️ Chat $chatId was restored, skipping deletion");
+      debugPrint("ℹ️ Chat $chatId was restored, skipping deletion");
       _pendingDeletes.remove(chatId);
+      isDeleting.remove(chatId);
+      return;
+    }
+
+    // Prevent double-commit
+    if (pending.isCommitted) {
+      debugPrint("⚠️ Chat $chatId already committed - ignoring duplicate commit");
       return;
     }
 
@@ -466,12 +476,14 @@ Future<void> togglePinChat(Chat chat) async {
       // If deletion fails, restore the chat
       debugPrint("❌ Failed to delete chat $chatId: $e");
       pending.isCommitted = false;
+      pending.isRestored = false; // Reset flags
       _restoreChat(chatId);
       return;
-    } finally {
-      // Clean up tracking maps
-      isDeleting.remove(chatId);
     }
+
+    // Clean up tracking maps
+    isDeleting.remove(chatId);
+    _pendingDeletes.remove(chatId);
 
     // Ensure it's removed from state (should already be gone)
     _allChats = _allChats.where((c) => c.isarID != chatId).toList();
@@ -485,9 +497,6 @@ Future<void> togglePinChat(Chat chat) async {
       chats: updatedChats,
       selectedChat: newSelectedChat,
     );
-
-    // Final cleanup
-    _pendingDeletes.remove(chatId);
   }
 
   /// Public method to restore - called from Homescreen if needed
@@ -508,7 +517,6 @@ Future<void> togglePinChat(Chat chat) async {
       _restoreChat(id);
     }
   }
-
   void handleChatHoldOptions(String value, Chat chat) {
     switch (value) {
       case 'pin':
