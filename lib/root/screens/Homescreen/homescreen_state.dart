@@ -26,7 +26,10 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(userController.notifier).loadUser();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(userController.notifier).loadUser();
+      ref.read(chatListProvider.notifier).applyFilter(filter);
+    });
   }
 
   @override
