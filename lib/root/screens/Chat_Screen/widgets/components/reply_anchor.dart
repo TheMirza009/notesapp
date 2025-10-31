@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 
@@ -51,6 +53,9 @@ class ReplyAnchor extends StatelessWidget {
             )
             : EdgeInsets.zero;
 
+    final bool threadType = media?.type == Mediatype.thread;
+    final bool audioType = media?.type == Mediatype.audio;
+    final String threadDecode = "🧵 ${text?.safeDecode().length.toString() ?? "thread"} notes";
     return ClipRect(
       child: AnimatedSlide(
         offset: _isVisible ? Offset.zero : const Offset(0, 1.0), // const Offset(0, 1.5),
@@ -103,7 +108,7 @@ class ReplyAnchor extends StatelessWidget {
                           // SizedBox(height: 2),
                           Flexible(
                             child: Text(
-                              text ?? '',
+                              _buildDisplayText(),
                               softWrap: true,
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
@@ -151,5 +156,28 @@ class ReplyAnchor extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _buildDisplayText() {
+    if (media == null) return text ?? '';
+
+    switch (media!.type) {
+      case Mediatype.thread:
+        final decoded = text?.safeDecode() ?? [];
+        final count = decoded.length;
+        return "🧵 $count notes";
+
+      case Mediatype.audio:
+        final duration = media?.duration ?? "00:00";
+        final prefix = (text?.isNotEmpty ?? false) ? text!.characters.first : "🎧 ";
+        return "$prefix $duration";
+
+      case Mediatype.document:
+        final prefix = (text?.isNotEmpty ?? false) ? text!.characters.first : "🎧 ";
+        return "$prefix ${media?.extension.toUpperCase() ?? "UNKNOWN"} - ${media?.name ?? "Unknown"}";
+
+      default:
+        return text ?? '';
+    }
   }
 }

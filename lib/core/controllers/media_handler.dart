@@ -9,12 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:isar_community/isar.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
@@ -196,12 +198,34 @@ static List<String> _getAllowedDocumentExtensions() {
   }
 
   /// Pick Audio -> save to Media/Audio
-  static Future<Media?> saveAudio(String audioPath) async {
-    // final audioPath = await Recorder().stopRecording();
-    if (audioPath == null) return null;
+  
+static Future<Media?> saveAudio(String audioPath) async {
+    if (audioPath.isEmpty) return null;
 
-    final savedFile = await saveToStorage(File(audioPath), 'Audio');
-    return Media.fromFilePath(savedFile.path);
+    final file = File(audioPath);
+    if (!file.existsSync()) return null;
+
+    // ✅ Step 1: Save to your app's storage folder
+    final savedFile = await saveToStorage(file, 'Audio');
+
+    // ✅ Step 2: Create the Media object
+    final media = Media.fromFilePath(savedFile.path);
+
+    // ✅ Step 3: Extract duration using just_audio
+    try {
+      final player = AudioPlayer();
+      final duration = await player.setFilePath(savedFile.path);
+      await player.dispose();
+
+      if (duration != null) {
+        media.duration = Utils.formatDuration(duration); // Store as string
+        media.fileSize = await savedFile.length();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to extract audio duration: $e');
+    }
+
+    return media;
   }
 
   /// Save recorded Audio

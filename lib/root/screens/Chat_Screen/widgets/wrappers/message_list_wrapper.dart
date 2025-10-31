@@ -179,17 +179,17 @@ class _MessageItemBuilder extends ConsumerWidget {
                         ),
                       ),
                       transitionsBuilder: (_, animation, secondaryAnimation, child) {
-      // Use curved animation for smoother start/end
-      final curvedAnimation = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeInOutQuint,
-      );
+                        // Use curved animation for smoother start/end
+                        final curvedAnimation = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        );
 
-      return FadeTransition(
-        opacity: curvedAnimation,
-        child: child,
-      );
-    },
+                        return FadeTransition(
+                          opacity: curvedAnimation,
+                          child: child,
+                        );
+                      },
                     ),
                   );
                 } else if (message.isDocument) {

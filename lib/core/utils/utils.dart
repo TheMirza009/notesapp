@@ -215,6 +215,27 @@ class Utils {
   );
 }
 
+static String formatDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+
+  if (hours > 0) {
+    // 1 hour or more → HH:MM:SS
+    return [
+      hours.toString().padLeft(2, '0'),
+      minutes.toString().padLeft(2, '0'),
+      seconds.toString().padLeft(2, '0'),
+    ].join(':');
+  } else {
+    // Less than 1 hour → MM:SS
+    return [
+      minutes.toString().padLeft(2, '0'),
+      seconds.toString().padLeft(2, '0'),
+    ].join(':');
+  }
+}
+
 static Size getObjectSize({required GlobalKey objectKey}) {
   final RenderBox box = objectKey.currentContext!.findRenderObject() as RenderBox;
     final Size size = box.size;
