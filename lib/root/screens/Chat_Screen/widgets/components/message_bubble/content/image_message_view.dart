@@ -88,25 +88,28 @@ class _ImageMessageViewState extends State<ImageMessageView> {
               AnimatedOpacity(
                 opacity: _imageLoaded ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
-                child: ExtendedImage.file(
-                  file,
-                  fit: BoxFit.cover,
-                  cacheHeight: maxHeight ~/ 2, // max(1, maxHeight.toInt()),
-                  cacheWidth: maxWidth ~/ 2, // max(1, maxWidth.toInt()),
-                  clearMemoryCacheIfFailed: true,
-                  gaplessPlayback: true,
-                  cacheRawData: true,
-                  clearMemoryCacheWhenDispose: false,
-                  compressionRatio: 0.5,
-                  loadStateChanged: (state) {
-                    if (state.extendedImageLoadState == LoadState.completed &&
-                        !_imageLoaded) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) setState(() => _imageLoaded = true);
-                      });
-                    }
-                    return null;
-                  },
+                child: Hero(
+                  tag: widget.message.media.value?.path ?? widget.message.isarId, // Unique tag,
+                  child: ExtendedImage.file(
+                    file,
+                    fit: BoxFit.cover,
+                    cacheHeight: maxHeight ~/ 2, // max(1, maxHeight.toInt()),
+                    cacheWidth: maxWidth ~/ 2, // max(1, maxWidth.toInt()),
+                    clearMemoryCacheIfFailed: true,
+                    gaplessPlayback: true,
+                    cacheRawData: true,
+                    clearMemoryCacheWhenDispose: false,
+                    compressionRatio: 0.5,
+                    loadStateChanged: (state) {
+                      if (state.extendedImageLoadState == LoadState.completed &&
+                          !_imageLoaded) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() => _imageLoaded = true);
+                        });
+                      }
+                      return null;
+                    },
+                  ),
                 ),
               ),
 

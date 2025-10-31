@@ -157,22 +157,42 @@ class _MessageItemBuilder extends ConsumerWidget {
                   ref.read(overlayHandlerProvider).closeAttachmentBoard();
                 }
                 if (message.isImage) {
-                final allImages = ref.read(chatStateController).messages.imageMedias;
-                final initialIndex = allImages.indexOfMediaIsarID(message);
-                debugPrint( "📷❓ASPECT RATIO:  ${(message.media.value?.aspectRatio).toString()}" ?? "COULD NOT GET");
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => GalleryViewWrapper(
-                      galleryItems: allImages,
-                      initialIndex: initialIndex,
-                      showOptions: true,
-                      options: galleryOptions,
-                      onOptionSelect: (value) => handleGalleryOptions(context, ref, value, allImages[initialIndex]),
+                  final allImages = ref.read(chatStateController).messages.imageMedias;
+                  final initialIndex = allImages.indexOfMediaIsarID(message);
+                  final heroTag = message.media.value?.path ?? message.isarId;
+
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      opaque: false,
+                      barrierColor: Colors.black, // Slight fade
+                      transitionDuration: const Duration(milliseconds: 250),
+                      pageBuilder: (_, __, ___) => GalleryViewWrapper(
+                        galleryItems: allImages,
+                        initialIndex: initialIndex,
+                        showOptions: true,
+                        options: galleryOptions,
+                        onOptionSelect: (value) => handleGalleryOptions(
+                          context,
+                          ref,
+                          value,
+                          allImages[initialIndex],
+                        ),
+                      ),
+                      transitionsBuilder: (_, animation, secondaryAnimation, child) {
+      // Use curved animation for smoother start/end
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeInOutQuint,
+      );
+
+      return FadeTransition(
+        opacity: curvedAnimation,
+        child: child,
+      );
+    },
                     ),
-                  ),
-                );
-              } else if (message.isDocument) {
+                  );
+                } else if (message.isDocument) {
                 await OpenFile.open(message.media!.value!.path!);
               } else {
                 ref.read(chatStateController.notifier).toggleSender(message);
