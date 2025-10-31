@@ -15,6 +15,8 @@ import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/root/data/enums/bubble_color.dart';
+import 'package:notesapp/root/screens/Chat_Detail/screens/chat_detail_screen_divided.dart';
+import 'package:notesapp/root/screens/Chat_Detail/screens/chat_media_screen.dart';
 import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
@@ -1046,48 +1048,81 @@ Future<List<Message>> _loadMessageBatch(
   // ===============================================
 
   /// Start thread creating
-  void createThread() async {
+  /// Start thread creation — always creates a new message.
+Future<void> createThread() async {
+  debugPrint('=== CREATE THREAD CALLED ===');
   await deleteInitMessage();
 
-  final threadTitle = state.activeThreadStrings.isNotEmpty
-      ? state.activeThreadStrings.first
-      : "_Start typing your first thread_";
+  // 🧹 Step 1: Clear any existing thread state (we always start fresh)
+  if (state.activeEditingThread != null) {
+    debugPrint('♻️ Disposing previous activeEditingThread: ${state.activeEditingThread!.isarId}');
+  }
 
-  final threadMedia = Media.thread(threadTitle);
+  state = state.copyWith(
+    activeEditingThread: null,
+    activeThreadStrings: const [],
+    cancelledThread: null,
+    isThreading: false,
+  );
+
+  // 🧩 Step 2: Prepare initial placeholder thread
+  const placeholder = "_Start typing your first thread_";
+  final initialThreads = [placeholder];
+  final threadsJson = jsonEncode(initialThreads);
+
+  // 🧩 Step 3: Create media + persist it
+  final threadMedia = Media.thread(threadsJson);
   final persistedMedia = await _persistMedia(threadMedia);
 
+  // 🧩 Step 4: Create the new message object
   final newMessage = Message()
-    ..text = threadTitle
+    ..text = threadsJson
     ..time = DateTime.now()
     ..isSender = true;
 
-  // ✅ Immediately persist to get isarId
+  // 🧩 Step 5: Persist it and attach to chat
   final savedMessage = await _createAndAttachMessage(
     message: newMessage,
     persistedMedia: persistedMedia,
     replyingTo: state.anchorMessage,
   );
 
-  if (savedMessage == null) return;
+  if (savedMessage == null) {
+    debugPrint('❌ Failed to create new thread message.');
+    return;
+  }
 
+  // 🧩 Step 6: Update in-memory list and set it as the only active thread
+  final updatedMessages = List<Message>.from(allMessages)..add(savedMessage);
+  allMessages = updatedMessages;
+
+  state = state.copyWith(
+    isThreading: true,
+    activeEditingThread: savedMessage,
+    activeThreadStrings: initialThreads,
+    messages: List.unmodifiable(updatedMessages),
+  );
+
+  // 🧩 Step 7: Focus + scroll
   keyboardFocusNode.requestFocus();
   scrollToBottom();
 
-  allMessages.add(savedMessage);
-
-  // ✅ Use the persisted message with isarId
-  state = state.copyWith(
-    isThreading: true,
-    activeThreadStrings: [threadTitle],
-    activeEditingThread: savedMessage,  // ✅ Now has isarId
-    messages: List.unmodifiable(allMessages),
-  );
+  debugPrint('✅ New activeEditingThread created: ${savedMessage.isarId}');
+  debugPrint('=== CREATE THREAD COMPLETED ===');
 }
 
-void onTyping(String text) {
-  final currentThreads = List<String>.from(state.activeThreadStrings);
-  final effective = text.trim().isEmpty ? "_Start typing your first thread_" : text;
 
+void onTyping(String text) async {
+  if (!state.isThreading || state.activeEditingThread == null) {
+    return;
+  }
+
+  final currentThreads = List<String>.from(state.activeThreadStrings);
+  final effective = text.trim().isEmpty && currentThreads.isEmpty
+      ? "_Start typing your first thread_"
+      : text;
+
+  // Replace the last string in the thread list
   if (currentThreads.isEmpty) {
     currentThreads.add(effective);
   } else {
@@ -1095,39 +1130,47 @@ void onTyping(String text) {
   }
 
   final threadsJson = jsonEncode(currentThreads);
+  final lastThread = state.activeEditingThread!;
 
-  if (state.isThreading && state.activeEditingThread != null) {
-    final lastThread = state.activeEditingThread!;
-    if (lastThread.isarId == 0) return;
-
-    // ✅ Create updated message
-    final updatedMessage = lastThread.copyWith(text: threadsJson);
-
-    if (updatedMessage.media.value?.type == Mediatype.thread) {
-      updatedMessage.media.value = updatedMessage.media.value?.copyWith(
-        name: threadsJson,
-      );
-    }
-
-    // ✅ Update allMessages (authoritative list)
-    final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
-    if (threadIndex != -1) {
-      allMessages[threadIndex] = updatedMessage;
-    }
-
-    // ✅ Update state with BOTH strings AND the updated message
-    state = state.copyWith(
-      activeThreadStrings: List.unmodifiable(currentThreads),
-      activeEditingThread: updatedMessage, // ✅ Update the reference
-      messages: List.unmodifiable(allMessages),
-    );
-  } else {
-    state = state.copyWith(
-      activeThreadStrings: List.unmodifiable(currentThreads),
-    );
+  // ✅ Step 1: Load the *managed instance* from Isar
+  final managedThread = await _isar.messages.get(lastThread.isarId);
+  if (managedThread == null) {
+    debugPrint('⚠️ Managed thread not found in DB for id ${lastThread.isarId}');
+    return;
   }
-}
 
+  // ✅ Step 2: Update text on the managed instance
+  managedThread.text = threadsJson;
+
+  // ✅ Step 3: Update linked media (if exists)
+  await managedThread.media.load();
+  final media = managedThread.media.value;
+  if (media != null && media.type == Mediatype.thread) {
+    media.name = threadsJson;
+    await _isar.writeTxn(() async {
+      await _isar.medias.put(media);
+      await _isar.messages.put(managedThread);
+    });
+  } else {
+    await _isar.writeTxn(() async {
+      await _isar.messages.put(managedThread);
+    });
+  }
+
+  // ✅ Step 4: Update in-memory state
+  final index = allMessages.indexWhere((m) => m.isarId == managedThread.isarId);
+  if (index != -1) {
+    allMessages[index] = managedThread;
+  }
+
+  state = state.copyWith(
+    activeThreadStrings: List.unmodifiable(currentThreads),
+    activeEditingThread: managedThread,
+    messages: List.unmodifiable(allMessages),
+  );
+
+  debugPrint('⌨️ Typing updated thread: ${managedThread.isarId} → $threadsJson');
+}
 
   void ensureThreadTitlePlaceholder() {
     // If there are no threads, or the first thread string is empty,
@@ -1142,133 +1185,151 @@ void onTyping(String text) {
       state = state.copyWith(activeThreadStrings: List.unmodifiable(threads));
     }
   }
-
-  void addThread(String text) {
-    // Clone current thread strings
-    keyboardController.clear();
-    final currentThreads = List<String>.from(state.activeThreadStrings);
-
-    // Append new thread entry
-    final newEntry =
-        text.trim().isEmpty ? "_Start typing your first thread_" : text;
-    currentThreads.add(newEntry);
-
-    // Encode updated threads as JSON
-    final threadsJson = jsonEncode(currentThreads);
-
-    // Update the active message if we're threading
-    if (state.isThreading && state.messages.isNotEmpty) {
-      final activeThread = state.activeEditingThread;
-      if (activeThread == null) return;
-
-      // Update message and its linked media
-      final updatedMessage = activeThread.copyWith(text: threadsJson);
-
-      if (updatedMessage.media.value?.type == Mediatype.thread) {
-        updatedMessage.media.value = updatedMessage.media.value?.copyWith(
-          name: threadsJson,
-        );
-      }
-
-      // Replace last message immutably
-      final updatedMessages =
-          state.messages.map((message) {
-            return message.isarId == activeThread.isarId
-                ? updatedMessage
-                : message;
-          }).toList();
-
-      // Commit changes
-      state = state.copyWith(
-        activeThreadStrings: List.unmodifiable(currentThreads),
-        messages: List.unmodifiable(updatedMessages),
-      );
-    } else {
-      // Edge case: no thread message yet
-      state = state.copyWith(
-        activeThreadStrings: List.unmodifiable(currentThreads),
-      );
-    }
-  }
-
-  void removeLastThread() async {
+void addThread(String text) {
+  // Clone current thread strings
+  keyboardController.clear();
   final currentThreads = List<String>.from(state.activeThreadStrings);
 
-  if (currentThreads.isNotEmpty && currentThreads.first == "_Start typing your first thread_") {
+  // ✅ Only add placeholder if this is the very first thread
+  final newEntry = text.trim().isEmpty && currentThreads.isEmpty
+      ? "_Start typing your first thread_"
+      : text;
+
+  currentThreads.add(newEntry);
+
+  // Encode updated threads as JSON
+  final threadsJson = jsonEncode(currentThreads);
+
+  // Update the active message if we're threading
+  if (state.isThreading && state.messages.isNotEmpty) {
+    final activeThread = state.activeEditingThread;
+    if (activeThread == null) return;
+
+    // Update message and its linked media WITH JSON
+    final updatedMessage = activeThread.copyWith(text: threadsJson);
+
+    if (updatedMessage.media.value?.type == Mediatype.thread) {
+      updatedMessage.media.value = updatedMessage.media.value?.copyWith(
+        name: threadsJson, // ✅ Media name should be JSON too
+      );
+    }
+
+    // Replace last message immutably
+    final updatedMessages = state.messages.map((message) {
+      return message.isarId == activeThread.isarId ? updatedMessage : message;
+    }).toList();
+
+    // Commit changes
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+      messages: List.unmodifiable(updatedMessages),
+    );
+  } else {
+    // Edge case: no thread message yet
+    state = state.copyWith(
+      activeThreadStrings: List.unmodifiable(currentThreads),
+    );
+  }
+}
+Future<void> removeLastThread() async {
+  final currentThreads = List<String>.from(state.activeThreadStrings);
+
+  // 🧩 Handle placeholder-only state
+  if (currentThreads.length == 1 &&
+      currentThreads.first == "_Start typing your first thread_") {
     await cancelThread();
     return;
   }
 
-  if (currentThreads.isNotEmpty) {
-    currentThreads.removeLast();
-  }
-
-  if (currentThreads.isEmpty) {
-    currentThreads.add("_Start typing your first thread_");
-  }
+  // 🧩 Remove last entry or reset to placeholder
+  if (currentThreads.isNotEmpty) currentThreads.removeLast();
+  if (currentThreads.isEmpty) currentThreads.add("_Start typing your first thread_");
 
   final threadsJson = jsonEncode(currentThreads);
 
+  // 🧩 Only proceed if editing a thread
   if (state.isThreading && state.activeEditingThread != null) {
-    final lastThread = state.activeEditingThread!;
+    final activeThread = state.activeEditingThread!;
 
-    final updatedMessage = lastThread.copyWith(text: threadsJson);
-
-    if (updatedMessage.media.value?.type == Mediatype.thread) {
-      updatedMessage.media.value = updatedMessage.media.value?.copyWith(
-        name: threadsJson,
-      );
+    // ✅ Fetch the managed version from Isar
+    final managed = await _isar.messages.get(activeThread.isarId);
+    if (managed == null) {
+      debugPrint('⚠️ Active editing thread not found in Isar.');
+      return;
     }
 
-    // ✅ Persist to Isar
+    // ✅ Update text directly on the managed object
+    managed.text = threadsJson;
+
+    // ✅ Update linked media safely
+    await managed.media.load();
+    final media = managed.media.value;
+    if (media != null && media.type == Mediatype.thread) {
+      media.name = threadsJson;
+      await _persistMedia(media); // handles own transaction
+    }
+
+    // ✅ Save updated message back to Isar
     await _isar.writeTxn(() async {
-      await _isar.messages.put(updatedMessage);
-      if (updatedMessage.media.value != null) {
-        await _isar.medias.put(updatedMessage.media.value!);
-      }
+      await _isar.messages.put(managed);
     });
 
-    // Update allMessages
-    final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
-    if (threadIndex != -1) {
-      allMessages[threadIndex] = updatedMessage;
+    // ✅ Reload the updated message
+    final refreshed = await _isar.messages.get(managed.isarId);
+    await refreshed?.media.load();
+
+    // ✅ Update in-memory state
+    final updatedMessages = List<Message>.from(allMessages);
+    final idx = updatedMessages.indexWhere((m) => m.isarId == managed.isarId);
+    if (idx != -1 && refreshed != null) {
+      updatedMessages[idx] = refreshed;
     }
 
+    allMessages = updatedMessages;
+
+    // ✅ Update state
     state = state.copyWith(
       activeThreadStrings: List.unmodifiable(currentThreads),
-      messages: List.unmodifiable(allMessages),
+      messages: List.unmodifiable(updatedMessages),
+      activeEditingThread: refreshed,
     );
+
+    debugPrint('✅ Thread updated after removal: $currentThreads');
   } else {
+    // 🧩 Not in thread mode — just update the state
     state = state.copyWith(
       activeThreadStrings: List.unmodifiable(currentThreads),
     );
   }
 }
 
+
   Future<void> cancelThread() async {
-    final lastThread = state.activeEditingThread;
-    if (lastThread == null) return;
+  final lastThread = state.activeEditingThread;
+  if (lastThread == null) return;
 
-    state = state.copyWith(cancelledThread: lastThread);
-    keyboardController.clear();
+  final threadIsarId = lastThread.isarId;
 
-    await Future.delayed(const Duration(milliseconds: 300));
+  state = state.copyWith(cancelledThread: lastThread);
+  keyboardController.clear();
 
-    // ✅ Delete from Isar
-    if (lastThread.isarId != 0) {
-      await deleteMessage(lastThread); // This already persists to Isar
-    }
+  await Future.delayed(const Duration(milliseconds: 300));
 
-    allMessages.removeWhere((m) => m.isarId == lastThread.isarId);
-
-    state = state.copyWith(
-      messages: List.unmodifiable(allMessages),
-      activeThreadStrings: [],
-      activeEditingThread: null,
-      isThreading: false,
-      cancelledThread: null,
-    );
+  if (threadIsarId != 0) {
+    // ✅ Use your existing deleteMessage method which properly handles chat links
+    await deleteMessage(lastThread);
   }
+
+  allMessages.removeWhere((m) => m.isarId == threadIsarId);
+
+  state = state.copyWith(
+    messages: List.unmodifiable(allMessages),
+    activeThreadStrings: [],
+    activeEditingThread: null,
+    isThreading: false,
+    cancelledThread: null,
+  );
+}
 
   bool _isPlaceholderThread(Message? thread) {
     if (thread == null) return false;
@@ -1276,10 +1337,11 @@ void onTyping(String text) {
     return thread.text == "_Start typing your first thread_" ||
         (decodedText.isNotEmpty && decodedText.first == "_Start typing your first thread_");
   }
-Future<void> saveThread() async {
-  final lastThread = allMessages.getLastThread();
+
+  Future<void> saveThread() async {
+  final lastThread = state.activeEditingThread;
   if (lastThread == null) return;
-  
+
   if (state.activeThreadStrings.length == 1 &&
       state.activeThreadStrings.first == "_Start typing your first thread_") {
     debugPrint('📝 Empty thread not being saved.');
@@ -1292,7 +1354,7 @@ Future<void> saveThread() async {
 
   // ✅ Create updated thread with current content
   final updatedThread = lastThread.copyWith(
-    text: jsonEncode(state.activeThreadStrings), // Update with current threads
+    text: jsonEncode(state.activeThreadStrings),
   );
 
   // ✅ Update media name as well to keep in sync
@@ -1303,13 +1365,14 @@ Future<void> saveThread() async {
   Media? persistedMedia;
   if (updatedMedia != null) {
     persistedMedia = await _persistMedia(updatedMedia);
+    // Reattach persisted media
+    updatedThread.media.value = persistedMedia;
   }
 
-  final savedMessage = await _createAndAttachMessage(
-    message: updatedThread, // ✅ Use the UPDATED thread, not the original
-    persistedMedia: persistedMedia,
-    replyingTo: lastThread.replyingTo.value,
-  );
+  // 🧩 Instead of creating a new message, update the existing one
+  await _isar.writeTxn(() async {
+    await _isar.messages.put(updatedThread);
+  });
 
   // ✅ Replace the old thread with the updated one in allMessages
   final threadIndex = allMessages.indexWhere((m) => m.isarId == lastThread.isarId);
@@ -1325,10 +1388,16 @@ Future<void> saveThread() async {
     cancelledThread: null,
     isThreading: false,
   );
-  highlightMessageTemporarily(updatedThread);
 
-  debugPrint('✅ Thread saved successfully: ${updatedThread.text}');
+  // ✅ Highlight after rebuild
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    highlightMessageTemporarily(updatedThread);
+  });
+
+  debugPrint('✅ Thread updated successfully (no duplication): ${updatedThread.text}');
 }
+
+
 
 void editThread(Message thread) {
   unSelectAllMessages();
@@ -1390,13 +1459,13 @@ void editThread(Message thread) {
       case "chatInfo":
         Navigator.push(
           navigatorKey.currentContext!,
-          CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat)),
+          CupertinoPageRoute(builder: (_) => ChatDetailScreenDivided(chat: chat)),
         );
         break;
       case "chatMedia":
         Navigator.push(
           navigatorKey.currentContext!,
-          CupertinoPageRoute(builder: (_) => ChatDetailScreen(chat: chat, scrollToMedia: true,)),
+          CupertinoPageRoute(builder: (_) => ChatMediaScreen(chat: chat)),
         );
         break;
       case "search":

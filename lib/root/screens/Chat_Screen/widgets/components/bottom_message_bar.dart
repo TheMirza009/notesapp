@@ -101,7 +101,7 @@ class _BottomMessageBarState extends ConsumerState<BottomMessageBar> {
                 notifier.cancelEditing();
                 messageController.clear();
               },
-              onDeleteThread: notifier.cancelThread,
+              onDeleteThread: () async => await notifier.cancelThread(),
               onEmojiTap: widget.onEmojiTap,
             ),
           ),

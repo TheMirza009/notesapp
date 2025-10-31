@@ -6,35 +6,60 @@ import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 extension ChatX on Chat {
-  String get lastMessageText {
+  String loadLastMessageTextFormatted() {
     const String noMessages = "No notes added yet.";
-    if (messages.isEmpty) return noMessages;
-    final Message lastMessage = messages.last;
-    final bool isPhoto = lastMessage.media.value?.type == Mediatype.image && (lastMessage.text.isEmpty ?? true);
-    final bool isVideo = lastMessage.media.value?.type == Mediatype.video && (lastMessage.text.isEmpty ?? true);
-    final bool isDocument = lastMessage.media.value?.type == Mediatype.document && (lastMessage.text.isEmpty ?? true);
-    final bool isThread= lastMessage.media.value?.type == Mediatype.thread && (lastMessage.text.isEmpty ?? true);
+    
+    try {
+      final lastMessage = IsarDatabase.isar.messages
+          .filter()
+          .chat((q) => q.isarIDEqualTo(isarID))
+          .sortByTimeDesc()
+          .findFirstSync();
+      
+      if (lastMessage == null) return noMessages;
+      
+      return getMessageDisplayText(lastMessage, noMessages);
+    } catch (_) {
+      return noMessages;
+    }
+  }
+
+  String getMessageDisplayText(Message message, String fallbackText) {
+    final bool isPhoto = message.media.value?.type == Mediatype.image && (message.text.isEmpty);
+    final bool isVideo = message.media.value?.type == Mediatype.video && (message.text.isEmpty);
+    final bool isDocument = message.media.value?.type == Mediatype.document && (message.text.isEmpty);
+    final bool isThread = message.media.value?.type == Mediatype.thread && (message.text.isEmpty);
+    
     if (isPhoto) return "📷 Photo";
     if (isVideo) return "📽️ Video";
     if (isDocument) return "📄 Document";
-    if (isThread) return "🧵 ${lastMessage.text.formatThread()}";
-    return lastMessage.text ?? noMessages;
+    if (isThread) return "🧵 ${message.text.formatThread()}";
+    return message.text ?? fallbackText;
   }
 
+  // Your existing methods...
   String loadLastMessage() {
     return IsarDatabase.isar.messages
         .filter()
-        .chat((q) => q.isarIDEqualTo(isarID)) // assuming chat has isarID
-        .sortByTimeDesc() // requires time indexed
+        .chat((q) => q.isarIDEqualTo(isarID))
+        .sortByTimeDesc()
         .findFirstSync()!
         .text;
+  }
+
+  Message loadLastMessageFull() {
+    return IsarDatabase.isar.messages
+        .filter()
+        .chat((q) => q.isarIDEqualTo(isarID))
+        .sortByTimeDesc()
+        .findFirstSync()!;
   }
 
   DateTime loadLastMessageTime() {
     return IsarDatabase.isar.messages
         .filter()
-        .chat((q) => q.isarIDEqualTo(isarID)) // assuming chat has isarID
-        .sortByTimeDesc() // requires time indexed
+        .chat((q) => q.isarIDEqualTo(isarID))
+        .sortByTimeDesc()
         .findFirstSync()!
         .time;
   }

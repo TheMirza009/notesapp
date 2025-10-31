@@ -8,6 +8,7 @@ import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -216,7 +217,7 @@ class HomescreenState extends HomeScreenBaseState {
                                   child: matchingMessages.isEmpty
                                     ? ChatTile(
                                       title: chat.title ?? "New Note",
-                                      subtitle: chat.loadLastMessage(),
+                                      subtitle: chat.loadLastMessageFull().getMessageDisplayText, // loadLastMessageTextFormatted(), //loadLastMessage(),
                                       chatPhotoPath: chat.chatPhotoPath,
                                       time: TimeFormat.formatChatTime( chat.date, ),
                                       onDismissed: (_) => chatNotifier.removeChat( chat, ),

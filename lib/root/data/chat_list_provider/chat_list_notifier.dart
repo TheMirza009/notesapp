@@ -232,7 +232,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
 
   /// Reset to full list
   void clearSearch() {
-    state = state.copyWith(chats: _allChats, searchResults: {},);
+    state = state.copyWith(chats: _allChats, searchResults: {}, messageToHighlight: null);
   }
 
   /// Select chat
@@ -285,6 +285,8 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
     context,
     CupertinoPageRoute(builder: (_) => const ChatScreen()),
   );
+
+  clearHighlight();
 }
 
   /// Sort chats based on the current filter

@@ -60,15 +60,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
 
   @override void initState() {
     super.initState();
-     WidgetsBinding.instance.addPostFrameCallback((_) {
-    final highlightId = ref.read(chatListProvider).messageToHighlight;
-    if (highlightId != null) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        ref.read(chatStateController.notifier).scrollToMessage(highlightId.isarId);
-        ref.read(chatListProvider.notifier).clearHighlight();
-      });
-    }
-  });
   }
 
   @override
