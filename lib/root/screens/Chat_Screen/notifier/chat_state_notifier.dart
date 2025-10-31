@@ -74,7 +74,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     _chat = selectedChat;
   
   // Listen for message to highlight
-  final messageToHighlight = ref.watch(
+  final messageToHighlight = ref.read(
     chatListProvider.select((s) => s.messageToHighlight),
   );
   
