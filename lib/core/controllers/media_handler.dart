@@ -149,6 +149,39 @@ class MediaHandler {
     return Media.fromFilePath(savedFile.path);
   }
 
+  /// Explicitly allow document types and exclude media types
+static List<String> _getAllowedDocumentExtensions() {
+  // Common document formats
+  const documents = [
+    'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt',
+    'xls', 'xlsx', 'csv', 'ods',
+    'ppt', 'pptx', 'odp',
+  ];
+  
+  // Image formats (optional - include if you want images as documents)
+  const images = [
+    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico',
+  ];
+  
+  // Archive formats
+  const archives = [
+    'zip', 'rar', '7z', 'tar', 'gz', 'bz2',
+  ];
+  
+  // E-book formats
+  const ebooks = [
+    'epub', 'mobi', 'azw3',
+  ];
+  
+  // Combine all allowed types (EXCLUDING video/audio)
+  return [
+    ...documents,
+    // ...images,
+    ...archives,
+    ...ebooks,
+  ];
+}
+
   /// Pick a document → saved in Media/Documents
   static Future<Media?> pickDocument({FileType? fileType}) async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -159,7 +192,7 @@ class MediaHandler {
 
     final file = File(result.files.single.path!);
     final savedFile = await saveToStorage(file, 'Documents');
-    return Media.fromFilePath(savedFile.path);
+    return Media.fromFilePath(savedFile.path, forceDocument: true);
   }
 
   /// Pick Audio -> save to Media/Audio

@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
+import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:svg_flutter/svg.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/lucide.dart';
@@ -260,7 +262,7 @@ List<PopupMenuItem<String>> get galleryOptions => [
 ];
 
 /// Options: Message Hold
-List<PopupMenuItem<String>> messageHoldOptions({bool isMedia = false})  => [
+List<PopupMenuItem<String>> messageHoldOptions({bool isMedia = false, required Message message})  => [
   if (isMedia) PopupMenuItem(
     value: 'toggleSender',
     child: buildOptionTile(
@@ -296,7 +298,7 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isMedia = false})  => [
       text: "Copy",
     ),
   ),
-  if (isMedia) PopupMenuItem(
+  if (isMedia || message.isThread) PopupMenuItem(
     value: 'share',
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.shareIcon2),

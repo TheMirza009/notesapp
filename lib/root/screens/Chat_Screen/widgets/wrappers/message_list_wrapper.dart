@@ -191,7 +191,7 @@ class _MessageItemBuilder extends ConsumerWidget {
                 context,
                 position: pos,
                 triangleHorizontalOffset: message.isSender ? 120 : 40,
-                menuItems: messageHoldOptions(isMedia: (message.isImage || message.isDocument || message.isAudio) ),
+                menuItems: messageHoldOptions(isMedia: (message.isImage || message.isDocument || message.isAudio), message: message ),
                 onSelected: (val) => notifier.handleMessageMenuAction(val, message, context),
               );
             },

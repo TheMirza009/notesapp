@@ -111,52 +111,69 @@ class ChatStateNotifier extends Notifier<ChatState> {
   /// Core helper to create a Message, optionally attach persisted media & reply link, attach it to the active chat.
   /// This runs a single writeTxn combining all DB writes for a message-send flow.
   Future<Message?> _createAndAttachMessage({
-    required Message message,
-    Media? persistedMedia, // managed media (must already be in DB or null)
-    Message? replyingTo, // link to another managed message
-  }) async {
-    if (_chat == null) return null;
+  required Message message,
+  Media? persistedMedia, // managed media (must already be in DB or null)
+  Message? replyingTo,   // link to another managed message
+}) async {
+  if (_chat == null) return null;
 
-    await _isar.writeTxn(() async {
-      // If replying, link first
-      if (replyingTo != null) {
-        message.replyingTo.value = replyingTo;
-      }
+  int? messageId;
 
-      // Ensure message is stored to obtain isarId
-      await _isar.messages.put(message);
+  await _isar.writeTxn(() async {
+    // 🧩 Link replying message if provided
+    if (replyingTo != null) {
+      message.replyingTo.value = replyingTo;
+    }
 
-      // Attach media if provided
-      if (persistedMedia != null) {
-        message.media.value = persistedMedia;
-        await message.media.save();
-      }
+    // 🧩 Save the base message first
+    messageId = await _isar.messages.put(message);
 
-      // Ensure chat exists in DB
-      Chat? managedChat = await _isar.chats.get(_chat!.isarID);
-      if (managedChat == null) {
-        // chat might be new; put _chat to create managed chat
-        await _isar.chats.put(_chat!);
-        managedChat = await _isar.chats.get(_chat!.isarID);
-      }
+    // 🧩 Attach media (if any)
+    if (persistedMedia != null) {
+      message.media.value = persistedMedia;
+      await message.media.save(); // ✅ save link
+    }
 
-      // Attach message to chat and save
-      if (managedChat != null) {
-        await managedChat.messages.load();
-        managedChat.messages.add(message);
-        await managedChat.messages.save();
-        await _isar.chats.put(managedChat);
-        _chat = managedChat;
-      }
+    // 🧩 Ensure chat exists in DB
+    Chat? managedChat = await _isar.chats.get(_chat!.isarID);
+    if (managedChat == null) {
+      await _isar.chats.put(_chat!);
+      managedChat = await _isar.chats.get(_chat!.isarID);
+    }
 
-      // If replying link exists, save it as well
-      if (replyingTo != null) {
-        await message.replyingTo.save();
-      }
-    });
+    // 🧩 Link message to chat
+    if (managedChat != null) {
+      await managedChat.messages.load();
+      managedChat.messages.add(message);
+      await managedChat.messages.save();
+      await _isar.chats.put(managedChat);
+      _chat = managedChat;
+    }
 
-    return message;
+    // 🧩 Save reply link (if any)
+    if (replyingTo != null) {
+      await message.replyingTo.save();
+    }
+
+    await _isar.messages.put(message); // final write
+  });
+
+  // ✅ Final step: reload message from Isar to ensure it's fully managed
+  if (messageId != null) {
+    final managed = await _isar.messages.get(messageId!);
+    if (managed != null) {
+      await managed.media.load();
+      await managed.replyingTo.load();
+      debugPrint(
+          '✅ Fully managed message loaded: ${managed.isarId} → media: ${managed.media.value?.isarId}');
+      return managed;
+    }
   }
+
+  debugPrint('⚠️ Could not reload managed message, returning original instance.');
+  return message;
+}
+
 
   /// Delete a message within a single DB transaction (removes message record and removes links from chat)
   /// Returns a reference to the media (if any) so caller can check and perform file cleanup outside the txn.
@@ -1463,7 +1480,11 @@ void editThread(Message thread) {
         unSelectAllMessages();
         break;
       case "share":
-        await Utils.shareToApps(XFile(message.media.value!.path!));
+        if (message.isThread) {
+          await Utils.shareText(message.text.formatThread());
+        } else {
+          await Utils.shareToApps(XFile(message.media.value!.path!));
+        }
         unSelectAllMessages();
         break;
     }

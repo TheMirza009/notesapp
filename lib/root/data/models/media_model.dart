@@ -36,14 +36,14 @@ class Media {
     return media;
   }
 
-  factory Media.fromFilePath(String filePath) {
+  factory Media.fromFilePath(String filePath, {bool? forceDocument = false}) {
     final media = Media();
     final segments = filePath.split('/');
     media.name = segments.isNotEmpty ? segments.last : filePath;
     media.path = filePath;
     final ext = media.name.split('.').last.toLowerCase();
     media.extension = ext;
-    media.type = _detectType(ext);
+    media.type = forceDocument == true ? Mediatype.document : _detectType(ext);
     return media;
   }
 

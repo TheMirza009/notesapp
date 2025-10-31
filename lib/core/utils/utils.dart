@@ -152,6 +152,11 @@ class Utils {
     await Share.shareXFiles([file]);
   }
 
+  static Future<void> shareText(String text) async {
+    // await Share.share(text);
+    await SharePlus.instance.share(ShareParams(text: text ));
+  }
+
   static Future<String> getFileSize(String filePath) async {
     final file = File(filePath);
 

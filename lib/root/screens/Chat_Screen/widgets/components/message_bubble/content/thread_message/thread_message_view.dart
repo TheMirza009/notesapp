@@ -148,7 +148,7 @@ class ThreadMessageView extends ConsumerWidget {
     CustomContextMenu.showMenuAt(
       context,
       position: offset,
-      menuItems: messageHoldOptions(isMedia: false),
+      menuItems: messageHoldOptions(message: message),
     );
   }
 }
