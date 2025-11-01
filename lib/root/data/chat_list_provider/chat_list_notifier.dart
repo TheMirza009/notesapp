@@ -242,7 +242,8 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
 
   /// Reset to full list
   void clearSearch() {
-    state = state.copyWith(chats: _allChats, searchResults: {}, messageToHighlight: null);
+    applyFilter(_currentFilter);
+    state = state.copyWith(searchResults: {}, messageToHighlight: null);
   }
 
   /// Select chat

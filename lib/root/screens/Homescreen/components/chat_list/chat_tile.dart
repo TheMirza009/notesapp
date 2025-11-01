@@ -117,7 +117,8 @@ class ChatTile extends StatelessWidget {
                                   isPinned == true
                                       ? Expanded(
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          spacing: 5,
+                                          mainAxisAlignment: MainAxisAlignment.end,
                                           key: const ValueKey('pinned'),
                                           mainAxisSize: MainAxisSize.min,
                                           children: [

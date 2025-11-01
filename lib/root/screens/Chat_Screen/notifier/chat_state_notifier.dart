@@ -74,7 +74,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     _chat = selectedChat;
   
   // Listen for message to highlight
-  final messageToHighlight = ref.read(
+  final messageToHighlight = ref.watch(
     chatListProvider.select((s) => s.messageToHighlight),
   );
   
@@ -1127,6 +1127,7 @@ Future<void> createThread() async {
   debugPrint('✅ New activeEditingThread created: ${savedMessage.isarId}');
   debugPrint('=== CREATE THREAD COMPLETED ===');
 }
+
 void onTyping(String text) async {
   if (!state.isThreading || state.activeEditingThread == null) return;
 
@@ -1263,6 +1264,7 @@ void addThread(String text) {
     );
   }
 }
+
 Future<void> removeLastThread() async {
   final currentThreads = List<String>.from(state.activeThreadStrings);
 
@@ -1283,34 +1285,54 @@ Future<void> removeLastThread() async {
   if (state.isThreading && state.activeEditingThread != null) {
     final activeThread = state.activeEditingThread!;
 
-    // ✅ Fetch the managed version from Isar
+    // ✅ Step 1: Fetch the managed version from Isar
     final managed = await _isar.messages.get(activeThread.isarId);
     if (managed == null) {
       debugPrint('⚠️ Active editing thread not found in Isar.');
       return;
     }
 
-    // ✅ Update text directly on the managed object
-    managed.text = threadsJson;
-
-    // ✅ Update linked media safely
+    // ✅ Step 2: Try to load linked media safely
     await managed.media.load();
-    final media = managed.media.value;
-    if (media != null && media.type == Mediatype.thread) {
-      media.name = threadsJson;
-      await _persistMedia(media); // handles own transaction
+    var media = managed.media.value;
+
+    // ✅ Step 3: Repair missing or detached media link (SAME AS onTyping)
+    if (media == null) {
+      debugPrint('⚠️ Thread ${managed.isarId} lost media link in removeLastThread — repairing...');
+      media = activeThread.media.value ?? Media.thread(threadsJson);
+
+      // Save and link media properly
+      await _isar.writeTxn(() async {
+        final id = await _isar.medias.put(media!);
+        managed.media.value = await _isar.medias.get(id);
+        await managed.media.save();
+        await _isar.messages.put(managed);
+      });
+
+      debugPrint('🧩 Media link repaired for thread ${managed.isarId} in removeLastThread');
     }
 
-    // ✅ Save updated message back to Isar
+    // ✅ Step 4: Update text directly on the managed object
+    managed.text = threadsJson;
+
+    // ✅ Step 5: Update linked media safely
+    await managed.media.load(); // Reload after potential repair
+    final updatedMedia = managed.media.value;
+    if (updatedMedia != null && updatedMedia.type == Mediatype.thread) {
+      updatedMedia.name = threadsJson;
+      await _persistMedia(updatedMedia); // handles own transaction
+    }
+
+    // ✅ Step 6: Save updated message back to Isar
     await _isar.writeTxn(() async {
       await _isar.messages.put(managed);
     });
 
-    // ✅ Reload the updated message
+    // ✅ Step 7: Reload the updated message
     final refreshed = await _isar.messages.get(managed.isarId);
     await refreshed?.media.load();
 
-    // ✅ Update in-memory state
+    // ✅ Step 8: Update in-memory state
     final updatedMessages = List<Message>.from(allMessages);
     final idx = updatedMessages.indexWhere((m) => m.isarId == managed.isarId);
     if (idx != -1 && refreshed != null) {
@@ -1319,7 +1341,7 @@ Future<void> removeLastThread() async {
 
     allMessages = updatedMessages;
 
-    // ✅ Update state
+    // ✅ Step 9: Update state
     state = state.copyWith(
       activeThreadStrings: List.unmodifiable(currentThreads),
       messages: List.unmodifiable(updatedMessages),
