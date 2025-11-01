@@ -381,7 +381,7 @@ class _ThreadTile extends StatelessWidget {
                     config.text,
                     style: TextStyle(
                       fontSize: 15,
-                      color: (config.text == initString)
+                      color: (config.text == initString || config.text == "_Start typing next note_")
                           ? Colors.blueGrey
                           : (context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark),
                     ),

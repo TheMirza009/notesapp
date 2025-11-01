@@ -1224,8 +1224,8 @@ void addThread(String text) {
   final currentThreads = List<String>.from(state.activeThreadStrings);
 
   // ✅ Only add placeholder if this is the very first thread
-  final newEntry = text.trim().isEmpty && currentThreads.isEmpty
-      ? "_Start typing your first thread_"
+  final newEntry = text.trim().isEmpty && currentThreads.isNotEmpty
+      ? "_Start typing next note_"
       : text;
 
   currentThreads.add(newEntry);
