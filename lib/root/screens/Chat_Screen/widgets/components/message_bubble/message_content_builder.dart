@@ -37,11 +37,11 @@ class MessageContentBuilder extends StatelessWidget {
       case Mediatype.text:
         return _buildTextWithTimestamp(context);
       case Mediatype.image:
-        return ImageMessageView(message: message);
+        return ImageMessageView(message: message, key: ValueKey(message.isarId),);
       case Mediatype.video:
         return _buildVideoMessage();
       case Mediatype.audio:
-        return AudioMessageView(message: message);
+        return AudioMessageView(message: message, key: ValueKey(message.isarId),);
       case Mediatype.document:
         return DocumentMessageView(message: message);
       default:

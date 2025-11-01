@@ -82,7 +82,7 @@ class ChatStateNotifier extends Notifier<ChatState> {
     if (!isLoading) {
       hydrateMessages().then((_) {
         // After hydration, check if we need to scroll to a message
-        if (messageToHighlight != null) {
+        if (messageToHighlight != null && ref.watch(chatListProvider.notifier).state.searchResults.isNotEmpty) {
           Future.delayed(const Duration(milliseconds: 300), () {
             scrollToMessage(messageToHighlight.isarId);
             ref.read(chatListProvider.notifier).clearHighlight();

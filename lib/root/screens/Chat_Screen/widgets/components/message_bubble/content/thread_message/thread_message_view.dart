@@ -256,7 +256,7 @@ class _ThreadItem extends ConsumerWidget {
           // Right clear button (for receiver)
           if (!config.isSender)
             _ClearButtonSpace(
-              show: isThreading && config.isLast,
+              show: isThreading && config.isLast && isActive,
               isSender: false,
               index: config.index,
               onPressed: onClearPressed,

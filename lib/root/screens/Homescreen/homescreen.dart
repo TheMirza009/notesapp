@@ -234,7 +234,7 @@ class HomescreenState extends HomeScreenBaseState {
                                   ),
                                 );
                                 final matchingMessages = searchResults[chat] ?? [];
-
+                                // print(searchResults);
                                 return TweenAnimationBuilder<double>(
                                   tween: Tween(begin: chatNotifier.isDeleting[chat.isarID] == true ? 1.0 : 0.0, end: chatNotifier.isDeleting[chat.isarID] == true ? 0.0 : 1.0),
                                   duration: const Duration(milliseconds: 300),
