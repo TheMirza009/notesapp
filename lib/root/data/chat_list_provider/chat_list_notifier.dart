@@ -83,6 +83,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
   final newSelected = state.selectedChat?.isarID == isarId ? fresh : state.selectedChat;
 
   state = state.copyWith(chats: updatedChats, selectedChat: newSelected);
+  applyFilter(_currentFilter);
 }
 
   /// Create + persist + add to state
@@ -90,6 +91,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
     final savedChat = await IsarDatabase.addNewChat();
     _allChats = [..._allChats, savedChat];
     state = state.copyWith(chats: [...state.chats, savedChat]);
+    applyFilter(_currentFilter);
     return savedChat;
   }
 
@@ -107,6 +109,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
           ? null
           : state.selectedChat,
     );
+    applyFilter(_currentFilter);
   }
 
 
@@ -134,6 +137,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
         : state.selectedChat;
 
     state = state.copyWith(chats: updatedChats, selectedChat: newSelected);
+    applyFilter(_currentFilter);
   }
 
   /// Search chats by title
@@ -265,6 +269,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
         .toList();
 
     state = state.copyWith(chats: updatedChats, selectedChat: updatedChat);
+    applyFilter(_currentFilter);
   }
 
   /// Get chat by ID
