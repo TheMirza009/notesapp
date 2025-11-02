@@ -65,77 +65,79 @@ class _ImageMessageViewState extends State<ImageMessageView> {
     final maxWidth = ThemeConstants.screenWidth * 0.7;
     final aspectRatio = media.aspectRatio ?? 1.0;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight, maxWidth: maxWidth),
-        child: AspectRatio(
-          aspectRatio: aspectRatio,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // ✅ Layer 1: BlurHash (should appear instantly)
-              if (_blurBytes != null)
-                Image.memory(
-                  _blurBytes!,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                )
-              else
-                Container(color: Colors.transparent ),// Colors.grey[300]),
-
-              // ✅ Layer 2: Actual image (fades in)
-              AnimatedOpacity(
-                opacity: _imageLoaded ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Hero(
-                  tag: widget.message.media.value?.path ?? widget.message.isarId, // Unique tag,
-                  child: ExtendedImage.file(
-                    file,
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight, maxWidth: maxWidth),
+          child: AspectRatio(
+            aspectRatio: aspectRatio,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ✅ Layer 1: BlurHash (should appear instantly)
+                if (_blurBytes != null)
+                  Image.memory(
+                    _blurBytes!,
                     fit: BoxFit.cover,
-                    cacheHeight: maxHeight ~/ 2, // max(1, maxHeight.toInt()),
-                    cacheWidth: maxWidth ~/ 2, // max(1, maxWidth.toInt()),
-                    clearMemoryCacheIfFailed: true,
                     gaplessPlayback: true,
-                    cacheRawData: true,
-                    clearMemoryCacheWhenDispose: false,
-                    compressionRatio: 0.5,
-                    loadStateChanged: (state) {
-                      if (state.extendedImageLoadState == LoadState.completed &&
-                          !_imageLoaded) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) setState(() => _imageLoaded = true);
-                        });
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ),
-
-              // ✅ Layer 3: Timestamp
-              Positioned(
-                bottom: 0,
-                right: 0,
-                left: 0,
-                child: Container(
-                  height: 50,
-                  alignment: Alignment.bottomRight,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.black.withAlpha(0), Colors.black.withAlpha(255)],
+                  )
+                else
+                  Container(color: Colors.transparent ),// Colors.grey[300]),
+      
+                // ✅ Layer 2: Actual image (fades in)
+                AnimatedOpacity(
+                  opacity: _imageLoaded ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Hero(
+                    tag: widget.message.media.value?.path ?? widget.message.isarId, // Unique tag,
+                    child: ExtendedImage.file(
+                      file,
+                      fit: BoxFit.cover,
+                      cacheHeight: maxHeight ~/ 2, // max(1, maxHeight.toInt()),
+                      cacheWidth: maxWidth ~/ 2, // max(1, maxWidth.toInt()),
+                      clearMemoryCacheIfFailed: true,
+                      gaplessPlayback: true,
+                      cacheRawData: true,
+                      clearMemoryCacheWhenDispose: false,
+                      compressionRatio: 0.5,
+                      loadStateChanged: (state) {
+                        if (state.extendedImageLoadState == LoadState.completed &&
+                            !_imageLoaded) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) setState(() => _imageLoaded = true);
+                          });
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    DateFormat.jm().format(widget.message.time),
-                    style: const TextStyle(fontSize: 12, color: ThemeConstants.subtitleLight),
+                ),
+      
+                // ✅ Layer 3: Timestamp
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  left: 0,
+                  child: Container(
+                    height: 50,
+                    alignment: Alignment.bottomRight,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black.withAlpha(0), Colors.black.withAlpha(255)],
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      DateFormat.jm().format(widget.message.time),
+                      style: const TextStyle(fontSize: 12, color: ThemeConstants.subtitleLight),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

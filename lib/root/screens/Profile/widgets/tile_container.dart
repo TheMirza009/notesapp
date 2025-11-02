@@ -210,7 +210,7 @@ class TileContainer extends StatelessWidget {
       ),
       title: Text(
         item.title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w200),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w300),
       ),
       onTap: item.onTap,
     );

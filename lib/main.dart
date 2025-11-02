@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -11,6 +12,7 @@ import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
 
 bool kisWindows = Platform.isWindows;
 void main() async {
+  // debugRepaintRainbowEnabled = true;
   WidgetsFlutterBinding.ensureInitialized();
   await IsarDatabase.init();
   await IsarDatabase.loadUserData();
@@ -64,6 +66,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     return MaterialApp(
       // showPerformanceOverlay: true,
       debugShowCheckedModeBanner: false,
+      debugShowMaterialGrid: false,
       title: 'NotesApp',
       theme: themeProvider,
       scaffoldMessengerKey: scaffoldMessengerkey,

@@ -1220,15 +1220,23 @@ void onTyping(String text) async {
 
 void addThread(String text) {
   // Clone current thread strings
-  keyboardController.clear();
+  const placeHolderNew =  "_Start typing next note_";
   final currentThreads = List<String>.from(state.activeThreadStrings);
+
+  if (currentThreads.isNotEmpty && (currentThreads.last == "" || currentThreads.last == placeHolderNew)) {
+    return;
+  }
+  keyboardController.clear();
 
   // ✅ Only add placeholder if this is the very first thread
   final newEntry = text.trim().isEmpty && currentThreads.isNotEmpty
-      ? "_Start typing next note_"
+      ? placeHolderNew
       : text;
 
   currentThreads.add(newEntry);
+  // if (keyboardController.text.isEmpty || keyboardController.text == "" ) {
+  //   return;
+  // }
 
   // Encode updated threads as JSON
   final threadsJson = jsonEncode(currentThreads);
@@ -1393,12 +1401,18 @@ Future<void> removeLastThread() async {
   }
 
   Future<void> saveThread() async {
+  const placeHolderNew =  "_Start typing next note_";
   final lastThread = state.activeEditingThread;
   if (lastThread == null) return;
 
   if (state.activeThreadStrings.length == 1 &&
       state.activeThreadStrings.first == "_Start typing your first thread_") {
     debugPrint('📝 Empty thread not being saved.');
+    return;
+  }
+
+  if (state.activeThreadStrings.length > 1 && state.activeThreadStrings.last == placeHolderNew) {
+    debugPrint("📝 Last thread empty, cannot save.");
     return;
   }
 
