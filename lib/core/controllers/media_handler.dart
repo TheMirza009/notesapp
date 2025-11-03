@@ -14,6 +14,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
+import 'package:notesapp/core/controllers/video_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -145,10 +146,21 @@ class MediaHandler {
 
   /// Pick a video → saved in Media/Videos
   static Future<Media?> pickVideo() async {
-    final XFile? pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickVideo(
+      source: ImageSource.gallery,
+    );
     if (pickedFile == null) return null;
+
+    // Save video file using your existing method
     final savedFile = await saveToStorage(File(pickedFile.path), 'Videos');
-    return Media.fromFilePath(savedFile.path);
+
+    // Generate complete metadata
+    final videoMetadata = await VideoMetadataHandler.generateVideoMetadata(
+      savedFile.path,
+    );
+
+    // Create Media object with all video metadata
+    return Media.fromVideoPath(savedFile.path, metadata: videoMetadata);
   }
 
   /// Explicitly allow document types and exclude media types
@@ -553,6 +565,42 @@ static Future<Media?> saveAudio(String audioPath) async {
       debugPrint('❌ Error storing blurHash: $e');
     }
   }
+
+  /// Save thumbnail to Thumbnails subfolder (reusable for both images and videos)
+  static Future<String> saveThumbnailToStorage(
+    Uint8List thumbnailBytes,
+    String originalFileName, {
+    String baseFolder = 'Media',
+  }) async {
+    try {
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final String fileName = 'thumb_${originalFileName.split('.').first}.png';
+      final String thumbnailsDirPath = '${appDir.path}/$baseFolder/Thumbnails';
+
+      // Create Thumbnails directory if it doesn't exist
+      final Directory thumbnailsDir = Directory(thumbnailsDirPath);
+      if (!await thumbnailsDir.exists()) {
+        await thumbnailsDir.create(recursive: true);
+      }
+
+      final String thumbnailPath = '$thumbnailsDirPath/$fileName';
+      final File thumbnailFile = File(thumbnailPath);
+      await thumbnailFile.writeAsBytes(thumbnailBytes);
+
+      debugPrint('✅ Thumbnail saved: $thumbnailPath');
+      return thumbnailPath;
+    } catch (e) {
+      debugPrint('❌ Error saving thumbnail: $e');
+      // Fallback to temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final tempPath =
+          '${tempDir.path}/thumb_${DateTime.now().millisecondsSinceEpoch}.png';
+      final File tempFile = File(tempPath);
+      await tempFile.writeAsBytes(thumbnailBytes);
+      return tempPath;
+    }
+  }
+
 
   /// (Optional) Compress image before saving (stub)
   // static Future<File?> _compressImage(File file) async {

@@ -63,6 +63,11 @@ dependencies:
   blurhash_dart: ^1.2.1
   image: ^4.5.4
 
+  # Video
+  video_player: ^2.10.0
+  video_thumbnail: ^0.5.6
+  ffmpeg_kit_flutter_new: ^4.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

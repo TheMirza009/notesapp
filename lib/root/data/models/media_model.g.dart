@@ -51,8 +51,13 @@ const MediaSchema = CollectionSchema(
     r'hashCode': PropertySchema(id: 7, name: r'hashCode', type: IsarType.long),
     r'name': PropertySchema(id: 8, name: r'name', type: IsarType.string),
     r'path': PropertySchema(id: 9, name: r'path', type: IsarType.string),
-    r'type': PropertySchema(
+    r'thumbnailPath': PropertySchema(
       id: 10,
+      name: r'thumbnailPath',
+      type: IsarType.string,
+    ),
+    r'type': PropertySchema(
+      id: 11,
       name: r'type',
       type: IsarType.byte,
       enumMap: _MediatypeEnumValueMap,
@@ -109,6 +114,12 @@ int _mediaEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.thumbnailPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -128,7 +139,8 @@ void _mediaSerialize(
   writer.writeLong(offsets[7], object.hashCode);
   writer.writeString(offsets[8], object.name);
   writer.writeString(offsets[9], object.path);
-  writer.writeByte(offsets[10], object.type.index);
+  writer.writeString(offsets[10], object.thumbnailPath);
+  writer.writeByte(offsets[11], object.type.index);
 }
 
 Media _mediaDeserialize(
@@ -146,8 +158,9 @@ Media _mediaDeserialize(
   object.isarId = id;
   object.name = reader.readString(offsets[8]);
   object.path = reader.readStringOrNull(offsets[9]);
+  object.thumbnailPath = reader.readStringOrNull(offsets[10]);
   object.type =
-      _MediatypeValueEnumMap[reader.readByteOrNull(offsets[10])] ??
+      _MediatypeValueEnumMap[reader.readByteOrNull(offsets[11])] ??
       Mediatype.text;
   return object;
 }
@@ -180,6 +193,8 @@ P _mediaDeserializeProp<P>(
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
       return (_MediatypeValueEnumMap[reader.readByteOrNull(offset)] ??
               Mediatype.text)
           as P;
@@ -1530,6 +1545,168 @@ extension MediaQueryFilter on QueryBuilder<Media, Media, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'thumbnailPath'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'thumbnailPath'),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'thumbnailPath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'thumbnailPath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'thumbnailPath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'thumbnailPath',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'thumbnailPath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'thumbnailPath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'thumbnailPath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'thumbnailPath',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'thumbnailPath', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> thumbnailPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'thumbnailPath', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterFilterCondition> typeEqualTo(
     Mediatype value,
   ) {
@@ -1781,6 +1958,18 @@ extension MediaQuerySortBy on QueryBuilder<Media, Media, QSortBy> {
     });
   }
 
+  QueryBuilder<Media, Media, QAfterSortBy> sortByThumbnailPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> sortByThumbnailPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterSortBy> sortByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -1927,6 +2116,18 @@ extension MediaQuerySortThenBy on QueryBuilder<Media, Media, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Media, Media, QAfterSortBy> thenByThumbnailPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterSortBy> thenByThumbnailPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Media, Media, QAfterSortBy> thenByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -2016,6 +2217,17 @@ extension MediaQueryWhereDistinct on QueryBuilder<Media, Media, QDistinct> {
     });
   }
 
+  QueryBuilder<Media, Media, QDistinct> distinctByThumbnailPath({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'thumbnailPath',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<Media, Media, QDistinct> distinctByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'type');
@@ -2087,6 +2299,12 @@ extension MediaQueryProperty on QueryBuilder<Media, Media, QQueryProperty> {
   QueryBuilder<Media, String?, QQueryOperations> pathProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'path');
+    });
+  }
+
+  QueryBuilder<Media, String?, QQueryOperations> thumbnailPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'thumbnailPath');
     });
   }
 

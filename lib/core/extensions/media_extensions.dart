@@ -27,6 +27,10 @@ extension MediaX on Media {
     return type == Mediatype.image;
   }
 
+  bool get isVideo {
+    return type == Mediatype.video;
+  }
+
   bool get isDocument {
     return type == Mediatype.document;
   }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
@@ -20,6 +21,7 @@ import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+import 'package:notesapp/root/widgets/video_view/video_gallery_player.dart';
 import 'package:open_file/open_file.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -192,6 +194,10 @@ class _MessageItemBuilder extends ConsumerWidget {
                       },
                     ),
                   );
+                } else if (message.isVideo) {
+                  Navigator.push(context, CupertinoPageRoute(builder: (_) => VideoGalleryPlayer(media: message.media.value!)));
+                  print("VID");
+                  debugPrint("Video file: ${message.media.value?.path ?? "Unavailable"}");
                 } else if (message.isDocument) {
                 await OpenFile.open(message.media!.value!.path!);
               } else {

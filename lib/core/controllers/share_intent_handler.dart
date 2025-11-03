@@ -124,7 +124,9 @@ String _getTypeString(Media mediaFile) {
           ? '🎧 Audio'
           : mediaFile.isDocument
               ? '📃 Document'
-              : '❓ Unknown';
+              : mediaFile.isVideo 
+                ? "📽️ Video" 
+                : '❓ Unknown';
 }
 
 
@@ -230,7 +232,7 @@ String getTypeString(Media mediaFile) {
     _ => mediaFile.isImage ? '📷 Image'
         : mediaFile.isAudio ? '🎧 Audio'
         : mediaFile.isDocument ? '📃 Document'
-        // : mediaFile.isVideo ? '🎞️ Video'
+        : mediaFile.isVideo ? '🎞️ Video'
         : '❓ Unknown',
   };
 }

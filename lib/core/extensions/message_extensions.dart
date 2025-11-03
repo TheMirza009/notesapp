@@ -7,14 +7,18 @@ extension MessageX on Message {
     return media.value?.type == Mediatype.image;
   }
 
+  bool get isAudio {
+    return media.value?.type == Mediatype.audio;
+  }
+
+  bool get isVideo {
+    return media.value?.type == Mediatype.video;
+  }
+  
   bool get isDocument {
     return media.value?.type == Mediatype.document;
   }
 
-  bool get isAudio {
-    return media.value?.type == Mediatype.audio;
-  }
-  
   bool get isThread {
     return media.value?.type == Mediatype.thread;
   }

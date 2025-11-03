@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:isar_community/isar.dart';
+import 'package:notesapp/core/controllers/video_handler.dart';
 import 'message_model.dart';
 import '../enums/media_type.dart';
 
@@ -17,10 +18,11 @@ class Media {
   late Mediatype type;
 
   /// Nullable Metadata
-  int? fileSize;        // ALL TYPES
-  double? aspectRatio;  // Image + Video
-  String? blurHash;     // Image + Video
-  String? duration;     // Audio + Video
+  int? fileSize;          // ALL TYPES
+  double? aspectRatio;    // Image + Video
+  String? blurHash;       // Image + Video
+  String? duration;       // Audio + Video
+  String? thumbnailPath;  // Video only
 
   @Backlink(to: 'media')
   final IsarLinks<Message> messagesBacklink = IsarLinks<Message>();
@@ -67,6 +69,27 @@ class Media {
     return media;
   }
 
+  factory Media.fromVideoPath(String videoPath, {VideoMetadata? metadata}) {
+    final media = Media();
+    final segments = videoPath.split('/');
+    media.name = segments.isNotEmpty ? segments.last : videoPath;
+    media.path = videoPath;
+    final ext = media.name.split('.').last.toLowerCase();
+    media.extension = ext;
+    media.type = Mediatype.video;
+
+    // Set metadata if provided
+    if (metadata != null) {
+      media.fileSize = metadata.fileSize;
+      media.aspectRatio = metadata.aspectRatio;
+      media.blurHash = metadata.blurHash;
+      media.duration = metadata.formattedDuration;
+      media.thumbnailPath = metadata.thumbnailPath;
+    }
+
+    return media;
+  }
+
   factory Media.thread(String title) {
     final media = Media();
     media.name = "Thread_${DateTime.now().millisecondsSinceEpoch}";
@@ -90,9 +113,9 @@ class Media {
   bool get hasCompleteMetadata {
     switch (type) {
       case Mediatype.image:
-        return aspectRatio != null && blurHash != null && fileSize != null;
-      case Mediatype.video:
-        return aspectRatio != null && duration != null && fileSize != null;
+      return aspectRatio != null && blurHash != null && fileSize != null;
+    case Mediatype.video:
+      return aspectRatio != null && duration != null && fileSize != null && thumbnailPath != null;
       case Mediatype.audio:
         return duration != null && fileSize != null;
       case Mediatype.document:
@@ -124,6 +147,7 @@ class Media {
     double? aspectRatio,
     String? blurHash,
     String? duration,
+    String? thumbnailPath,
   }) {
     final media = Media()
       ..name = name ?? this.name
@@ -133,7 +157,8 @@ class Media {
       ..fileSize = fileSize ?? this.fileSize
       ..aspectRatio = aspectRatio ?? this.aspectRatio
       ..blurHash = blurHash ?? this.blurHash
-      ..duration = duration ?? this.duration;
+      ..duration = duration ?? this.duration
+      ..thumbnailPath = thumbnailPath ?? this.thumbnailPath;
     
     return media;
   }
@@ -144,6 +169,7 @@ class Media {
     aspectRatio = other.aspectRatio ?? aspectRatio;
     blurHash = other.blurHash ?? blurHash;
     duration = other.duration ?? duration;
+    thumbnailPath = other.thumbnailPath ?? thumbnailPath;
   }
 
    /// ✅ Get display-friendly file size
@@ -170,6 +196,7 @@ class Media {
       'path: ${path ?? "remote"}, '
       'size: $fileSizeDisplay, '
       'aspectRatio: $aspectRatio'
+      'thumbnailPath: $thumbnailPath'
       ')';
 
   /// ✅ Equality check (useful for comparisons)

@@ -15,6 +15,7 @@ import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
@@ -27,6 +28,7 @@ import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/widgets/nothing_to_see.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_list/chat_tile.dart';
+import 'package:notesapp/root/widgets/video_view/video_gallery_player.dart';
 import 'package:typeset/typeset.dart';
 import 'homescreen_state.dart';
 
@@ -114,6 +116,7 @@ class HomescreenState extends HomeScreenBaseState {
             title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontFamily: "Poppins", fontWeight: FontWeight.w500)),
             leading: Padding(padding: const EdgeInsets.only(left: 12), child: circularAvatar(isLight)),
             actions: [
+              // IconButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (_) => VideoGalleryPlayer(media: Media.fromFilePath(samplePhone)))), icon: Icon(Icons.play_arrow)),
               CustomContextMenu(
                 icon: const Icon(Icons.more_vert),
                 menuItems: homeScreenOptions,
