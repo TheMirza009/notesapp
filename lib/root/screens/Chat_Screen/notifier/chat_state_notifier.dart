@@ -553,7 +553,11 @@ Future<List<Message>> _loadMessageBatch(
     );
   }
 
-  Future<void> pickImage({Uint8List? imageBytes, bool? isCamera = false, Media? media}) async {
+  Future<void> pickImage({
+    Uint8List? imageBytes,
+    bool? isCamera = false,
+    Media? media,
+  }) async {
     final Media? pickedMedia = imageBytes != null
         ? await MediaHandler.fromImageBytes(imageBytes)
         : (media ?? await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery));
@@ -567,6 +571,38 @@ Future<List<Message>> _loadMessageBatch(
 
     final newMessage = Message()
       ..text = "📷 Photo"
+      ..isSender = true
+      ..time = DateTime.now();
+
+    await _createAndAttachMessage(
+      message: newMessage,
+      persistedMedia: persisted,
+      replyingTo: state.anchorMessage,
+    );
+
+    allMessages.add(newMessage);
+    state = state.copyWith(messages: [...allMessages]);
+  }
+
+  Future<void> pickVideo({
+    bool? isCamera = false,
+  }) async {
+
+    if (Platform.isWindows) {
+    Utils.showGlobalSnackBar("Video picking not supported on Windows", Colors.orange);
+    return;
+  }
+    final Media? pickedMedia =  await MediaHandler.pickVideo();
+
+    if (pickedMedia == null || _chat == null) return;
+    await deleteInitMessage();
+
+    // Persist media in a centralized helper
+    final persisted = await _persistMedia(pickedMedia);
+    if (persisted == null) return;
+
+    final newMessage = Message()
+      ..text = "📽️ Video"
       ..isSender = true
       ..time = DateTime.now();
 

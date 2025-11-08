@@ -57,8 +57,6 @@ dependencies:
   open_file: ^3.5.10
   siri_wave: ^2.3.0
   receive_sharing_intent: ^1.8.1
-  flutter_native_splash: ^2.4.7
-  flutter_launcher_icons: ^0.14.4
   croppy: ^1.4.1
   blurhash_dart: ^1.2.1
   image: ^4.5.4
@@ -66,8 +64,12 @@ dependencies:
   # Video
   video_player: ^2.10.0
   video_thumbnail: ^0.5.6
-  ffmpeg_kit_flutter_new: ^4.1.0
+  # ffmpeg_kit_flutter_new: ^4.1.0
 
+  # Launcer
+  flutter_native_splash: ^2.4.7
+  flutter_launcher_icons: ^0.14.4
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -163,6 +163,11 @@ extension MessageGalleryExtensions on List<Message> {
       where((m) => m.isImage && m.media.value?.path != null)
           .map((m) => m.media.value!)
           .toList();
+
+  List<Media> get imagesAndVideos =>
+      where((m) => (m.isImage || m.isVideo) && m.media.value?.path != null)
+          .map((m) => m.media.value!)
+          .toList();
 }
 
 extension ThreadExtensions on List<Message> {

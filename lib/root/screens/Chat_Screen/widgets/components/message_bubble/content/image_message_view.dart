@@ -9,13 +9,15 @@ import 'package:extended_image/extended_image.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
 
 class ImageMessageView extends StatefulWidget {
   final Message message;
-  const ImageMessageView({super.key, required this.message});
+  final bool isVideo;
+  const ImageMessageView({super.key, required this.message, this.isVideo = false});
 
   @override
   State<ImageMessageView> createState() => _ImageMessageViewState();
@@ -58,7 +60,7 @@ class _ImageMessageViewState extends State<ImageMessageView> {
     final media = widget.message.media.value;
     if (media == null || media.path == null) return _buildBrokenImage();
 
-    final file = File(media.path!);
+    final file = widget.message.isVideo ? File(media.thumbnailPath!) : File(media.path!);
     if (!file.existsSync()) return _buildBrokenImage();
 
     final maxHeight = ThemeConstants.screenHeight * 0.5;
@@ -120,22 +122,52 @@ class _ImageMessageViewState extends State<ImageMessageView> {
                   right: 0,
                   left: 0,
                   child: Container(
-                    height: 50,
-                    alignment: Alignment.bottomRight,
+                    height: widget.isVideo ? 70 :  50,
+                    alignment: widget.isVideo ? Alignment.bottomCenter : Alignment.bottomRight,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.black.withAlpha(0), Colors.black.withAlpha(255)],
+                        colors: [Colors.black.withAlpha(0), Colors.black.withAlpha(250)],
                       ),
                     ),
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(
+                    child: widget.isVideo == false ? Text(
                       DateFormat.jm().format(widget.message.time),
                       style: const TextStyle(fontSize: 12, color: ThemeConstants.subtitleLight),
-                    ),
+                    ) : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                       Text(
+                            widget.message.media.value!.duration!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ThemeConstants.subtitleLight,
+                            ),
+                          ),
+                       Text(
+                            DateFormat.jm().format(widget.message.time),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ThemeConstants.subtitleLight,
+                            ),
+                          ),
+                        ],
+                      ),
                   ),
                 ),
+
+                if (widget.isVideo) 
+                Icon(Icons.play_arrow, 
+        size: 50,
+        shadows: [
+          BoxShadow(
+            blurRadius: 25,
+            color: Colors.black.withValues(alpha: 0.5),
+            blurStyle: BlurStyle.outer,
+            spreadRadius: 10,
+          )
+        ],)
               ],
             ),
           ),
@@ -150,7 +182,8 @@ class _ImageMessageViewState extends State<ImageMessageView> {
       height: 100,
       child: Column(
         children: [
-          const Expanded(child: Center(child: Icon(Icons.broken_image))),
+          const Expanded(child: Center(child: Icon(
+            Icons.broken_image))),
           Align(
             alignment: Alignment.bottomRight,
             child: Text(

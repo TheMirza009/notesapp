@@ -17,6 +17,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bub
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/document_message_view.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/image_message_view.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/thread_message/thread_message_view.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/content/video_message_view.dart';
 import 'package:notesapp/root/widgets/voice_message/components/voice_controller.dart';
 import 'package:notesapp/root/widgets/voice_message/components/voice_message_view.dart';
 import 'package:typeset/typeset.dart';
@@ -39,7 +40,7 @@ class MessageContentBuilder extends StatelessWidget {
       case Mediatype.image:
         return ImageMessageView(message: message, key: ValueKey(message.isarId),);
       case Mediatype.video:
-        return _buildVideoMessage();
+        return ImageMessageView(message: message, isVideo: true, key: ValueKey(message.isarId),); // VideoMessageView(message: message); // _buildVideoMessage();
       case Mediatype.audio:
         return AudioMessageView(message: message, key: ValueKey(message.isarId),);
       case Mediatype.document:

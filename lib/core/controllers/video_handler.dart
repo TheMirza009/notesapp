@@ -10,7 +10,7 @@ import 'package:blurhash_dart/blurhash_dart.dart';
 import 'package:image/image.dart' as img;
 
 class VideoHandler {
-  static final Map<String, VideoHandler> _controllers = {};
+  static final Map<String, VideoHandler> controllers = {};
   
   final String videoPath;
   final VideoPlayerController _controller;
@@ -27,8 +27,8 @@ class VideoHandler {
   /// Get or create a controller for a video path
   static Future<VideoHandler?> fromPath(String videoPath) async {
     // Return cached controller if exists
-    if (_controllers.containsKey(videoPath)) {
-      return _controllers[videoPath];
+    if (controllers.containsKey(videoPath)) {
+      return controllers[videoPath];
     }
     
     try {
@@ -42,7 +42,7 @@ class VideoHandler {
       await controller.initialize();
       
       final wrapper = VideoHandler._(videoPath, controller);
-      _controllers[videoPath] = wrapper;
+      controllers[videoPath] = wrapper;
       
       debugPrint('✅ Video initialized: $videoPath');
       return wrapper;
@@ -107,17 +107,17 @@ class VideoHandler {
   
   /// Dispose a specific controller
   static void disposeController(String videoPath) {
-    final controller = _controllers.remove(videoPath);
+    final controller = controllers.remove(videoPath);
     controller?._controller.dispose();
     debugPrint('🗑️ Disposed video controller: $videoPath');
   }
   
   /// Dispose all controllers (call when leaving gallery)
   static void disposeAll() {
-    for (final controller in _controllers.values) {
+    for (final controller in controllers.values) {
       controller._controller.dispose();
     }
-    _controllers.clear();
+    controllers.clear();
     debugPrint('🗑️ Disposed all video controllers');
   }
   

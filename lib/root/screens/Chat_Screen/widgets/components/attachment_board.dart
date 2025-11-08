@@ -68,15 +68,26 @@ class AttachmentBoard extends ConsumerWidget {
             spacing: rowSpacing,
             open: isOpen,
             tiles: [
-              AttachmentItem(
-                widget: Icon(Icons.music_note, color: Colors.deepOrange, size: iconSize),
-                title: "Audio",
-                onPressed: onAudioPressed ?? () async => await notifier.pickAudio(),
-              ),
+              // AttachmentItem(
+              //   widget: Icon(Icons.music_note, color: Colors.deepOrange, size: iconSize),
+              //   title: "Audio",
+              //   onPressed: onAudioPressed ?? () async => await notifier.pickAudio(),
+              // ),
+              // AttachmentItem(
+              //   widget: Icon(Icons.photo, color: Color(0xFFF43665), size: iconSize),
+              //   title: "Gallery",
+              //   onPressed: onGalleryPressed ?? () async => await notifier.pickImage(),
+              // ),
               AttachmentItem(
                 widget: Icon(Icons.photo, color: Color(0xFFF43665), size: iconSize),
-                title: "Gallery",
+                title: "Photo",
                 onPressed: onGalleryPressed ?? () async => await notifier.pickImage(),
+              ),
+              AttachmentItem(
+                widget: Icon(Icons.video_camera_back_rounded, 
+                color:  Colors.red, size: iconSize),
+                title: "Video",
+                onPressed: onGalleryPressed ?? () async => await notifier.pickVideo(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.camera, color: Color(0xFFCE6789), size: iconSize),
@@ -91,6 +102,11 @@ class AttachmentBoard extends ConsumerWidget {
             open: isOpen,
             tiles: [
               AttachmentItem(
+                widget: Icon(Icons.music_note, color: Colors.deepOrange, size: iconSize),
+                title: "Audio",
+                onPressed: onAudioPressed ?? () async => await notifier.pickAudio(),
+              ),
+              AttachmentItem(
                 widget: Icon(Icons.edit_document, color: Color(0xFFAD76CE), size: iconSize),
                 title: "Document",
                 onPressed: onDocumentsPressed ?? () async => await notifier.pickDocument(),
@@ -100,11 +116,11 @@ class AttachmentBoard extends ConsumerWidget {
                 title: "Thread",
                 onPressed: onThreadPressed ?? () => notifier.createThread(),
               ),
-              AttachmentItem(
-                widget: Icon(Icons.bar_chart, color: Colors.cyan, size: iconSize),
-                title: "Chart",
-                onPressed: onChartPressed,
-              ),
+              // AttachmentItem(
+              //   widget: Icon(Icons.bar_chart, color: Colors.cyan, size: iconSize),
+              //   title: "Chart",
+              //   onPressed: onChartPressed,
+              // ),
               
             ],
           ),

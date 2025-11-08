@@ -158,9 +158,10 @@ class _MessageItemBuilder extends ConsumerWidget {
                 if (ref.read(overlayHandlerProvider).isAttachmentOpen) {
                   ref.read(overlayHandlerProvider).closeAttachmentBoard();
                 }
-                if (message.isImage) {
-                  final allImages = ref.read(chatStateController).messages.imageMedias;
-                  final initialIndex = allImages.indexOfMediaIsarID(message);
+                if (message.isImage || message.isVideo) {
+                  // final allImages = ref.read(chatStateController).messages.imageMedias;
+                  final allMedia = ref.read(chatStateController).messages.imagesAndVideos;
+                  final initialIndex = allMedia.indexOfMediaIsarID(message);
                   final heroTag = message.media.value?.path ?? message.isarId;
 
                   Navigator.of(context).push(
@@ -169,7 +170,7 @@ class _MessageItemBuilder extends ConsumerWidget {
                       barrierColor: Colors.black, // Slight fade
                       transitionDuration: const Duration(milliseconds: 250),
                       pageBuilder: (_, __, ___) => GalleryViewWrapper(
-                        galleryItems: allImages,
+                        galleryItems: allMedia, // allImages,
                         initialIndex: initialIndex,
                         showOptions: true,
                         options: galleryOptions,
@@ -177,7 +178,8 @@ class _MessageItemBuilder extends ConsumerWidget {
                           context,
                           ref,
                           value,
-                          allImages[initialIndex],
+                          allMedia[initialIndex],
+                          // allImages[initialIndex],
                         ),
                       ),
                       transitionsBuilder: (_, animation, secondaryAnimation, child) {
@@ -194,10 +196,6 @@ class _MessageItemBuilder extends ConsumerWidget {
                       },
                     ),
                   );
-                } else if (message.isVideo) {
-                  Navigator.push(context, CupertinoPageRoute(builder: (_) => VideoGalleryPlayer(media: message.media.value!)));
-                  print("VID");
-                  debugPrint("Video file: ${message.media.value?.path ?? "Unavailable"}");
                 } else if (message.isDocument) {
                 await OpenFile.open(message.media!.value!.path!);
               } else {

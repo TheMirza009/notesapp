@@ -31,19 +31,32 @@ class GlassContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurX, sigmaY: blurY),
-        child: Container(
-          width: width,
-          height: height,
-          padding: padding,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            border: Border.all(width: borderWidth, color: borderColor),
-            borderRadius: BorderRadius.circular(borderRadius),
+      child: Stack(
+        children: [
+          // Background blur layer - SINGLE BackdropFilter for entire area
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: blurX, 
+                sigmaY: blurY,
+                tileMode: TileMode.clamp,
+              ),
+              child: Container(color: Colors.transparent),
+            ),
           ),
-          child: child,
-        ),
+          // Glass content layer
+          Container(
+            width: width,
+            height: height,
+            padding: padding,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              border: Border.all(width: borderWidth, color: borderColor),
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            child: child,
+          ),
+        ],
       ),
     );
   }
