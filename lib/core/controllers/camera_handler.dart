@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
+import 'package:notesapp/core/controllers/video_handler.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 
@@ -117,28 +120,64 @@ class CameraHandler {
 
   /// Stop video recording and save to /Media/Camera/Videos.
   Future<Media?> stopVideoRecording() async {
-    if (!isInitialized) throw Exception('Camera not initialized');
-    if (!controller!.value.isRecordingVideo) return null;
+  if (!isInitialized) throw Exception('Camera not initialized');
+  if (!controller!.value.isRecordingVideo) return null;
 
-    try {
-      final XFile videoFile = await controller!.stopVideoRecording();
-      final File recordedFile = File(videoFile.path);
+  try {
+    final XFile videoFile = await controller!.stopVideoRecording();
+    final File recordedFile = File(videoFile.path);
 
-      final File savedFile = await MediaHandler.saveToStorage(
-        recordedFile,
-        'Camera/Videos',
-      );
+    final File savedFile = await MediaHandler.saveToStorage(
+      recordedFile,
+      'Camera/Videos',
+    );
 
-      final media = Media.fromFilePath(savedFile.path);
-      media.type = Mediatype.video;
+    // Create media with minimal metadata immediately
+    final media = Media.fromVideoPath(savedFile.path, metadata: null);
+    media.type = Mediatype.video;
 
-      debugPrint('🎬 Video saved: ${savedFile.path}');
-      return media;
-    } catch (e, st) {
-      debugPrint('❌ Failed to stop recording: $e\n$st');
-      return null;
-    }
+    // Generate metadata in background
+    unawaited(_generateVideoMetadataInBackground(savedFile.path, media));
+
+    debugPrint('🎬 Video saved: ${savedFile.path}');
+    return media;
+  } catch (e, st) {
+    debugPrint('❌ Failed to stop recording: $e\n$st');
+    return null;
   }
+}
+
+/// Generate video metadata in background without blocking UI
+Future<void> _generateVideoMetadataInBackground(String videoPath, Media media) async {
+  try {
+    final videoMetadata = await VideoMetadataHandler.generateVideoMetadata(videoPath);
+    
+    // Update the media object with complete metadata
+    if (videoMetadata != null) {
+      media.updateMetadata(
+        Media.fromVideoPath(videoPath, metadata: videoMetadata),
+      );
+      
+      // Optional: Persist to database in background
+      await _persistUpdatedMedia(media);
+    }
+  } catch (e, st) {
+    debugPrint('❌ Background metadata generation failed: $e\n$st');
+  }
+}
+
+/// Persist updated media metadata to database
+Future<void> _persistUpdatedMedia(Media media) async {
+  try {
+    final isar = IsarDatabase.isar;
+    await isar.writeTxn(() async {
+      await isar.medias.put(media);
+    });
+    debugPrint('✅ Video metadata updated in database');
+  } catch (e) {
+    debugPrint('❌ Failed to persist video metadata: $e');
+  }
+}
 
   /// Switches between available cameras (front ↔ back) safely.
   Future<void> switchCamera() async {

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class CameraModeSelector extends StatefulWidget {
-  const CameraModeSelector({super.key});
+  final Function(int index)? onModeChanged;
+  const CameraModeSelector({super.key, this.onModeChanged});
 
   @override
   State<CameraModeSelector> createState() => _CameraModeSelectorState();
@@ -27,7 +28,10 @@ class _CameraModeSelectorState extends State<CameraModeSelector> {
           perspective: 0.0025, // Depth for 3D effect
           diameterRatio: 1.3, // Adjust curve depth
           physics: const BouncingScrollPhysics().applyTo(const ClampingScrollPhysics()),          
-          onSelectedItemChanged: (index) => setState(() => _currentIndex = index),
+          onSelectedItemChanged: (index) {
+            widget.onModeChanged?.call(index);
+            setState(() => _currentIndex = index);
+            },
           childDelegate: ListWheelChildBuilderDelegate(
             childCount: modes.length,
             builder: (context, index) {
@@ -40,7 +44,8 @@ class _CameraModeSelectorState extends State<CameraModeSelector> {
                     fontFamily: "Poppins",
                     fontSize: isActive ? 18 : 16,
                     fontWeight: isActive ? FontWeight.normal : FontWeight.normal,
-                    color: isActive ? (index == 0 ? Colors.white : Colors.white.withOpacity(0.5)) : Colors.white.withOpacity(0.5),
+                    color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
+                    // color: isActive ? (index == 0 ? Colors.white : Colors.white.withOpacity(0.5)) : Colors.white.withOpacity(0.5),
                   ),
                   child: Center(child: Text(modes[index])),
                 ),

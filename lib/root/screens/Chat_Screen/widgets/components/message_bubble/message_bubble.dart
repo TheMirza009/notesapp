@@ -106,7 +106,7 @@ class _MessageBubbleState extends State<MessageBubble>
   bool get _hasReply => widget.message.replyingTo.value != null;
   
   EdgeInsets get _bubblePadding {
-    if (widget.message.isImage) {
+    if (widget.message.isImage || widget.message.isVideo) {
       return const EdgeInsets.symmetric(horizontal: 5, vertical: 5);
     } else if (widget.message.isDocument) {
       return const EdgeInsets.all(4);
@@ -429,7 +429,7 @@ class _OpaqueBubble extends StatelessWidget {
     final highlightColor = colors.highlightedColor;
     return RippleWell(
       animated: true,
-      borderRadius: rippleBorderRadius ??  BorderRadius.circular(message.isImage ? 5 : borderRadius),
+      borderRadius: rippleBorderRadius ??  BorderRadius.circular((message.isImage || message.isVideo) ? 10 : borderRadius),
       materialColor: baseColor,
       onTap: isSelecting ? onTapWhileSelecting : onTap,
       onLongPress: onLongPress,

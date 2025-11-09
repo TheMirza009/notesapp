@@ -587,13 +587,14 @@ Future<List<Message>> _loadMessageBatch(
 
   Future<void> pickVideo({
     bool? isCamera = false,
+    Media? media,
   }) async {
 
     if (Platform.isWindows) {
     Utils.showGlobalSnackBar("Video picking not supported on Windows", Colors.orange);
     return;
   }
-    final Media? pickedMedia =  await MediaHandlerVideoExtensions.pickVideo();
+    final Media? pickedMedia = media ??  await MediaHandlerVideoExtensions.pickVideo();
 
     if (pickedMedia == null || _chat == null) return;
     await deleteInitMessage();

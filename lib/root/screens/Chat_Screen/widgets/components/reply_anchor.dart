@@ -130,8 +130,8 @@ class ReplyAnchor extends StatelessWidget {
                               width: 60,
                               clipBehavior: Clip.antiAlias,
                               child: RepaintBoundary(
-                                  child: media!.isImage ? Image.file(
-                                    File(media!.path!),
+                                  child: (media!.isImage || media!.isVideo) ? Image.file(
+                                    File(media!.isVideo ? media!.thumbnailPath! : media!.path!),
                                     fit: BoxFit.cover,
                                   ) : SizedBox.shrink(), // (media!.isDocument ? Icon(Icons.insert_drive_file) : (media!.isAudio ? Icon(Icons.audio_file) : SizedBox.shrink())),
                                 ),
@@ -173,8 +173,13 @@ class ReplyAnchor extends StatelessWidget {
         return "$prefix $duration";
 
       case Mediatype.document:
-        final prefix = (text?.isNotEmpty ?? false) ? text!.characters.first : "🎧 ";
+        final prefix = (text?.isNotEmpty ?? false) ? text!.characters.first : "📃 ";
         return "$prefix ${media?.extension.toUpperCase() ?? "UNKNOWN"} - ${media?.name ?? "Unknown"}";
+
+      case Mediatype.video:
+        final duration = media?.duration ?? "00:00";
+        final prefix = (text?.isNotEmpty ?? false) ? text!.characters.first : "📽️ ";
+        return "$prefix $duration";
 
       default:
         return text ?? '';

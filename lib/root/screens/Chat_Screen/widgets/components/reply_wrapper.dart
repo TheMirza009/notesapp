@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/ph.dart';
+import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/ripple_well.dart';
@@ -77,19 +78,19 @@ class ReplyWrapper extends StatelessWidget {
 
               Flexible(
                 child: Text(
-                  replyText,
+                  media == null ? replyText : (media.isVideo ? "📽️ ${media.duration!}" : replyText),
                   overflow: TextOverflow.ellipsis,
                   maxLines: maxLines,
                   style: textStyle ?? TextStyle(fontSize: 12, fontWeight: FontWeight.w300, ),
                 ),
               ),
 
-              if (mediaPath != null && media?.type == Mediatype.image) ...[
+              if (mediaPath != null && (media?.type == Mediatype.image || media?.type == Mediatype.video)) ...[
                 const SizedBox(width: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(5),
                   child: Image.file(
-                    File(mediaPath),
+                    File(media!.isVideo ? media.thumbnailPath! : mediaPath),
                     width: imageSize,
                     height: imageSize,
                     fit: BoxFit.cover,

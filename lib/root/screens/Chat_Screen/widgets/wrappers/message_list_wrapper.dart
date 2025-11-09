@@ -215,7 +215,7 @@ class _MessageItemBuilder extends ConsumerWidget {
                 context,
                 position: pos,
                 triangleHorizontalOffset: message.isSender ? 120 : 40,
-                menuItems: messageHoldOptions(isMedia: (message.isImage || message.isDocument || message.isAudio), message: message ),
+                menuItems: messageHoldOptions(isMedia: (message.isImage || message.isDocument || message.isAudio || message.isVideo), message: message ),
                 onSelected: (val) => notifier.handleMessageMenuAction(val, message, context),
               );
             },
@@ -230,7 +230,9 @@ class _MessageItemBuilder extends ConsumerWidget {
 
 
 class LoadIndicator extends StatelessWidget {
-  const LoadIndicator({super.key});
+  final Color? color;
+  final double? size;
+  const LoadIndicator({super.key, this.color, this.size = 40});
 
   @override
   Widget build(BuildContext context) {
@@ -239,14 +241,14 @@ class LoadIndicator extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(top: 50), // optional spacing from top
         child: SizedBox(
-          height: 40,
-          width: 40,
+          height: size ?? 40,
+          width: size ?? 40,
           child: CircularProgressIndicator(
             strokeWidth: 2,
             strokeCap: StrokeCap.round,
-            color: context.isLight
+            color: color ?? (context.isLight
                 ? ThemeConstants.sacredSeed
-                : ThemeConstants.sinisterSeed,
+                : ThemeConstants.sinisterSeed),
           ),
         ),
       ),

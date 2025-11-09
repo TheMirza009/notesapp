@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/video_handler.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
@@ -14,14 +17,18 @@ import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
+import 'package:notesapp/root/screens/Chat_Forward/widgets/send_button.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
+import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/video_view/seek_indicators.dart';
 import 'package:notesapp/root/widgets/video_view/video_gallery_player.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:video_player/video_player.dart';
+
+final isProcessing = StateProvider.autoDispose<bool>((ref) => false);
 
 class GalleryViewWrapper extends StatefulWidget {
   const GalleryViewWrapper({
@@ -154,9 +161,15 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                 leading: IconButton(
                   onPressed: () {
                     if (showOverlay) Navigator.pop(context);
+                    if (widget.isCamera == true) {
+                      unawaited(MediaHandler.deleteMedia(widget.galleryItems[0]));
+                      // Navigator.pop(context);
+                    }
                   },
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
+                  icon: Icon(
+                    widget.isCamera == true 
+                    ? Icons.clear_rounded 
+                    : Icons.arrow_back_ios_new_rounded,
                     color: Colors.white,
                   ),
                 ),
@@ -179,7 +192,7 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                   ],
                 ),
                 actions:
-                    widget.showOptions == true
+                    (widget.showOptions == true && widget.isCamera != true)
                         ? [
                           Consumer(
                             builder: (context, ref, child) {
@@ -241,6 +254,7 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
               }
 
               if (media.type == Mediatype.video) {
+                final videoController = VideoHandler.controllers[media.path!];
                 return PhotoViewGalleryPageOptions.customChild(
                   child: Stack(
                     alignment: Alignment.center,
@@ -263,12 +277,37 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.contained,
-                );
-              }
+
+                       if (videoController != null && videoController.isInitialized)
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SeekIndicator(
+                onTap: toggleOverlay,
+                onDoubleTap: () {
+                  if (videoController.isInitialized) {
+                    videoController.seekTo(videoController.position - Duration(seconds: 5));
+                  }
+                },
+              ),
+              SeekIndicator(
+                forward: true,
+                onTap: toggleOverlay,
+                onDoubleTap: () {
+                  if (videoController.isInitialized) {
+                    videoController.seekTo(videoController.position + Duration(seconds: 5));
+                  }
+                },
+              ),
+            ],
+          ),
+      ],
+    ),
+    minScale: PhotoViewComputedScale.contained,
+    maxScale: PhotoViewComputedScale.contained,
+  );
+}
 
               return PhotoViewGalleryPageOptions(
                 imageProvider: ExtendedFileImageProvider(
@@ -309,23 +348,45 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                       children: [
                         Text(currentFileName, style: const TextStyle(color: Colors.white)),
                         Consumer(
-                          builder: (context, ref, child) {
-                            return IconButton.filled(
-                              onPressed: widget.onSendImage ?? () async => await _openPreviewAndRemoveCamera(
-                                context,
-                                widget.galleryItems[0],
-                                ref,
-                              ),
-                              icon: Icon(
-                                Icons.send,
+                            builder: (context, ref, child) {
+                              return Material(
                                 color: ThemeConstants.sinisterSeed,
-                                size: 30,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    )
+                                shape: const CircleBorder(),
+                                clipBehavior: Clip.antiAlias,
+                                elevation: 3,
+                                child: InkWell(
+                                  onTap:
+                                      () async =>
+                                          await _openPreviewAndRemoveCamera(
+                                            context,
+                                            widget.galleryItems[0],
+                                            ref,
+                                          ),
+                                  customBorder: const CircleBorder(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(14),
+                                    child:
+                                    ref.watch(isProcessing) == true
+                                    ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation< Color >(ThemeConstants.textDark2),
+                                      ),
+                                    )
+                                    : Icon(
+                                      Icons.send,
+                                      color: ThemeConstants.textDark2,
+                                      size: 28,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      )
                   : Text(currentFileName, style: const TextStyle(color: Colors.white)),
             ),
           ),
@@ -348,21 +409,16 @@ Widget _buildVideoControls(Media media) {
     duration: const Duration(milliseconds: 300),
     opacity: showOverlay ? 1.0 : 0.0,
     child: AspectRatio(
-      aspectRatio: media.aspectRatio!,
+      aspectRatio: media.aspectRatio ?? (9/16),
       child: SafeArea(
         top: false,
-        bottom: media.aspectRatio! >= 1.0 ? false : true,
+        bottom: (media.aspectRatio ?? 9/16) >= 1.0 ? false : true,
         child: Column(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const SizedBox.shrink(),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SeekIndicator(onDoubleTap: () => videoController.seekTo(videoController.position - Duration(seconds: 5))),
-                IgnorePointer(
+            IgnorePointer(
                   ignoring: !showOverlay,
                   child: IconButton(
                     onPressed: () {
@@ -376,11 +432,6 @@ Widget _buildVideoControls(Media media) {
                     ),
                   ),
                 ),
-                SeekIndicator(
-                  forward: true,
-                  onDoubleTap: () => videoController.seekTo(videoController.position + Duration(seconds: 5))),
-              ],
-            ),
             // Timeline/progress indicator with bottom padding for navbar
             if (videoController.duration != Duration.zero)
               IgnorePointer(
@@ -448,7 +499,7 @@ Widget _buildVideoProgressIndicator(VideoHandler videoController) {
       );
     },
   );
-}
+  }
 }
 
 Future<void> _openPreviewAndRemoveCamera(
@@ -456,19 +507,40 @@ Future<void> _openPreviewAndRemoveCamera(
   Media media,
   WidgetRef ref,
 ) async {
+  // Capture the provider reference BEFORE any navigation
+  final chatNotifier = ref.read(chatStateController.notifier);
+
+  // First, generate metadata if needed (BEFORE any popping)
+  if (media.isVideo && !media.hasCompleteMetadata && media.path != null) {
+    ref.read(isProcessing.notifier).state = true;
+    final videoMetadata = await VideoMetadataHandler.generateVideoMetadata(
+      media.path!,
+    );
+    if (videoMetadata != null) {
+      media.updateMetadata(
+        Media.fromVideoPath(media.path!, metadata: videoMetadata),
+      );
+    }
+  }
+
+  // Remove camera route
   final route = ModalRoute.of(context);
   if (route != null && Navigator.of(context).canPop()) {
-    Navigator.of(context).removeRouteBelow(route); // remove camera
+    Navigator.of(context).removeRouteBelow(route);
   }
 
-  // Pop first, then add the image
+  // Now pop and send the media
   if (Navigator.of(context).canPop()) {
+    ref.read(isProcessing.notifier).state = false;
     Navigator.of(context).pop(); // pop back to chat
-    // Schedule pickImage after popping completes
+
+    // Send the media immediately since metadata is ready
     Future.microtask(() async {
-      await ref.read(chatStateController.notifier).pickImage(media: media);
+      if (media.isVideo) {
+        await chatNotifier.pickVideo(media: media);
+      } else {
+        await chatNotifier.pickImage(media: media);
+      }
     });
   }
-
-  // Optional: pick image
 }
