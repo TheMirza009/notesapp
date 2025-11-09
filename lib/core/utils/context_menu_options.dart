@@ -280,6 +280,33 @@ List<PopupMenuItem<String>> get galleryOptions => [
   ),
 ];
 
+List<PopupMenuItem<String>> get galleryVideoOptions => [
+  PopupMenuItem(
+    value: 'shareImage',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.shareIcon2),
+      text: "Share Video",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
+    value: 'forwardimage',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.forward2),
+      text: "Forward Video",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
+    value: 'deleteImage',
+    child: buildOptionTile(
+      icon: clearIcon(),
+      text: "Delete from Chat",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+];
+
 /// Options: Message Hold
 List<PopupMenuItem<String>> messageHoldOptions({bool isMedia = false, required Message message})  => [
   if (isMedia) PopupMenuItem(

@@ -12,6 +12,7 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
@@ -179,16 +180,24 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                 actions:
                     widget.showOptions == true
                         ? [
-                          CustomContextMenu(
-                            backgroundColor: const Color.fromARGB(255,13,24,30,),
-                            icon: const Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                            ),
-                            menuItems: widget.options ?? galleryOptions,
-                            onSelected:
-                                widget.onOptionSelect ??
-                                (value) => debugPrint(value),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              return CustomContextMenu(
+                                backgroundColor: const Color.fromARGB(255,13,24,30,),
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.white,
+                                ),
+                                menuItems:
+                                    widget.options ??
+                                    (widget.galleryItems[currentIndex].isVideo ? galleryVideoOptions : galleryOptions),
+                                onSelected:
+                                    widget.onOptionSelect ??
+                                    ((value) => handleGalleryOptions(context, ref, value,
+                                      widget.galleryItems[currentIndex],
+                                    ))// allImages[initialIndex],
+                              );
+                            }
                           ),
                         ]
                         : [],
@@ -344,7 +353,7 @@ Widget _buildVideoControls(Media media) {
       aspectRatio: media.aspectRatio!,
       child: SafeArea(
         top: false,
-        bottom: media.aspectRatio == 1.0 ? false : true,
+        bottom: media.aspectRatio! >= 1.0 ? false : true,
         child: Column(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

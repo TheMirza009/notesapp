@@ -173,14 +173,14 @@ class _MessageItemBuilder extends ConsumerWidget {
                         galleryItems: allMedia, // allImages,
                         initialIndex: initialIndex,
                         showOptions: true,
-                        options: galleryOptions,
-                        onOptionSelect: (value) => handleGalleryOptions(
-                          context,
-                          ref,
-                          value,
-                          allMedia[initialIndex],
-                          // allImages[initialIndex],
-                        ),
+                        // options: message.isVideo ? galleryVideoOptions : galleryOptions,
+                        // onOptionSelect: (value) => handleGalleryOptions(
+                        //   context,
+                        //   ref,
+                        //   value,
+                        //   allMedia[initialIndex],
+                        //   // allImages[initialIndex],
+                        // ),
                       ),
                       transitionsBuilder: (_, animation, secondaryAnimation, child) {
                         // Use curved animation for smoother start/end
