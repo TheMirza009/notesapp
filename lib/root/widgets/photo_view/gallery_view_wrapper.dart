@@ -17,6 +17,7 @@ import 'package:notesapp/root/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
+import 'package:notesapp/root/widgets/video_view/seek_indicators.dart';
 import 'package:notesapp/root/widgets/video_view/video_gallery_player.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -253,15 +254,12 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                       ),
                       // Video controls managed by GalleryViewWrapper
                       // if (showOverlay)
-                        IgnorePointer(
-                          ignoring: !showOverlay,
-                          child: Positioned.fill(
-                            child: AnimatedContainer(
-                              duration: Duration(milliseconds: 300),
-                              color: showOverlay ? Colors.black38 : Colors.transparent,
-                              child: Center(
-                                child: _buildVideoControls(media),
-                              ),
+                        Positioned.fill(
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 300),
+                            color: showOverlay ? Colors.black38 : Colors.transparent,
+                            child: Center(
+                              child: _buildVideoControls(media),
                             ),
                           ),
                         ),
@@ -359,22 +357,38 @@ Widget _buildVideoControls(Media media) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const SizedBox.shrink(),
-            IconButton(
-              onPressed: () {
-                videoController.togglePlayPause();
-                setState(() {});
-              },
-              icon: Icon(
-                videoController.isPlaying ? Icons.pause : Icons.play_arrow,
-                size: 64,
-                color: Colors.white,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SeekIndicator(onDoubleTap: () => videoController.seekTo(videoController.position - Duration(seconds: 5))),
+                IgnorePointer(
+                  ignoring: !showOverlay,
+                  child: IconButton(
+                    onPressed: () {
+                      videoController.togglePlayPause();
+                      setState(() {});
+                    },
+                    icon: Icon(
+                      videoController.isPlaying ? Icons.pause : Icons.play_arrow,
+                      size: 64,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                SeekIndicator(
+                  forward: true,
+                  onDoubleTap: () => videoController.seekTo(videoController.position + Duration(seconds: 5))),
+              ],
             ),
             // Timeline/progress indicator with bottom padding for navbar
             if (videoController.duration != Duration.zero)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 0), // Respect bottom navbar height
-                child: _buildVideoProgressIndicator(videoController),
+              IgnorePointer(
+                ignoring: !showOverlay,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 0), // Respect bottom navbar height
+                  child: _buildVideoProgressIndicator(videoController),
+                ),
               ),
           ],
         ),

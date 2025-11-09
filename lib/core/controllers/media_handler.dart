@@ -155,9 +155,7 @@ class MediaHandler {
     final savedFile = await saveToStorage(File(pickedFile.path), 'Videos');
 
     // Generate complete metadata
-    final videoMetadata = await VideoMetadataHandler.generateVideoMetadata(
-      savedFile.path,
-    );
+    final videoMetadata = await VideoMetadataHandler.generateVideoMetadata(savedFile.path);
 
     // Create Media object with all video metadata
     return Media.fromVideoPath(savedFile.path, metadata: videoMetadata);

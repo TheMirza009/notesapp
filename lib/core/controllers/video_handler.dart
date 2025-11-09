@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:video_player/video_player.dart';
@@ -130,14 +131,15 @@ class VideoHandler {
   }
 }
 
+
 /// Handles video metadata extraction and thumbnail generation
+/// ⚡ OPTIMIZED: Video metadata handler with parallel processing
 class VideoMetadataHandler {
-  /// Generate complete video metadata including thumbnail, blurhash, aspect ratio, etc.
+  /// Generate complete video metadata with performance optimizations
   static Future<VideoMetadata?> generateVideoMetadata(String videoPath) async {
     try {
       debugPrint('🎬 Generating video metadata for: $videoPath');
       
-      // Get basic file info
       final file = File(videoPath);
       if (!await file.exists()) {
         debugPrint('❌ Video file not found: $videoPath');
@@ -148,19 +150,21 @@ class VideoMetadataHandler {
       final fileName = file.uri.pathSegments.last;
       final fileExtension = fileName.split('.').last.toLowerCase();
 
-      // Get video duration and aspect ratio
-      final duration = await _getVideoDuration(videoPath);
-      final aspectRatio = await _getVideoAspectRatio(videoPath);
+      // ⚡ OPTIMIZATION 1: Run video analysis and thumbnail generation in parallel
+      final results = await Future.wait([
+        _getVideoInfoOptimized(videoPath), // Get duration AND aspect ratio in one go
+        _generateThumbnailWithBlurHashOptimized(videoPath), // Generate thumbnail
+      ]);
 
-      // Generate thumbnail and blurhash
-      final thumbnailResult = await _generateThumbnailWithBlurHash(videoPath);
-      
+      final videoInfo = results[0] as Map<String, dynamic>?;
+      final thumbnailResult = results[1] as VideoThumbnailData?;
+
       if (thumbnailResult == null) {
         debugPrint('❌ Failed to generate thumbnail for: $videoPath');
         return null;
       }
 
-      // Save thumbnail to Thumbnails subfolder
+      // ⚡ OPTIMIZATION 2: Save thumbnail asynchronously
       final savedThumbnailPath = await MediaHandler.saveThumbnailToStorage(
         thumbnailResult.thumbnailBytes,
         fileName,
@@ -170,54 +174,49 @@ class VideoMetadataHandler {
         videoPath: videoPath,
         thumbnailPath: savedThumbnailPath,
         blurHash: thumbnailResult.blurHash,
-        aspectRatio: aspectRatio ?? thumbnailResult.aspectRatio,
-        duration: duration ?? Duration.zero,
+        aspectRatio: videoInfo?['aspectRatio'] ?? thumbnailResult.aspectRatio,
+        duration: videoInfo?['duration'] ?? Duration.zero,
         fileSize: fileSize,
         fileName: fileName,
         fileExtension: fileExtension,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ Error generating video metadata: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
 
-  /// Get video duration without keeping controller alive
-  static Future<Duration?> _getVideoDuration(String videoPath) async {
+  /// ⚡ OPTIMIZED: Get duration AND aspect ratio in a single controller initialization
+  static Future<Map<String, dynamic>?> _getVideoInfoOptimized(String videoPath) async {
+    VideoPlayerController? controller;
     try {
-      final controller = VideoPlayerController.file(File(videoPath));
+      controller = VideoPlayerController.file(File(videoPath));
       await controller.initialize();
-      final duration = controller.value.duration;
-      await controller.dispose();
-      return duration;
+      
+      final result = {
+        'duration': controller.value.duration,
+        'aspectRatio': controller.value.aspectRatio,
+      };
+      
+      return result;
     } catch (e) {
-      debugPrint('❌ Error getting video duration: $e');
+      debugPrint('❌ Error getting video info: $e');
       return null;
+    } finally {
+      // Ensure controller is always disposed
+      await controller?.dispose();
     }
   }
 
-  /// Get video aspect ratio
-  static Future<double?> _getVideoAspectRatio(String videoPath) async {
-    try {
-      final controller = VideoPlayerController.file(File(videoPath));
-      await controller.initialize();
-      final aspectRatio = controller.value.aspectRatio;
-      await controller.dispose();
-      return aspectRatio;
-    } catch (e) {
-      debugPrint('❌ Error getting video aspect ratio: $e');
-      return null;
-    }
-  }
-
-  /// Generate thumbnail and blurhash from video
-  static Future<VideoThumbnailData?> _generateThumbnailWithBlurHash(
+  /// ⚡ OPTIMIZED: Generate thumbnail with blurhash using isolate for heavy processing
+  static Future<VideoThumbnailData?> _generateThumbnailWithBlurHashOptimized(
     String videoPath, {
     int maxWidth = 400,
     int quality = 75,
   }) async {
     try {
-      // Generate thumbnail
+      // Generate thumbnail (already optimized by plugin)
       final uint8list = await VideoThumbnail.thumbnailData(
         video: videoPath,
         imageFormat: ImageFormat.PNG,
@@ -227,23 +226,13 @@ class VideoMetadataHandler {
 
       if (uint8list == null) return null;
 
-      // Decode image to get dimensions and generate blurhash
-      final image = img.decodeImage(uint8list);
-      if (image == null) return null;
-
-      final aspectRatio = image.width / image.height;
-
-      // Generate blurhash
-      final blurHash = BlurHash.encode(
-        image,
-        numCompX: 4,
-        numCompY: 3,
-      ).hash;
-
+      // ⚡ OPTIMIZATION 3: Process image and generate blurhash in isolate
+      final result = await compute(_processImageInIsolate, uint8list);
+      
       return VideoThumbnailData(
         thumbnailBytes: uint8list,
-        blurHash: blurHash,
-        aspectRatio: aspectRatio,
+        blurHash: result['blurHash'],
+        aspectRatio: result['aspectRatio'],
       );
     } catch (e) {
       debugPrint('❌ Error generating video thumbnail: $e');
@@ -251,37 +240,26 @@ class VideoMetadataHandler {
     }
   }
 
-  /// Save thumbnail to Thumbnails subfolder using your MediaHandler pattern
-  static Future<String> _saveThumbnailToStorage(
-    Uint8List thumbnailBytes,
-    String originalFileName,
-  ) async {
-    try {
-      final Directory appDir = await getApplicationDocumentsDirectory();
-      final String fileName = 'thumb_${originalFileName.split('.').first}.png';
-      final String thumbnailsDirPath = '${appDir.path}/Media/Thumbnails';
-      
-      // Create Thumbnails directory if it doesn't exist
-      final Directory thumbnailsDir = Directory(thumbnailsDirPath);
-      if (!await thumbnailsDir.exists()) {
-        await thumbnailsDir.create(recursive: true);
-      }
-
-      final String thumbnailPath = '$thumbnailsDirPath/$fileName';
-      final File thumbnailFile = File(thumbnailPath);
-      await thumbnailFile.writeAsBytes(thumbnailBytes);
-
-      debugPrint('✅ Thumbnail saved: $thumbnailPath');
-      return thumbnailPath;
-    } catch (e) {
-      debugPrint('❌ Error saving thumbnail: $e');
-      // Fallback to temporary directory
-      final tempDir = await getTemporaryDirectory();
-      final tempPath = '${tempDir.path}/thumb_${DateTime.now().millisecondsSinceEpoch}.png';
-      final File tempFile = File(tempPath);
-      await tempFile.writeAsBytes(thumbnailBytes);
-      return tempPath;
+  /// Isolate function for heavy image processing
+  static Map<String, dynamic> _processImageInIsolate(Uint8List imageBytes) {
+    final image = img.decodeImage(imageBytes);
+    if (image == null) {
+      throw Exception('Failed to decode image');
     }
+
+    final aspectRatio = image.width / image.height;
+    
+    // Generate blurhash (CPU-intensive operation)
+    final blurHash = BlurHash.encode(
+      image,
+      numCompX: 4,
+      numCompY: 3,
+    ).hash;
+
+    return {
+      'blurHash': blurHash,
+      'aspectRatio': aspectRatio,
+    };
   }
 
   /// Format duration to HH:MM:SS or MM:SS

@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
+import 'package:notesapp/core/controllers/media_handler_video_extensions.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/string_extensions.dart';
@@ -592,7 +593,7 @@ Future<List<Message>> _loadMessageBatch(
     Utils.showGlobalSnackBar("Video picking not supported on Windows", Colors.orange);
     return;
   }
-    final Media? pickedMedia =  await MediaHandler.pickVideo();
+    final Media? pickedMedia =  await MediaHandlerVideoExtensions.pickVideo();
 
     if (pickedMedia == null || _chat == null) return;
     await deleteInitMessage();
@@ -614,7 +615,72 @@ Future<List<Message>> _loadMessageBatch(
 
     allMessages.add(newMessage);
     state = state.copyWith(messages: [...allMessages]);
+    scrollToBottom();
+
   }
+
+  Future<void> pickVideoFast({
+  bool? isCamera = false,
+}) async {
+  if (Platform.isWindows) {
+    Utils.showGlobalSnackBar("Video picking not supported on Windows", Colors.orange);
+    return;
+  }
+
+  // Keep reference to the persisted media ID
+  int? persistedMediaId;
+  
+  final Media? pickedMedia = await MediaHandlerVideoExtensions.pickVideoFast(
+    onMetadataReady: (updatedMedia) async {
+      // Update the persisted media with full metadata
+      if (persistedMediaId != null) {
+        debugPrint('✅ Video metadata ready: ${updatedMedia!.duration ?? "N/A"}');
+        
+        // try {
+        //   await _isar.writeTxn(() async {
+        //     final existingMedia = await _isar.medias.get(persistedMediaId!);
+        //     if (existingMedia != null) {
+        //       // ✅ Update metadata fields
+        //       existingMedia.updateMetadata(updatedMedia);
+        //       await _isar.medias.put(existingMedia);
+        //       debugPrint('✅ Media metadata updated in database');
+              
+        //       // Trigger UI refresh
+        //       state = state.copyWith(messages: [...allMessages]);
+        //     }
+        //   });
+        // } catch (e) {
+        //   debugPrint('❌ Failed to update media metadata: $e');
+        // }
+      }
+    },
+  );
+
+  if (pickedMedia == null || _chat == null) return;
+  await deleteInitMessage();
+
+  // Persist media with placeholder metadata
+  final persisted = await _persistMedia(pickedMedia);
+  if (persisted == null) return;
+  
+  // Store the ID for the callback
+  persistedMediaId = persisted.isarId;
+
+  final newMessage = Message()
+    ..text = "📽️ Video"
+    ..isSender = true
+    ..time = DateTime.now();
+
+  await _createAndAttachMessage(
+    message: newMessage,
+    persistedMedia: persisted,
+    replyingTo: state.anchorMessage,
+  );
+
+  allMessages.add(newMessage);
+  state = state.copyWith(messages: [...allMessages]);
+  scrollToBottom();
+}
 
   Future<void> deleteInitMessage() async {
     if (_chat == null || state.messages.isEmpty) return;
