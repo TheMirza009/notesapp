@@ -77,6 +77,7 @@ void _stopRecording() {
   Future<void> _initCamera([CameraDescription? description]) async {
     await _cameraHandler.initializeCamera(
       preferredLens: description?.lensDirection ?? CameraLensDirection.back,
+      enableAudio: true,
     );
     if (mounted) {
       setState(() => _loading = false);

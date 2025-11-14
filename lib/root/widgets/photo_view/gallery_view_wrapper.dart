@@ -88,15 +88,15 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
   }
 
   void _onVideoCompleted() {
-  if (mounted) {
-    setState(() => showOverlay = true);
-    
-    // Auto-pause when video completes
-    final currentMedia = widget.galleryItems[currentIndex];
-    final videoController = VideoHandler.controllers[currentMedia.path!];
-    videoController?.pause();
+    if (mounted) {
+      setState(() => showOverlay = true);
+
+      // Auto-pause when video completes
+      final currentMedia = widget.galleryItems[currentIndex];
+      final videoController = VideoHandler.controllers[currentMedia.path!];
+      videoController?.pause();
+    }
   }
-}
 
   // Get video controller for current media
   VideoHandler? _getCurrentVideoController() {

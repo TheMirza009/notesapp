@@ -20,8 +20,8 @@ android {
         }
     }
 
-    // kotlin {
-    //     jvmToolchain(17)
+    // kotlinOptions {
+    //     jvmTarget = "17"
     // }
 
     defaultConfig {
@@ -38,8 +38,8 @@ android {
     buildTypes {
         named("release") {
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
         named("profile") {
             signingConfig = signingConfigs.getByName("debug")

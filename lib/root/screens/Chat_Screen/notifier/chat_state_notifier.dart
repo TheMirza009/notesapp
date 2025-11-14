@@ -22,6 +22,8 @@ import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/anchor_wrapper.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+import 'package:notesapp/root/widgets/photo_view/media_preview_screen.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -554,6 +556,63 @@ Future<List<Message>> _loadMessageBatch(
     );
   }
 
+  Future<Media?> showPreview(Media originalMedia) async {
+    final BuildContext? ctx = navigatorKey.currentContext;
+    if (ctx == null) return null;
+
+    Media currentMedia = originalMedia;
+    Media? croppedMedia; // Track if we created a cropped version
+
+    return await showModalBottomSheet<Media?>(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height - kToolbarHeight / 1.5,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+                child: MediaPreviewScreen(
+                  media: currentMedia,
+                  onSend: () => Navigator.of(context).pop(currentMedia),
+                  onCancelled: () {
+                    // Clean up cropped media if user cancels after cropping
+                    if (croppedMedia != null && croppedMedia != originalMedia) {
+                      MediaHandler.deleteMedia(croppedMedia!);
+                    }
+                    Navigator.of(context).pop(null);
+                  },
+                  onCropped: (imageToCrop) async {
+                    final newMedia = await MediaHandler.cropAndSavePhoto(
+                      imageToCrop.path!,
+                      isProfilePicture: false,
+                    );
+                    if (newMedia != null) {
+                      croppedMedia = newMedia;
+                      currentMedia = newMedia;
+                      setModalState(() {}); // Update the modal state
+                    }
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> pickImage({
     Uint8List? imageBytes,
     bool? isCamera = false,
@@ -564,10 +623,12 @@ Future<List<Message>> _loadMessageBatch(
         : (media ?? await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery));
 
     if (pickedMedia == null || _chat == null) return;
+    final previewed = await showPreview(pickedMedia);
+    if (previewed == null) return;
     await deleteInitMessage();
 
     // Persist media in a centralized helper
-    final persisted = await _persistMedia(pickedMedia);
+    final persisted = await _persistMedia(previewed);
     if (persisted == null) return;
 
     final newMessage = Message()
@@ -583,6 +644,7 @@ Future<List<Message>> _loadMessageBatch(
 
     allMessages.add(newMessage);
     state = state.copyWith(messages: [...allMessages]);
+    scrollToBottom();
   }
 
   Future<void> pickVideo({
@@ -597,6 +659,8 @@ Future<List<Message>> _loadMessageBatch(
     final Media? pickedMedia = media ??  await MediaHandlerVideoExtensions.pickVideo();
 
     if (pickedMedia == null || _chat == null) return;
+    final previewed = await showPreview(pickedMedia);
+    if (previewed == null) return;
     await deleteInitMessage();
 
     // Persist media in a centralized helper
@@ -696,110 +760,94 @@ Future<List<Message>> _loadMessageBatch(
   }
 
   Future<void> deleteMessage(Message message) async {
-    // Delete message within DB and get media reference back
-    final mediaRef = await _deleteMessageManaged(message);
-
-    // If message had media, check if that media is used by any other message; if not, delete file
-    if (mediaRef != null && mediaRef.type != Mediatype.text) {
-      // See if used by others excluding current message
-      final usedByOthers = await _isMediaUsedByOthers(mediaRef.path, excludingMessageIsarId: message.isarId);
-
-      if (!usedByOthers) {
-        // Offload file deletion to background isolate to avoid blocking UI
-        try {
-          await compute(_backgroundDeleteMedia, mediaRef.path ?? '');
-        } catch (_) {
-          // fallback to direct call if compute fails
-          await MediaHandler.deleteMedia(mediaRef);
-        }
-      }
-    }
-
-    // Update in-memory collections & state
+    // Update UI state immediately
     allMessages.removeWhere((m) => m.isarId == message.isarId);
     unSelectAllMessages();
     state = state.copyWith(messages: List.unmodifiable(allMessages));
+
+    // Handle database and file operations in background
+    _backgroundDeleteOperations(message);
   }
 
-  /// Background isolate function to delete a media file path. Runs via compute().
-  /// Note: compute only accepts/top-level functions.
-  static Future<bool> _backgroundDeleteMedia(String path) async {
-    try {
-      if (path.isEmpty) return false;
-      final file = File(path);
-      if (await file.exists()) {
-        await file.delete();
+  void _backgroundDeleteOperations(Message message) async {
+    // Delete message from database and get media reference
+    final mediaRef = await _deleteMessageManaged(message);
+
+    // Handle media cleanup if needed
+    if (mediaRef != null && mediaRef.type != Mediatype.text) {
+      final usedByOthers = await _isMediaUsedByOthers(
+        mediaRef.path,
+        excludingMessageIsarId: message.isarId,
+      );
+
+      if (!usedByOthers && mediaRef.path != null) {
+        await MediaHandler.deleteMedia(mediaRef);
       }
-      return true;
-    } catch (_) {
-      return false;
     }
   }
 
   /// Function to delete selected messages from chat
   Future<void> deleteSelected() async {
-  final selected = state.selectedMessages;
-  if (selected.isEmpty) return;
+    final selected = state.selectedMessages;
+    if (selected.isEmpty) return;
 
-  try {
-    final mediaToCheck = <Media>[];
-    
-    // ✅ Single transaction for all deletions
-    await _isar.writeTxn(() async {
-      // Collect media first
-      final managedMessages = await _isar.messages.getAll(
-        selected.map((m) => m.isarId).toList(),
-      );
-      
-      for (final msg in managedMessages.whereType<Message>()) {
-        await msg.media.load().catchError((_) {});
-        if (msg.media.value != null) {
-          mediaToCheck.add(msg.media.value!);
+    try {
+      final mediaToCheck = <Media>[];
+
+      // ✅ Single transaction for all deletions
+      await _isar.writeTxn(() async {
+        // Collect media first
+        final managedMessages = await _isar.messages.getAll(
+          selected.map((m) => m.isarId).toList(),
+        );
+
+        for (final msg in managedMessages.whereType<Message>()) {
+          await msg.media.load().catchError((_) {});
+          if (msg.media.value != null) {
+            mediaToCheck.add(msg.media.value!);
+          }
         }
-      }
 
-      // Batch delete messages
-      await _isar.messages.deleteAll(
-        selected.map((m) => m.isarId).toList(),
-      );
+        // Batch delete messages
+        await _isar.messages.deleteAll(selected.map((m) => m.isarId).toList());
 
-      // Update chat links in single operation
-      if (_chat != null) {
-        final managedChat = await _isar.chats.get(_chat!.isarID);
-        if (managedChat != null) {
-          await managedChat.messages.load();
-          
-          final toRemoveIds = selected.map((m) => m.isarId).toSet();
-          managedChat.messages.removeWhere((m) => toRemoveIds.contains(m.isarId));
-          
-          await managedChat.messages.save();
-          await _isar.chats.put(managedChat);
-          _chat = managedChat;
+        // Update chat links in single operation
+        if (_chat != null) {
+          final managedChat = await _isar.chats.get(_chat!.isarID);
+          if (managedChat != null) {
+            await managedChat.messages.load();
+
+            final toRemoveIds = selected.map((m) => m.isarId).toSet();
+            managedChat.messages.removeWhere(
+              (m) => toRemoveIds.contains(m.isarId),
+            );
+
+            await managedChat.messages.save();
+            await _isar.chats.put(managedChat);
+            _chat = managedChat;
+          }
         }
-      }
-    });
+      });
 
-    // Clean up media in parallel (outside transaction)
-    await Future.wait(
-      mediaToCheck.map((media) async {
+      // Update UI state immediately
+      allMessages.removeWhere((m) => selected.contains(m));
+      state = state.copyWith(messages: [...allMessages], selectedMessages: []);
+
+      // Clean up media in background
+      for (final media in mediaToCheck) {
         if (media.type != Mediatype.text) {
           final usedByOthers = await _isMediaUsedByOthers(media.path);
           if (!usedByOthers) {
-            compute(_backgroundDeleteMedia, media.path ?? '')
-                .catchError((_) => MediaHandler.deleteMedia(media));
+            await MediaHandler.deleteMedia(media);
           }
         }
-      }),
-      eagerError: false,
-    );
-
-    allMessages.removeWhere((m) => selected.contains(m));
-    state = state.copyWith(messages: [...allMessages], selectedMessages: []);
-  } catch (e) {
-    debugPrint('❌ Error deleting selected: $e');
-    Utils.showGlobalSnackBar('Failed to delete messages', Colors.red);
+      }
+    } catch (e) {
+      debugPrint('❌ Error deleting selected: $e');
+      Utils.showGlobalSnackBar('Failed to delete messages', Colors.red);
+    }
   }
-}
+
   /// Function to change the message sender position
   void toggleSender(Message message) async {
     message.isSender = !message.isSender;
