@@ -35,4 +35,9 @@ extension StringCaseX on String {
         .map((entry) => '${entry.value}\n${entry.key + 1}/${threads.length}')
         .join('\n\n|\n\n');
   }
+
+  int getThreadLength() {
+    final threads = safeDecode();
+    return threads.length;
+  }
 }

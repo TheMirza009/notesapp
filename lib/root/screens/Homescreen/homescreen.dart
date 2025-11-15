@@ -247,7 +247,7 @@ class HomescreenState extends HomeScreenBaseState {
                                       key: _getChatKey(chat),
                                       isPinned: chat.isPinned,
                                       title: chat.title ?? "New Note",
-                                      subtitle: chat.loadLastMessageFull().getMessageDisplayText, // loadLastMessageTextFormatted(), //loadLastMessage(),
+                                      subtitle: chat.loadLastMessageTextFormatted(),
                                       chatPhotoPath: chat.chatPhotoPath,
                                       time: TimeFormat.formatChatTime( chat.date, ),
                                       onDismissed: (_) async => await chatNotifier.deleteChatWithUndo(chat), // _deleteChatWithFade(chat),// chatNotifier.removeChat( chat, ),

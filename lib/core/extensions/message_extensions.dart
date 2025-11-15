@@ -24,15 +24,15 @@ extension MessageX on Message {
   }
 
   String get getMessageDisplayText {
-    final bool isPhoto = media.value?.type == Mediatype.image && (text.isEmpty);
-    final bool isVideo = media.value?.type == Mediatype.video && (text.isEmpty);
-    final bool isDocument = media.value?.type == Mediatype.document && (text.isEmpty);
-    final bool isThread = media.value?.type == Mediatype.thread && (text.isEmpty);
+    final bool isPhoto = media.value?.type == Mediatype.image; // && (text.isEmpty);
+    final bool isVideo = media.value?.type == Mediatype.video; // && (text.isEmpty);
+    final bool isDocument = media.value?.type == Mediatype.document; // && (text.isEmpty);
+    final bool isThread = media.value?.type == Mediatype.thread; // && (text.isEmpty);
     
     if (isPhoto) return "📷 Photo";
     if (isVideo) return "📽️ Video";
     if (isDocument) return "📄 Document";
-    if (isThread) return "🧵 ${text.formatThread()}";
+    if (isThread) return "🧵 ${text.getThreadLength()} Threads";
     return text ?? "No notes to show";
   }
 }

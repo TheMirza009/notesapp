@@ -80,11 +80,16 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
             ),
             actions: [
               if (widget.media.isImage && widget.onCropped != null)
-                TextButton(
-                  onPressed: () => widget.onCropped!(widget.media),
-                  child: const Text(
-                    'CROP',
-                    style: TextStyle(color: ThemeConstants.sinisterSeedHighlight),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextButton(
+                    onPressed: () => widget.onCropped!(widget.media),
+                    child: const Text(
+                      'CROP',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        color: ThemeConstants.sinisterSeedHighlight),
+                    ),
                   ),
                 ),
             ],

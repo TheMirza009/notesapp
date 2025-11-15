@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -18,7 +19,8 @@ extension ChatX on Chat {
       
       if (lastMessage == null) return noMessages;
       
-      return getMessageDisplayText(lastMessage, noMessages);
+      // Use the MessageX extension method directly
+      return lastMessage.getMessageDisplayText;
     } catch (_) {
       return noMessages;
     }

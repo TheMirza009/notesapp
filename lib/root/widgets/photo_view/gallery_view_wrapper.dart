@@ -357,7 +357,7 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                                 child: InkWell(
                                   onTap:
                                       () async =>
-                                          await _openPreviewAndRemoveCamera(
+                                          await openPreviewAndRemoveCamera(
                                             context,
                                             widget.galleryItems[0],
                                             ref,
@@ -502,7 +502,7 @@ Widget _buildVideoProgressIndicator(VideoHandler videoController) {
   }
 }
 
-Future<void> _openPreviewAndRemoveCamera(
+Future<void> openPreviewAndRemoveCamera(
   BuildContext context,
   Media media,
   WidgetRef ref,

@@ -15,6 +15,7 @@ import 'package:notesapp/core/controllers/media_handler_video_extensions.dart';
 import 'package:notesapp/core/controllers/recording_handler.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/extensions/string_extensions.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/screens/Chat_Detail/screens/chat_detail_screen_divided.dart';
 import 'package:notesapp/root/screens/Chat_Detail/screens/chat_media_screen.dart';
@@ -571,7 +572,7 @@ Future<List<Message>> _loadMessageBatch(
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
-              height: MediaQuery.of(context).size.height - kToolbarHeight / 1.5,
+              height: MediaQuery.of(context).size.height - (kisWindows ? 0 : (kToolbarHeight / 1.5)),
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
@@ -623,7 +624,7 @@ Future<List<Message>> _loadMessageBatch(
         : (media ?? await MediaHandler.pickImage(source: (isCamera ?? false) ? ImageSource.camera : ImageSource.gallery));
 
     if (pickedMedia == null || _chat == null) return;
-    final previewed = await showPreview(pickedMedia);
+    final previewed = media ?? await showPreview(pickedMedia);
     if (previewed == null) return;
     await deleteInitMessage();
 
