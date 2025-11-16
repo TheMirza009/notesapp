@@ -40,6 +40,17 @@ class SettingsNotifier extends StateNotifier<Settings?> {
     final updated = current.setBubbleStyle(style);
     await update(updated);
   }
+
+  Future<void> setChatOrder(bool chatOrder) async {
+    final current = state ?? Settings(chatDisplayAscending: chatOrder);
+    final updated = current.setChatOrder(chatOrder);
+    await update(updated);
+  }
+
+  Future<void> toggleChatOrder() async {
+    final updated = state?.toggleChatDisplayOrder() ?? state!.copyWith(chatDisplayAscending: false);
+    await update(updated);
+  }
 }
 
 final settingsController =

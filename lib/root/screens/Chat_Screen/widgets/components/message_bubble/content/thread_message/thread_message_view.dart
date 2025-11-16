@@ -432,12 +432,15 @@ class _ClearButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: IconButton(
+      child: IconButton.filled(
         icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white70),
         splashRadius: 18,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
         onPressed: () => onPressed?.call(index),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.black12, // Set background color
+        ),
       ),
     );
   }

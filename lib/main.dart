@@ -62,7 +62,6 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = ref.watch(themeNotifierProvider);
-
     return MaterialApp(
       // showPerformanceOverlay: true,
       debugShowCheckedModeBanner: false,

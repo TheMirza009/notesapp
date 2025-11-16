@@ -33,53 +33,68 @@ class MessageListWrapper extends ConsumerStatefulWidget {
 }
 
 class _MessageListWrapperState extends ConsumerState<MessageListWrapper> 
-  with AutomaticKeepAliveClientMixin  {
+  with AutomaticKeepAliveClientMixin {
   
   @override 
   bool get wantKeepAlive => true;
+
+  bool _isInitialBuild = true; // ✅ Track first build only
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final notifier = ref.read(chatStateController.notifier);
-    final messages = ref.watch( chatStateController.select((s) => s.messages));
-    final isLoading = ref.watch(chatStateController.notifier).isLoading;
+    final messages = ref.watch(chatStateController.select((s) => s.messages));
+    final isLoading = ref.watch(chatStateController.select((s) => s.isLoading));
+    final shouldStartFromBottom = !(ref.read(settingsController)?.chatDisplayAscending ?? true);
 
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //   if (notifier.itemScrollController.isAttached && messages.isNotEmpty) {
-  //     notifier.itemScrollController.jumpTo(index: messages.length - 1);
-  //   }
-  // });
+    // ✅ Reset flag when loading (new chat selected)
+    if (isLoading) {
+      _isInitialBuild = true;
+    }
+
+    // ✅ Calculate initial index ONLY on first build
+    // Calculate initial index
+    final int initialIndex;
+    if (_isInitialBuild && !isLoading && messages.isNotEmpty) {
+      initialIndex = shouldStartFromBottom 
+          ? (messages.length - 1).clamp(0, messages.length) // Start at last message
+          : 0;
+      _isInitialBuild = false;
+    } else {
+      initialIndex = 0;
+    }
 
     return Expanded(
-      child: isLoading ? const LoadIndicator() : messages.isEmpty
-          ? const NothingToSee()
-          : AbsorbPointer(
-            absorbing: ref.watch(chatStateController.select((s) => s.isEditing)),
-            child: ScrollablePositionedList.builder(
-                itemScrollController: notifier.itemScrollController,
-                itemPositionsListener: notifier.itemPositionsListener,
-                itemCount: messages.length + 1,
-                addSemanticIndexes: true,        // ✅
-                // physics: ref.watch(chatStateController.select((s) => s.isEditing))
-                //     ? const NeverScrollableScrollPhysics() // 🚫 disables scroll
-                //     : const BouncingScrollPhysics(),  
-                itemBuilder: (context, index) {
-                  if (index == messages.length) {
-                    return const SizedBox( height: 150);
-                  }
-            
-                  final message = messages[index]; // 👈 Get the message directly
-                   return ProviderScope(
-                    overrides: [
-                      // messageIdProvider.overrideWith((_) => messageId),
-                      messageProvider.overrideWithValue(message), // 👈 Pass the message instead of finding it later
-                    ],
-                    child: const _MessageItemBuilder(),
-                  );
-                },
-              ),
-          ),
+      child: isLoading 
+          ? const LoadIndicator() 
+          : messages.isEmpty
+              ? const NothingToSee()
+              : AbsorbPointer(
+                  absorbing: ref.watch(chatStateController.select((s) => s.isEditing)),
+                  child: ScrollablePositionedList.builder(
+                    key: ValueKey(isLoading), // ✅ Only rebuild on loading state change
+                    itemScrollController: notifier.itemScrollController,
+                    itemPositionsListener: notifier.itemPositionsListener,
+                    itemCount: messages.length + 1,
+                    addSemanticIndexes: true,
+                    // ✅ Only use initialScrollIndex on first build
+                    initialScrollIndex: initialIndex,
+                    itemBuilder: (context, index) {
+                      if (index == messages.length) {
+                        return const SizedBox(height: 150);
+                      }
+
+                      final message = messages[index];
+                      return ProviderScope(
+                        overrides: [
+                          messageProvider.overrideWithValue(message),
+                        ],
+                        child: const _MessageItemBuilder(),
+                      );
+                    },
+                  ),
+                ),
     );
   }
 }

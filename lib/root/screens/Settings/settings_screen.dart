@@ -5,8 +5,10 @@ import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/screens/Settings/widgets/emerging_circle.dart';
@@ -16,6 +18,7 @@ import 'package:notesapp/root/widgets/theme_switch.dart';
 
 final GlobalKey tile1 = GlobalKey();
 final GlobalKey tile2 = GlobalKey();
+final GlobalKey tile3 = GlobalKey();
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -65,6 +68,31 @@ class SettingsScreen extends ConsumerWidget {
               );
               },
             ),
+            RoundedTile(
+  key: tile3,
+  margins: EdgeInsets.only(bottom: 10),
+  leading: Icon(Icons.vertical_align_bottom),
+  title: Text("Start Chat from Bottom"),
+  trailing: Switch.adaptive(
+    value: !(ref.watch(settingsController)?.chatDisplayAscending ?? true),
+    onChanged: (value) async {
+      // Save setting
+      await ref.read(settingsController.notifier).setChatOrder(!value);
+      
+      // ✅ Force complete rebuild by disposing and recreating notifier
+      final currentChat = ref.read(chatListProvider).selectedChat;
+      if (currentChat != null) {
+        // Clear current state
+        ref.invalidate(chatStateController);
+        
+        // Small delay to ensure clean slate
+        await Future.delayed(const Duration(milliseconds: 1));
+        
+        // Rebuild will trigger with new setting
+      }
+    },
+  ),
+),
             // EmergingCircle()
           ],
         ),

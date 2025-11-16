@@ -52,6 +52,10 @@ class Settings {
     return copyWith(chatDisplayAscending: !chatDisplayAscending);
   }
 
+  Settings setChatOrder(bool chatOrderAscending) {
+    return copyWith(chatDisplayAscending: chatOrderAscending);
+  }
+
   Settings toggleTheme() {
     return copyWith(isLightMode: !isLightMode);
   }
