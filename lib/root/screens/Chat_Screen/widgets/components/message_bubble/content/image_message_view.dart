@@ -92,7 +92,7 @@ class _ImageMessageViewState extends State<ImageMessageView> {
                   opacity: _imageLoaded ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
                   child: Hero(
-                    tag: widget.message.media.value?.path ?? widget.message.isarId, // Unique tag,
+                    tag: widget.message.media.value?.isarId ?? widget.message.isarId, // Unique tag,
                     child: ExtendedImage.file(
                       file,
                       fit: BoxFit.cover,

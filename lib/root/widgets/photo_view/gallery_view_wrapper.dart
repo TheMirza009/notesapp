@@ -314,7 +314,7 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                   File(path),
                   cacheRawData: true,
                 ),
-                heroAttributes: PhotoViewHeroAttributes(tag: path),
+                heroAttributes: PhotoViewHeroAttributes(tag: media.isarId),
                 minScale: PhotoViewComputedScale.contained * 0.9,
                 maxScale: PhotoViewComputedScale.covered * 2.0,
                 initialScale: PhotoViewComputedScale.contained,
