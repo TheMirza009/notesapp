@@ -262,36 +262,17 @@ class ChatStateNotifier extends Notifier<ChatState> {
     final startFromBottom = !(ref.read(settingsController)?.chatDisplayAscending ?? true);
 
     if (startFromBottom) {
-      // ✅ DIFFERENT STRATEGY: Load more initially, then prepend silently
-      final initialBatchSize = 50.clamp(1, messageIds.length); // Load last 50
-      final skipCount = (messageIds.length - initialBatchSize).clamp(0, messageIds.length);
-      final visibleIds = messageIds.skip(skipCount).toList();
-
-      // Load initial batch
-      final visibleMessages = await _loadMessageBatch(visibleIds, concurrency: concurrency);
-      allMessages = visibleMessages;
-      
-      isLoading = false;
-      state = state.copyWith(
-        messages: List.unmodifiable(allMessages),
-        isLoading: false,
-      );
-
-      // ✅ Load remaining SILENTLY in background (no scroll disruption)
-      if (skipCount > 0) {
-        final remainingIds = messageIds.take(skipCount).toList();
-        
-        // ✅ Wait longer before starting background load
-        Future.delayed(const Duration(milliseconds: 1000), () {
-          _loadRemainingMessagesSilently(
-            remainingIds,
-            batchSize: batchSize,
-            concurrency: concurrency,
-            delay: delay,
-          );
-        });
-      }
-    } else {
+  // ✅ SIMPLE STRATEGY: Load ALL messages at once for bottom-start
+  // This prevents any jumps from silent loading
+  final allMessagesFromDb = await _loadMessageBatch(messageIds, concurrency: concurrency);
+  allMessages = allMessagesFromDb;
+  
+  isLoading = false;
+  state = state.copyWith(
+    messages: List.unmodifiable(allMessages),
+    isLoading: false,
+  );
+} else {
       // ✅ Original strategy for top-start
       final actualVisibleCount = visibleCount.clamp(1, messageIds.length);
       final visibleIds = messageIds.take(actualVisibleCount).toList();
@@ -369,6 +350,7 @@ Future<List<Message>> _loadMessageBatch(
 }
 
 /// ✅ Silent background loading - maintains scroll position
+/// ✅ Silent background loading - ALWAYS stay at bottom for bottom-start mode
 Future<void> _loadRemainingMessagesSilently(
   List<int> remainingIds, {
   int batchSize = 50,
@@ -377,57 +359,34 @@ Future<void> _loadRemainingMessagesSilently(
 }) async {
   debugPrint('🔇 Starting silent background load: ${remainingIds.length} messages');
 
+  final startFromBottom = !(ref.read(settingsController)?.chatDisplayAscending ?? true);
+
   for (int i = 0; i < remainingIds.length; i += batchSize) {
     if (_chat == null) return;
 
     await Future.delayed(delay);
-
-    // ✅ Capture scroll position BEFORE prepending
-    int? anchorIndex;
-    double? anchorAlignment;
-    
-    if (itemScrollController.isAttached) {
-      try {
-        final positions = itemPositionsListener.itemPositions.value;
-        if (positions.isNotEmpty) {
-          // Get the first visible item
-          final first = positions.reduce((a, b) => a.index < b.index ? a : b);
-          anchorIndex = first.index;
-          anchorAlignment = first.itemLeadingEdge;
-        }
-      } catch (e) {
-        debugPrint('⚠️ Could not capture scroll position: $e');
-      }
-    }
 
     final batchIds = remainingIds.skip(i).take(batchSize).toList();
     final batchMessages = await _loadMessageBatch(batchIds, concurrency: concurrency);
 
     if (batchMessages.isEmpty) continue;
 
-    final batchLength = batchMessages.length;
-
     // ✅ Prepend messages
     allMessages = [...batchMessages, ...allMessages];
     state = state.copyWith(messages: List.unmodifiable(allMessages));
 
-    // ✅ CRITICAL: Restore scroll position to prevent jump
-    if (anchorIndex != null && itemScrollController.isAttached) {
-      // Wait for layout to complete
-      await Future.delayed(const Duration(milliseconds: 50));
-      
+    // ✅ For bottom-start mode, ALWAYS scroll to bottom after loading
+    if (startFromBottom && itemScrollController.isAttached) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (itemScrollController.isAttached) {
           try {
-            // Adjust index by number of prepended messages
-            final newIndex = anchorIndex! + batchLength;
             itemScrollController.jumpTo(
-              index: newIndex,
-              alignment: anchorAlignment ?? 0.0,
+              index: allMessages.length - 1,
+              alignment: 0.0,
             );
-            debugPrint('🔧 Adjusted scroll: $anchorIndex → $newIndex');
+            debugPrint('🔧 Staying at bottom after silent load');
           } catch (e) {
-            debugPrint('⚠️ Could not restore scroll: $e');
+            debugPrint('⚠️ Could not stay at bottom: $e');
           }
         }
       });
@@ -438,7 +397,6 @@ Future<void> _loadRemainingMessagesSilently(
 
   debugPrint('✅ Silent background load complete');
 }
-
   /// Progressive background loading with append/prepend logic
   Future<void> _loadRemainingMessagesInBatches(
   List<int> remainingIds, {

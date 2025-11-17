@@ -53,16 +53,22 @@ class _MessageListWrapperState extends ConsumerState<MessageListWrapper>
       _isInitialBuild = true;
     }
 
-    // ✅ Calculate initial index ONLY on first build
-    // Calculate initial index
+    // Calculate initial index and alignment
     final int initialIndex;
-    if (_isInitialBuild && !isLoading && messages.isNotEmpty) {
-      initialIndex = shouldStartFromBottom 
-          ? (messages.length - 1).clamp(0, messages.length) // Start at last message
-          : 0;
+    double initialAlignment = 0.0; // Default: align to top
+    
+    if (_isInitialBuild && !isLoading && messages.isNotEmpty && messages.length >= 3) {
+      if (shouldStartFromBottom) {
+        initialIndex = messages.length;
+        initialAlignment = 0.8; // ✅ Align to BOTTOM of screen
+      } else {
+        initialIndex = 0;
+        initialAlignment = 0.0; // Align to top
+      }
       _isInitialBuild = false;
     } else {
       initialIndex = 0;
+      initialAlignment = 0.0;
     }
 
     return Expanded(
@@ -78,8 +84,8 @@ class _MessageListWrapperState extends ConsumerState<MessageListWrapper>
                     itemPositionsListener: notifier.itemPositionsListener,
                     itemCount: messages.length + 1,
                     addSemanticIndexes: true,
-                    // ✅ Only use initialScrollIndex on first build
                     initialScrollIndex: initialIndex,
+                    initialAlignment: initialAlignment,
                     itemBuilder: (context, index) {
                       if (index == messages.length) {
                         return const SizedBox(height: 150);
