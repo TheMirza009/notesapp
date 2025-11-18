@@ -277,6 +277,7 @@ void dispose() {
               return Consumer(
                 builder: (context, ref, child) {
                   return MediaPreviewScreen(
+                    fromCamera: true,
                     media: currentMedia,
                     onCancelled: () {
                       disposeTimer?.cancel();

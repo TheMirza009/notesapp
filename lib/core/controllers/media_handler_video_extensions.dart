@@ -29,6 +29,29 @@ class MediaHandlerVideoExtensions extends MediaHandler {
     return Media.fromVideoPath(savedFile.path, metadata: videoMetadata);
   }
 
+  static Future<Media?> previewVideo() async {
+    final XFile? pickedFile = await _picker.pickVideo(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile == null) return null;
+
+    return Media.fromVideoPath(pickedFile.path);
+  }
+
+  static Future<Media?> saveVideo(String? path) async {
+    if (path == null) return null;
+
+    // Save video file
+    final savedFile = await saveToStorage(File(path), 'Videos');
+
+    // Generate metadata with optimizations (faster but still waits)
+    final videoMetadata = await VideoMetadataHandler.generateVideoMetadata(
+      savedFile.path,
+    );
+
+    return Media.fromVideoPath(savedFile.path, metadata: videoMetadata);
+  }
+
   /// OPTION 2: Return immediately with null metadata, process in background
   static Future<Media?> pickVideoFast({
     Function(VideoMetadata?)? onMetadataReady,

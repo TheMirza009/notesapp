@@ -25,6 +25,7 @@ import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/attachment/ov
 import 'package:notesapp/root/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
 import 'package:notesapp/root/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/widgets/photo_view/gallery_view_wrapper.dart';
+import 'package:notesapp/root/widgets/photo_view/media_preview_modal.dart';
 import 'package:notesapp/root/widgets/photo_view/media_preview_screen.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:riverpod/riverpod.dart';
@@ -632,61 +633,25 @@ Future<void> _loadRemainingMessagesSilently(
     );
   }
 
+  // Shows Media Preview Modal for image or video
   Future<Media?> showPreview(Media originalMedia) async {
     final BuildContext? ctx = navigatorKey.currentContext;
     if (ctx == null) return null;
 
-    Media currentMedia = originalMedia;
-    Media? croppedMedia; // Track if we created a cropped version
-
-    return await showModalBottomSheet<Media?>(
+    final result = await showModalBottomSheet<Media?>(
       context: ctx,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              height: MediaQuery.of(context).size.height - (kisWindows ? 0 : (kToolbarHeight / 1.5)),
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-                child: MediaPreviewScreen(
-                  media: currentMedia,
-                  onSend: () => Navigator.of(context).pop(currentMedia),
-                  onCancelled: () {
-                    // Clean up cropped media if user cancels after cropping
-                    if (croppedMedia != null && croppedMedia != originalMedia) {
-                      MediaHandler.deleteMedia(croppedMedia!);
-                    }
-                    Navigator.of(context).pop(null);
-                  },
-                  onCropped: (imageToCrop) async {
-                    final newMedia = await MediaHandler.cropAndSavePhoto(
-                      imageToCrop.path!,
-                      isProfilePicture: false,
-                    );
-                    if (newMedia != null) {
-                      croppedMedia = newMedia;
-                      currentMedia = newMedia;
-                      setModalState(() {}); // Update the modal state
-                    }
-                  },
-                ),
-              ),
-            );
-          },
-        );
+        return MediaPreviewModal(
+          key: ValueKey(originalMedia.isarId),
+          originalMedia: originalMedia);
       },
     );
+
+    return result;
   }
 
   Future<void> pickImage({
@@ -732,11 +697,14 @@ Future<void> _loadRemainingMessagesSilently(
     Utils.showGlobalSnackBar("Video picking not supported on Windows", Colors.orange);
     return;
   }
-    final Media? pickedMedia = media ??  await MediaHandlerVideoExtensions.pickVideo();
+    // final Media? pickedMedia = media ??  await MediaHandlerVideoExtensions.pickVideo();
+    Media? pickedMedia = media ??  await MediaHandlerVideoExtensions.previewVideo();
 
     if (pickedMedia == null || _chat == null) return;
     final previewed = await showPreview(pickedMedia);
     if (previewed == null) return;
+    pickedMedia = await MediaHandlerVideoExtensions.saveVideo(previewed.path);
+    if (pickedMedia == null) return;
     await deleteInitMessage();
 
     // Persist media in a centralized helper

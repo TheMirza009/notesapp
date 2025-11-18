@@ -13,6 +13,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/constants.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
@@ -125,6 +126,13 @@ class ProfileScreenState extends ProfileScreenBaseState {
             ),
           ),
         ),
+        extendBody: true,
+        bottomNavigationBar: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Text("Version ${Constants.version}", style: TextStyle(color: context.isLight ? ThemeConstants.iconColorNeutral.withValues(alpha: 0.5) : ThemeConstants.iconColorNeutral),),
+          )),
       ),
     );
   }

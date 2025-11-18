@@ -80,6 +80,55 @@ class MediaHandler {
     return media;
   }
 
+  static Future<Media?> previewImage({
+    bool isProfilePicture = false,
+    ImageSource? source = ImageSource.gallery,
+    bool? useCroppy = false,
+    bool? navigateToCrop = false,
+  }) async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source ?? ImageSource.gallery,
+    );
+    if (pickedFile == null) {
+      debugPrint("⚠️ No image picked");
+      return null;
+    }
+
+    File file = File(pickedFile.path);
+    final media = Media.fromFilePath(file.path);
+    debugPrint("🎉 Returning media with path: ${media.path}");
+    return media;
+  }
+
+  static Future<Media?> saveImage({
+    required Media? image,
+  }) async {
+    if (image == null) return null;
+
+
+    File file = File(image.path!);
+    debugPrint("✅ Picked file: ${file.path}");
+
+    final savedFile = await saveToStorage(
+      file,
+      'Photos',
+    );
+    debugPrint("💾 Saved file: ${savedFile.path}");
+
+    // ✅ Generate blurHash in background (don't wait for it)
+    unawaited(_generateAndStoreBlurHash(savedFile.path));
+
+    final bytes = await savedFile.readAsBytes();
+    final decodedImage = await decodeImageFromList(bytes);
+    final aspectRatio = decodedImage.width / decodedImage.height;
+
+    final media = Media.fromFilePath(savedFile.path);
+    media.aspectRatio = aspectRatio;
+
+    debugPrint("🎉 Returning media with path: ${media.path}");
+    return media;
+  }
+
 
   static Future<Media> fromImageBytes(Uint8List bytes) async {
     final tempDir = await getTemporaryDirectory();
@@ -260,9 +309,9 @@ static Future<Media?> saveAudio(String audioPath) async {
     if (await file.exists()) {
       try {
         await file.delete();
-        debugPrint("Deleted file: ${media.name}");
+        debugPrint("🗑️ Deleted file: ${media.name}");
       } catch (e) {
-        debugPrint("Failed to delete media file at $filePath: $e");
+        debugPrint("🚨⚠️ Failed to delete media file at $filePath: $e");
       }
     }
   }

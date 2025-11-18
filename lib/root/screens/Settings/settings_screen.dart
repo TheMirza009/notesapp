@@ -15,6 +15,7 @@ import 'package:notesapp/root/screens/Settings/widgets/emerging_circle.dart';
 import 'package:notesapp/root/screens/Settings/widgets/rounded_tile.dart';
 import 'package:notesapp/root/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/widgets/theme_switch.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
 
 final GlobalKey tile1 = GlobalKey();
 final GlobalKey tile2 = GlobalKey();
@@ -25,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final baseColor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark;
     return Scaffold(
       appBar: AppBar(
         title: Text("Settings"),
@@ -54,7 +56,7 @@ class SettingsScreen extends ConsumerWidget {
             RoundedTile(
               key: tile2,
               margins: EdgeInsets.only(bottom: 10),
-              leading: Icon(Icons.chat),
+              leading: vectorBuild(IconPaths.chatBubble2, color: baseColor), // Icon(Icons.chat),
               title: Text("Bubble Style"),
               onTap: () {
                 final Offset position = Utils.getObjectPosition(objectKey: tile2);
@@ -71,7 +73,7 @@ class SettingsScreen extends ConsumerWidget {
             RoundedTile(
   key: tile3,
   margins: EdgeInsets.only(bottom: 10),
-  leading: Icon(Icons.vertical_align_bottom),
+  leading: vectorBuild(IconPaths.chatOrder, color: baseColor, scale: 0.8), // Icon(Icons.vertical_align_bottom),
   title: Text("Start Chat from Bottom"),
   trailing: Switch.adaptive(
     value: !(ref.watch(settingsController)?.chatDisplayAscending ?? true),

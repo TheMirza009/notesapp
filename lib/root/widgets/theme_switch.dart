@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
+import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
@@ -12,6 +13,7 @@ class ThemeSwitch extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final IconData themeIcon =  context.isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined;
     return IconButton(
+      color: context.isLight ? ThemeConstants.darkAppbar : ThemeConstants.iconColorNeutral,
       icon: context.isLight ? Icon(themeIcon) : vectorBuild(IconPaths.sun),
       onPressed: () => ref.read(themeNotifierProvider.notifier).toggleTheme(),
     );
