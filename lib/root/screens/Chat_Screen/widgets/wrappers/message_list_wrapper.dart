@@ -160,7 +160,7 @@ class _MessageItemBuilder extends ConsumerWidget {
             bubbleColor:  bubbleColor,
             // interactions
             onSwipe: () {
-              if (isEditing == false) {
+              if (isEditing == false && isSelecting == false) {
                 ref.read(overlayHandlerProvider).showReplyAnchor(context); // show hidden
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ref.read(chatStateController.notifier).setAnchorMessage(message, context); // trigger slide

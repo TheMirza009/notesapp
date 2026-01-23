@@ -76,6 +76,7 @@ class _SwipeableState extends State<Swipeable>
         // Draggable effect using Transform.translate
         GestureDetector(
           onHorizontalDragUpdate: (details) {
+            if (widget.isSelecting) return;
             setState(() {
               _dragOffset += details.delta.dx * 0.5; // resistive drag
             });

@@ -4,8 +4,16 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")// The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
 }
 
+// Load Keystore
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+
 android {
-    namespace = "com.example.notesapp"
+    namespace = "com.azdhaar.notesapp"
     compileSdk = 36
     ndkVersion =  "27.0.12077973" // flutter.ndkVersion
 
@@ -24,9 +32,19 @@ android {
     //     jvmTarget = "17"
     // }
 
+    // App Signing
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.notesapp"
+        applicationId = "com.azdhaar.notesapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -37,7 +55,7 @@ android {
 
     buildTypes {
         named("release") {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.release
             isMinifyEnabled = true
             isShrinkResources = true
         }
