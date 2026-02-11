@@ -117,8 +117,9 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
   Future<void> contactUs() async {
     final String subject = Uri.encodeComponent('Greetings');
     final String body = Uri.encodeComponent('Good Day, Mirza AbdulMoeed');
+    final String address = "azdhaarsoftware@gmail.com";
     final Uri emailUri = Uri.parse(
-      'mailto:themirza009@outlook.com?subject=$subject&body=$body',
+      'mailto:$address?subject=$subject&body=$body',
     );
 
 

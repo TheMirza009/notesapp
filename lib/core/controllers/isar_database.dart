@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:isar_community/isar.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -13,7 +14,7 @@ class IsarDatabase {
   /// Initialize Isar
   static Future<void> init() async {
     if (_isar != null && _isar!.isOpen) return;
-    final dir = await getDatabaseDirectory();
+    final dir = kisWindows ? await getApplicationSupportDirectory() : await getDatabaseDirectory();
     _isar = await Isar.open(
       [ChatSchema, MessageSchema, MediaSchema, UserSchema, SettingsSchema],
       directory: dir.path,
