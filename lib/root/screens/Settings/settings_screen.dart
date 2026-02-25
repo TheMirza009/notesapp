@@ -5,6 +5,7 @@ import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -27,76 +28,79 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final baseColor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Settings"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            RoundedTile(
-              key: tile1,
-              margins: EdgeInsets.only(bottom: 10),
-              leading: Icon(context.isLight ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-              title: Text("Theme"),
-              onTap: () {
-                 // Compute global position of the tile
-                final Offset position = Utils.getObjectPosition(objectKey: tile1);
-
-                CustomContextMenu.showMenuAt(
-                context,
-                position: position, // Offset(context.screenWidth - 20, 120), // Offset(200, 120),
-                menuItems: themeOptions,
-                triangleHorizontalOffset: 180,
-                onSelected: (val) => handleThemeOptions(ref, val),
-              );
-              },
-            ),
-            RoundedTile(
-              key: tile2,
-              margins: EdgeInsets.only(bottom: 10),
-              leading: vectorBuild(IconPaths.chatBubble2, color: baseColor), // Icon(Icons.chat),
-              title: Text("Bubble Style"),
-              onTap: () {
-                final Offset position = Utils.getObjectPosition(objectKey: tile2);
-                CustomContextMenu.showMenuAt(
-                context,
-                triangleHorizontalOffset: 180,
-                showTail: true,
-                position: position, // Offset(context.screenWidth - 20, 190), // Offset(200, 120),
-                menuItems: bubbleStyleOptions,
-                onSelected: (val) => handleBubbleStyle(ref, val),
-              );
-              },
-            ),
-            RoundedTile(
-  key: tile3,
-  margins: EdgeInsets.only(bottom: 10),
-  leading: vectorBuild(IconPaths.chatOrder, color: baseColor, scale: 0.8), // Icon(Icons.vertical_align_bottom),
-  title: Text("Start Chat from Bottom"),
-  trailing: Switch.adaptive(
-    value: !(ref.watch(settingsController)?.chatDisplayAscending ?? true),
-    onChanged: (value) async {
-      // Save setting
-      await ref.read(settingsController.notifier).setChatOrder(!value);
+    return PopScope(
+      onPopInvoked: (didPop) => WindowsUtils.clearTitleBarColorDirect(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Settings"),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            children: [
+              RoundedTile(
+                key: tile1,
+                margins: EdgeInsets.only(bottom: 10),
+                leading: Icon(context.isLight ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+                title: Text("Theme"),
+                onTap: () {
+                   // Compute global position of the tile
+                  final Offset position = Utils.getObjectPosition(objectKey: tile1);
       
-      // ✅ Force complete rebuild by disposing and recreating notifier
-      final currentChat = ref.read(chatListProvider).selectedChat;
-      if (currentChat != null) {
-        // Clear current state
-        ref.invalidate(chatStateController);
+                  CustomContextMenu.showMenuAt(
+                  context,
+                  position: position, // Offset(context.screenWidth - 20, 120), // Offset(200, 120),
+                  menuItems: themeOptions,
+                  triangleHorizontalOffset: 180,
+                  onSelected: (val) => handleThemeOptions(ref, val),
+                );
+                },
+              ),
+              RoundedTile(
+                key: tile2,
+                margins: EdgeInsets.only(bottom: 10),
+                leading: vectorBuild(IconPaths.chatBubble2, color: baseColor), // Icon(Icons.chat),
+                title: Text("Bubble Style"),
+                onTap: () {
+                  final Offset position = Utils.getObjectPosition(objectKey: tile2);
+                  CustomContextMenu.showMenuAt(
+                  context,
+                  triangleHorizontalOffset: 180,
+                  showTail: true,
+                  position: position, // Offset(context.screenWidth - 20, 190), // Offset(200, 120),
+                  menuItems: bubbleStyleOptions,
+                  onSelected: (val) => handleBubbleStyle(ref, val),
+                );
+                },
+              ),
+              RoundedTile(
+        key: tile3,
+        margins: EdgeInsets.only(bottom: 10),
+        leading: vectorBuild(IconPaths.chatOrder, color: baseColor, scale: 0.8), // Icon(Icons.vertical_align_bottom),
+        title: Text("Start Chat from Bottom"),
+        trailing: Switch.adaptive(
+      value: !(ref.watch(settingsController)?.chatDisplayAscending ?? true),
+      onChanged: (value) async {
+        // Save setting
+        await ref.read(settingsController.notifier).setChatOrder(!value);
         
-        // Small delay to ensure clean slate
-        await Future.delayed(const Duration(milliseconds: 1));
-        
-        // Rebuild will trigger with new setting
-      }
-    },
-  ),
-),
-            // EmergingCircle()
-          ],
+        // ✅ Force complete rebuild by disposing and recreating notifier
+        final currentChat = ref.read(chatListProvider).selectedChat;
+        if (currentChat != null) {
+          // Clear current state
+          ref.invalidate(chatStateController);
+          
+          // Small delay to ensure clean slate
+          await Future.delayed(const Duration(milliseconds: 1));
+          
+          // Rebuild will trigger with new setting
+        }
+      },
+        ),
+      ),
+              // EmergingCircle()
+            ],
+          ),
         ),
       ),
     );

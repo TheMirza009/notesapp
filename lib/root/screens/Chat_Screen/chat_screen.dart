@@ -7,7 +7,10 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -58,8 +61,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
   @override
   bool get wantKeepAlive => true;
 
-  @override void initState() {
-    super.initState();
+  // @override
+  // void initState() {
+  //   super.initState();
+  // }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WindowsUtils.setTitleBarColor(
+      context.isLight ? const Color(0xFFE7ECF3) : const Color(0xFF23333F),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -82,6 +99,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
     return PopScope(
       canPop: canPop,
       onPopInvokedWithResult: (didPop, result) {
+        WindowsUtils.clearTitleBarColorDirect();
+        
         final state = ref.read(chatStateController);
         final notifier = ref.read(chatStateController.notifier);
 

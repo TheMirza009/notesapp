@@ -4,8 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -81,12 +84,14 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
     switch (value) {
       case "profile":
         setState(() => isSliding = true);
+        WindowsUtils.setTitleBarColorDirect(context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
         break;
       case "settings":
         Navigator.push(
           context,
           CupertinoPageRoute(builder: (_) => const SettingsScreen()),
         );
+        WindowsUtils.setTitleBarColorDirect(context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
         break;
       case "deleteAll":
         showCupertinoDialog(
@@ -133,7 +138,10 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
           ),
         ),
       ),
-      onPressed: () => setState(() => isSliding = true),
+      onPressed: () {
+        setState(() => isSliding = true);
+        WindowsUtils.setTitleBarColorDirect(context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
+      },
     );
   }
 

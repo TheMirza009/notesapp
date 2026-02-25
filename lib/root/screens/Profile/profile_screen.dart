@@ -17,6 +17,7 @@ import 'package:notesapp/core/utils/constants.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/screens/Load_test/widgets/pulldown_wrapper.dart';
 import 'package:notesapp/root/screens/Profile/widgets/tile_container.dart';
 import 'package:notesapp/root/screens/Profile/wrappers/hero_wrapper.dart';
@@ -33,6 +34,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class ProfileScreenState extends ProfileScreenBaseState {
+
   @override
   Widget build(BuildContext context) {
     final screensize = MediaQuery.sizeOf(context);
@@ -45,94 +47,98 @@ class ProfileScreenState extends ProfileScreenBaseState {
 
     titleController.text = ref.watch(userController)?.name ?? "Name"; 
     debugPrint("Profile Screen built");
+
     return PullDownWrapper(
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        resizeToAvoidBottomInset: true,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          leading: widget.leading,
-          title: const Text(
-            "Profile",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+      child: PopScope(
+        onPopInvoked: (didPop) => WindowsUtils.clearTitleBarColorDirect(),
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          resizeToAvoidBottomInset: true,
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            leading: widget.leading,
+            title: const Text(
+              "Profile",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+            ),
+            actions: [
+              ThemeSwitch()
+            ],
+            systemOverlayStyle: SystemUiOverlayStyle(
+                systemNavigationBarColor: (context.isLight ? ThemeConstants.hometoolbarLight3 :ThemeConstants.messageBarDark),
+            ) ,
           ),
-          actions: [
-            ThemeSwitch()
-          ],
-          systemOverlayStyle: SystemUiOverlayStyle(
-              systemNavigationBarColor: (context.isLight ? ThemeConstants.hometoolbarLight3 :ThemeConstants.messageBarDark),
-          ) ,
-        ),
-        body: Container(
-          height: screensize.height,
-          width: screensize.width,
-          padding: const EdgeInsets.only(top: 12),
-          decoration: BoxDecoration(gradient: backgroundGradient),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 75),
-                HeroWrapper(
-                  tag: "profile-avatar",
-                  defaultChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: false),
-                  expandedChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: true),
-                  topWidget: Align(
-                    alignment: Alignment.topLeft,
-                    child: TextButton.icon(
-                      icon: Icon(Icons.arrow_back_rounded),
-                      onPressed: () => Navigator.pop(context),
-                      label: const Text("Back"),
+          body: Container(
+            height: screensize.height,
+            width: screensize.width,
+            padding: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(gradient: backgroundGradient),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 75),
+                  HeroWrapper(
+                    tag: "profile-avatar",
+                    defaultChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: false),
+                    expandedChild: _buildProfileImage(context, user?.profilePhotoPath, expanded: true),
+                    topWidget: Align(
+                      alignment: Alignment.topLeft,
+                      child: TextButton.icon(
+                        icon: Icon(Icons.arrow_back_rounded),
+                        onPressed: () => Navigator.pop(context),
+                        label: const Text("Back"),
+                      ),
+                    ),
+                    bottomWidget: Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Row(
+                        spacing: 10,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton.icon(
+                            icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
+                            onPressed: () => pickNewProfilePhoto(),
+                            label: const Text("Upload", style: TextStyle(color: darkPrimary),),
+                          ),
+                          TextButton.icon(
+                            icon: vectorBuild(IconPaths.shareIcon, color:  shareColor),
+                            onPressed: () => Utils.shareToApps(XFile(user!.profilePhotoPath!)), // () => Navigator.pop(context),
+                            label: Text("Share", style: TextStyle(color: shareColor),),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  bottomWidget: Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: Row(
-                      spacing: 10,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton.icon(
-                          icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
-                          onPressed: () => pickNewProfilePhoto(),
-                          label: const Text("Upload", style: TextStyle(color: darkPrimary),),
-                        ),
-                        TextButton.icon(
-                          icon: vectorBuild(IconPaths.shareIcon, color:  shareColor),
-                          onPressed: () => Utils.shareToApps(XFile(user!.profilePhotoPath!)), // () => Navigator.pop(context),
-                          label: Text("Share", style: TextStyle(color: shareColor),),
-                        ),
-                      ],
-                    ),
+                  // nameBuilderBordered(),
+                  nameBuilderSimple(),
+                  // SizedBox(height: 50),
+                  TileContainer.solidBox(
+                    backgroundColor: Colors.transparent,
+                    dividerColor: context.isLight ? dividerColor : null,
+                    tilePadding: EdgeInsets.symmetric(vertical: 10),
+                    iconPadding: EdgeInsets.only(left: 20, right: 12),
+                    borderRadius: 25,
+                    borderThickness: 2,
+                    dividerThickness: 2,
+                    items: [
+                      TileItem(title: "Settings", icon: vectorBuild(IconPaths.setting1, scale: 1.3), onTap: navigateToSettings),
+                      TileItem(title: "Refer a friend", icon: vectorBuild(IconPaths.mailHeart, scale: 1.3), onTap: () async => await refer()),
+                      TileItem(title: "Contact us", icon: vectorBuild(IconPaths.mail, scale: 1.3), onTap: () async => await contactUs()),
+                    ],
                   ),
-                ),
-                // nameBuilderBordered(),
-                nameBuilderSimple(),
-                // SizedBox(height: 50),
-                TileContainer.solidBox(
-                  backgroundColor: Colors.transparent,
-                  dividerColor: context.isLight ? dividerColor : null,
-                  tilePadding: EdgeInsets.symmetric(vertical: 10),
-                  iconPadding: EdgeInsets.only(left: 20, right: 12),
-                  borderRadius: 25,
-                  borderThickness: 2,
-                  dividerThickness: 2,
-                  items: [
-                    TileItem(title: "Settings", icon: vectorBuild(IconPaths.setting1, scale: 1.3), onTap: navigateToSettings),
-                    TileItem(title: "Refer a friend", icon: vectorBuild(IconPaths.mailHeart, scale: 1.3), onTap: () async => await refer()),
-                    TileItem(title: "Contact us", icon: vectorBuild(IconPaths.mail, scale: 1.3), onTap: () async => await contactUs()),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+          extendBody: true,
+          bottomNavigationBar: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Text("Version ${Constants.version}", style: TextStyle(color: context.isLight ? ThemeConstants.iconColorNeutral.withValues(alpha: 0.5) : ThemeConstants.iconColorNeutral),),
+            )),
         ),
-        extendBody: true,
-        bottomNavigationBar: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: Text("Version ${Constants.version}", style: TextStyle(color: context.isLight ? ThemeConstants.iconColorNeutral.withValues(alpha: 0.5) : ThemeConstants.iconColorNeutral),),
-          )),
       ),
     );
   }

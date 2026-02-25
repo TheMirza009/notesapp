@@ -5,6 +5,7 @@ import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/constants.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/widgets/crop/crop_screen.dart';
@@ -111,13 +112,13 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> refer() async {
-    await Share.share("Download NotesApp please :D");
+    await Share.share("Download NotesApp please :D \n\n${Constants.playStoreURL}");
   }
 
   Future<void> contactUs() async {
     final String subject = Uri.encodeComponent('Greetings');
     final String body = Uri.encodeComponent('Good Day, Mirza AbdulMoeed');
-    final String address = "azdhaarsoftware@gmail.com";
+    final String address = Constants.supportEmail;
     final Uri emailUri = Uri.parse(
       'mailto:$address?subject=$subject&body=$body',
     );
@@ -137,7 +138,7 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
       // Fallback to Outlook Web compose
       final fallback = Uri.parse(
         'https://outlook.live.com/mail/0/deeplink/compose'
-        '?to=themirza009@outlook.com'
+        '?to=$address' // ${Uri.encodeComponent(address)}
         '&subject=Greetings'
         '&body=Good%20Day%2C%20Mirza%20AbdulMoeed',
       );

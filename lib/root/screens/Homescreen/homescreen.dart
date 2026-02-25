@@ -12,6 +12,7 @@ import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
@@ -95,7 +96,11 @@ class HomescreenState extends HomeScreenBaseState {
         overlay: RepaintBoundary(
           child: ProfileScreen(
             leading: IconButton(
-              onPressed: () => setState(() => isSliding = false),
+              onPressed: () {
+                setState(() => isSliding = false);
+                WindowsUtils.clearTitleBarColorDirect();
+                // WindowsUtils.setTitleBarColorDirect(context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
+                },
               icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
             ),
           ),
@@ -131,8 +136,8 @@ class HomescreenState extends HomeScreenBaseState {
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
             child: Container(
-              height: context.screenHeight,
-              width: context.screenWidth,
+              // height: context.screenHeight,
+              // width: context.screenWidth,
               padding: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(gradient: backgroundGradient),
               child: Column(

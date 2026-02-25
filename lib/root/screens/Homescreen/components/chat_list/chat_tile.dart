@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/screens/Homescreen/components/chat_list/doc_icon.dart';
 
 class ChatTile extends StatelessWidget {
@@ -69,7 +70,7 @@ class ChatTile extends StatelessWidget {
               onTap: onTap, // Executes onTap if provided
               onLongPress: onLongPress,
               child: Container(
-                width: ThemeConstants.screenWidth,
+                width: Platform.isWindows ? double.infinity : ThemeConstants.screenWidth,
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 child: Row(
                   children: [
@@ -101,7 +102,16 @@ class ChatTile extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 // Title Text
-                                SizedBox(
+                                kisWindows ? Flexible(
+                                  child: Text(
+                                      title,
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w500,
+                                        overflow: TextOverflow.ellipsis, // Truncate if necessary
+                                      ),
+                                    ),
+                                ) : SizedBox(
                                   width: ThemeConstants.screenWidth * ((trailing == null) ? 0.58 : 0.5), // Adjust width for title
                                   child: Text(
                                     title,
@@ -158,8 +168,18 @@ class ChatTile extends StatelessWidget {
                               ],
                             ),
                             SizedBox(height: ThemeConstants.screenHeight * 0.002,),
+
                             // Subtitle Text
-                            SizedBox(
+                            kisWindows ? Text(
+                                subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
+                                maxLines: 1,
+                                softWrap: false, // Prevent wrapping
+                                overflow: TextOverflow.ellipsis, // Truncate if necessary
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: ThemeConstants.subtitleLight,
+                                ),
+                              ) : SizedBox(
                               width: ThemeConstants.screenWidth * 0.6, // Adjust width for subtitle
                               child: Text(
                                 subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line

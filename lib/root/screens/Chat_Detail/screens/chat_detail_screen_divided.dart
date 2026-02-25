@@ -14,8 +14,10 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_base_state.dart';
 import 'package:notesapp/root/screens/Chat_Detail/chat_detail_notifier.dart';
@@ -64,6 +66,22 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
       });
     }
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WindowsUtils.setTitleBarColor(
+      context.isLight ? ThemeConstants.textDark2 : const Color.fromARGB(255, 14, 20, 24),
+    );
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    scrollController.dispose();
+    super.dispose();
+  }
+
   void scrollHeaderToTop() {
     // Animate until the header is pinned (guard for scrollable extents)
     final maxExtent = scrollController.hasClients ? scrollController.position.maxScrollExtent : 0.0;
@@ -161,14 +179,6 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
   );
 }
 
-
-  @override
-  void dispose() {
-    titleController.dispose();
-    scrollController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chatDetailProvider);
@@ -189,173 +199,176 @@ class _ChatDetailScreenDividedState extends ConsumerState<ChatDetailScreenDivide
       );
     }
 
-    return Scaffold(
-      floatingActionButton: IconButton(
-        icon: Icon(Icons.info_outline_rounded),
-        onPressed: () => showChatInfoSheet(context, chat)
-            // () => Navigator.push(
-            //   context,
-            //   CupertinoPageRoute(builder: (_) => ThreadTestScreen()),
-            // ),
-      ), // 
-      appBar: AppBar(
-        elevation: 0,
-        forceMaterialTransparency: true,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-        ),
-        title: isEditing
-            ? TextField(
-                controller: titleController,
-                autofocus: true,
-                decoration: const InputDecoration(border: InputBorder.none),
-                style: const TextStyle(fontSize: 21.5, fontWeight: FontWeight.w300),
-              )
-            : Text(chat.title ?? "New Chat"),
-        actions: [
-          IconButton(
-            icon: Icon(isEditing ? Icons.check : Icons.edit),
-            onPressed: isEditing ? () => finishEditing(notifier) : startEditing,
+    return PopScope(
+      onPopInvoked: (didPop) =>  windowsTitleBarColor.value = context.isLight ? const Color(0xFFE7ECF3) : const Color(0xFF23333F),
+      child: Scaffold(
+        floatingActionButton: IconButton(
+          icon: Icon(Icons.info_outline_rounded),
+          onPressed: () => showChatInfoSheet(context, chat)
+              // () => Navigator.push(
+              //   context,
+              //   CupertinoPageRoute(builder: (_) => ThreadTestScreen()),
+              // ),
+        ), // 
+        appBar: AppBar(
+          elevation: 0,
+          forceMaterialTransparency: true,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
           ),
-        ],
-      ),
-      body: ListView(
-        children: [
-          // Profile Image Section
-          SizedBox(
-            height: context.screenHeight / 3,
-            child: Material(
-              color: Colors.transparent,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: HeroWrapper(
-                tag: "chat-avatar-${chat.uuid ?? 'unknown'}",
-                defaultChild: buildProfileImage(context, chat.chatPhotoPath, expanded: false),
-                expandedChild: buildProfileImage(context, chat.chatPhotoPath, expanded: true),
-                topWidget: Align(
-                  alignment: Alignment.topLeft,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    onPressed: () => Navigator.pop(context),
-                    label: const Text("Back"),
+          title: isEditing
+              ? TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  decoration: const InputDecoration(border: InputBorder.none),
+                  style: const TextStyle(fontSize: 21.5, fontWeight: FontWeight.w300),
+                )
+              : Text(chat.title ?? "New Chat"),
+          actions: [
+            IconButton(
+              icon: Icon(isEditing ? Icons.check : Icons.edit),
+              onPressed: isEditing ? () => finishEditing(notifier) : startEditing,
+            ),
+          ],
+        ),
+        body: ListView(
+          children: [
+            // Profile Image Section
+            SizedBox(
+              height: context.screenHeight / 3,
+              child: Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: HeroWrapper(
+                  tag: "chat-avatar-${chat.uuid ?? 'unknown'}",
+                  defaultChild: buildProfileImage(context, chat.chatPhotoPath, expanded: false),
+                  expandedChild: buildProfileImage(context, chat.chatPhotoPath, expanded: true),
+                  topWidget: Align(
+                    alignment: Alignment.topLeft,
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      onPressed: () => Navigator.pop(context),
+                      label: const Text("Back"),
+                    ),
                   ),
-                ),
-                bottomWidget: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton.icon(
-                        icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
-                        onPressed: () async {
-                          await notifier.updateChatPhoto();
-                          Navigator.pop(context);
-                        },
-                        label: const Text(
-                          "Upload",
-                          style: TextStyle(color: darkPrimary),
+                  bottomWidget: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton.icon(
+                          icon: vectorBuild(IconPaths.uploadImage, color: darkPrimary),
+                          onPressed: () async {
+                            await notifier.updateChatPhoto();
+                            Navigator.pop(context);
+                          },
+                          label: const Text(
+                            "Upload",
+                            style: TextStyle(color: darkPrimary),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      TextButton.icon(
-                        icon: vectorBuild(IconPaths.shareIcon, color: shareColor),
-                        onPressed: () async {
-                          if (chat.chatPhotoPath == null) return;
-                          await Utils.shareToApps(XFile(chat.chatPhotoPath!));
-                          Navigator.pop(context);
-                        },
-                        label: Text(
-                          "Share",
-                          style: TextStyle(color: shareColor),
+                        const SizedBox(width: 10),
+                        TextButton.icon(
+                          icon: vectorBuild(IconPaths.shareIcon, color: shareColor),
+                          onPressed: () async {
+                            if (chat.chatPhotoPath == null) return;
+                            await Utils.shareToApps(XFile(chat.chatPhotoPath!));
+                            Navigator.pop(context);
+                          },
+                          label: Text(
+                            "Share",
+                            style: TextStyle(color: shareColor),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Media Section ListTile
-          _buildButtonTile(
-            icon: vectorBuild(IconPaths.imageStack, scale: 0.63, color: ThemeConstants.sacredSeed),
-            title: "Chat Media",
-            subtitle: "${photoMessages.length} photos • ${docMessages.length} documents",
-            destination: ChatMediaScreen(chat: chat),
-          ),
-          _buildButtonTile(
-            key: bubbleTileKey1,
-            icon: vectorBuild(IconPaths.chatBubble1, scale: 0.63, color: ThemeConstants.sacredSeed),
-            title: "Bubble Color",
-            subtitle: "${colorName.toSentenceCase()} Color",
-            destination: ChatMediaScreen(chat: chat),
-            onTap: () {
-              // Compute global position of the tile
-              final RenderBox box = bubbleTileKey1.currentContext!.findRenderObject() as RenderBox;
-              final Offset globalPosition = box.localToGlobal(Offset.zero);
-              final Size size = box.size;
-          
-              // We want centerRight → x = right edge, y = vertical center
-              final Offset position = Offset(
-                globalPosition.dx + size.width,
-                globalPosition.dy + size.height / 1.1,
-              );
-              CustomContextMenu.showMenuAt(
-                  context,
-                  position: position, // Offset(300, 630),
-                  menuItems: bubbleColor,
-                  onSelected: (value) => handleBubbleColor(context, ref, value),
-                  triangleHorizontalOffset: 120
+      
+            const SizedBox(height: 24),
+      
+            // Media Section ListTile
+            _buildButtonTile(
+              icon: vectorBuild(IconPaths.imageStack, scale: 0.63, color: ThemeConstants.sacredSeed),
+              title: "Chat Media",
+              subtitle: "${photoMessages.length} photos • ${docMessages.length} documents",
+              destination: ChatMediaScreen(chat: chat),
+            ),
+            _buildButtonTile(
+              key: bubbleTileKey1,
+              icon: vectorBuild(IconPaths.chatBubble1, scale: 0.63, color: ThemeConstants.sacredSeed),
+              title: "Bubble Color",
+              subtitle: "${colorName.toSentenceCase()} Color",
+              destination: ChatMediaScreen(chat: chat),
+              onTap: () {
+                // Compute global position of the tile
+                final RenderBox box = bubbleTileKey1.currentContext!.findRenderObject() as RenderBox;
+                final Offset globalPosition = box.localToGlobal(Offset.zero);
+                final Size size = box.size;
+            
+                // We want centerRight → x = right edge, y = vertical center
+                final Offset position = Offset(
+                  globalPosition.dx + size.width,
+                  globalPosition.dy + size.height / 1.1,
                 );
-            },
-          ),
-          _buildButtonTile(
-            key: bubbleTileKey2,
-            icon: vectorBuild(IconPaths.phone2, scale: 0.63, color: ThemeConstants.sacredSeed),
-            title: "Chat Background",
-            subtitle: "Choose your own image",
-            destination: CropScreen(isChatBackground: true),
-            onTap: () {
-              // Compute global position of the tile
-              final RenderBox box = bubbleTileKey2.currentContext!.findRenderObject() as RenderBox;
-              final Offset globalPosition = box.localToGlobal(Offset.zero);
-              final Size size = box.size;
-
-              // We want centerRight → x = right edge, y = vertical center
-              final Offset position = Offset(
-                globalPosition.dx + size.width,
-                globalPosition.dy + size.height / 1.1,
-              );
-
-              CustomContextMenu.showMenuAt(
-                  context,
-                  position: position, // Offset(300, 550),
-                  menuItems: chatBackgroundOptions,
-                  onSelected: (value) => handleChatBackgroundAction(context, ref, value),
-                  triangleHorizontalOffset: 120
+                CustomContextMenu.showMenuAt(
+                    context,
+                    position: position, // Offset(300, 630),
+                    menuItems: bubbleColor,
+                    onSelected: (value) => handleBubbleColor(context, ref, value),
+                    triangleHorizontalOffset: 120
+                  );
+              },
+            ),
+            _buildButtonTile(
+              key: bubbleTileKey2,
+              icon: vectorBuild(IconPaths.phone2, scale: 0.63, color: ThemeConstants.sacredSeed),
+              title: "Chat Background",
+              subtitle: "Choose your own image",
+              destination: CropScreen(isChatBackground: true),
+              onTap: () {
+                // Compute global position of the tile
+                final RenderBox box = bubbleTileKey2.currentContext!.findRenderObject() as RenderBox;
+                final Offset globalPosition = box.localToGlobal(Offset.zero);
+                final Size size = box.size;
+      
+                // We want centerRight → x = right edge, y = vertical center
+                final Offset position = Offset(
+                  globalPosition.dx + size.width,
+                  globalPosition.dy + size.height / 1.1,
                 );
-            },
-          ),
-          // const SizedBox(height: 100),
-          const SizedBox(height: 100),
-          // Container(
-          //   height: 129,
-          //   clipBehavior: Clip.none,
-          //   decoration: BoxDecoration(border: Border.all(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder), borderRadius: BorderRadius.circular(25)),
-          //   padding: EdgeInsets.only(top: 12),
-          //   child: Column(
-          //     children: [
-          //       // Divider(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkAppbar,),
-          //       const SizedBox(height: 10),
-          //       // Additional chat details can go here
-          //       _buildChatInfoSection(chat),
-          //     ],
-          //   ),
-          // ),
-        ],
+      
+                CustomContextMenu.showMenuAt(
+                    context,
+                    position: position, // Offset(300, 550),
+                    menuItems: chatBackgroundOptions,
+                    onSelected: (value) => handleChatBackgroundAction(context, ref, value),
+                    triangleHorizontalOffset: 120
+                  );
+              },
+            ),
+            // const SizedBox(height: 100),
+            const SizedBox(height: 100),
+            // Container(
+            //   height: 129,
+            //   clipBehavior: Clip.none,
+            //   decoration: BoxDecoration(border: Border.all(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder), borderRadius: BorderRadius.circular(25)),
+            //   padding: EdgeInsets.only(top: 12),
+            //   child: Column(
+            //     children: [
+            //       // Divider(color: context.isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkAppbar,),
+            //       const SizedBox(height: 10),
+            //       // Additional chat details can go here
+            //       _buildChatInfoSection(chat),
+            //     ],
+            //   ),
+            // ),
+          ],
+        ),
       ),
     );
   }

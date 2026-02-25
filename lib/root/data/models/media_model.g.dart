@@ -84,7 +84,7 @@ const MediaSchema = CollectionSchema(
   getId: _mediaGetId,
   getLinks: _mediaGetLinks,
   attach: _mediaAttach,
-  version: '3.3.0-dev.3',
+  version: '3.3.0',
 );
 
 int _mediaEstimateSize(

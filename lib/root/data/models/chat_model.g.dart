@@ -73,7 +73,7 @@ const ChatSchema = CollectionSchema(
   getId: _chatGetId,
   getLinks: _chatGetLinks,
   attach: _chatAttach,
-  version: '3.3.0-dev.3',
+  version: '3.3.0',
 );
 
 int _chatEstimateSize(
