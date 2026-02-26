@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:notesapp/root/screens/Load_test/widgets/coin_animation_controllable.dart';
+import 'package:notesapp/root/screens/Profile/widgets/pulldown_wrapper/coin_animation_controllable.dart';
 
 class PullDownWrapper extends StatefulWidget {
   final Widget child;
