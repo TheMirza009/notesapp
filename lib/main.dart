@@ -8,10 +8,10 @@ import 'package:notesapp/core/controllers/share_intent_handler.dart';
 import 'package:notesapp/core/controllers/theme_provider.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
-import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
-import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
+import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart';
+import 'package:notesapp/root/presentation/screens/Homescreen/homescreen.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:notesapp/windows_titlebar.dart';
+import 'package:notesapp/root/presentation/widgets/windows/windows_titlebar.dart';
 
 bool kisWindows = Platform.isWindows;
 

@@ -6,7 +6,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/enums/bubble_color.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
-import 'package:notesapp/root/screens/Chat_screen/widgets/components/message_bubble/helpers/bubble_color_scheme.dart';
+import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/message_bubble/helpers/bubble_color_scheme.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';

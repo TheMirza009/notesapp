@@ -21,8 +21,8 @@ import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
-import 'package:notesapp/root/widgets/crop/croppyImage.dart';
-import 'package:notesapp/root/widgets/photo_view/croppy_settings_modal.dart';
+import 'package:notesapp/root/presentation/widgets/crop/croppyImage.dart';
+import 'package:notesapp/root/presentation/widgets/photo_view/croppy_settings_modal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 

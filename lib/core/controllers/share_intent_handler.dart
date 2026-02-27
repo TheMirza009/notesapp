@@ -10,7 +10,7 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+import 'package:notesapp/root/presentation/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
@@ -25,7 +25,7 @@ import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_Forward/chat_forward_screen.dart';
+import 'package:notesapp/root/presentation/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:uuid/uuid.dart';
 

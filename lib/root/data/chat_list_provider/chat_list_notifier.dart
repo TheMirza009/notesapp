@@ -11,8 +11,8 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/screens/Chat_screen/chat_screen.dart';
-import 'package:notesapp/root/screens/Homescreen/homescreen.dart';
+import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart';
+import 'package:notesapp/root/presentation/screens/Homescreen/homescreen.dart';
 
 class ChatListState {
   final List<Chat> chats;
