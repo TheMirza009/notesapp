@@ -138,6 +138,7 @@ Built for maximum performance, maintainability, and offline reliability.
 | **Language** | <img src="https://dart.dev/assets/img/logo/dart-192.svg" height="18"/> [ Dart 3.11](https://dart.dev) | Application logic and UI rendering |
 | **State Management** | <img src="https://riverpod.dev/img/logo.svg" height="14"/> [ Riverpod 3.x](https://riverpod.dev) | Reactive state, per-feature notifiers |
 | **Database** | <img src="https://isar.dev/isar.svg" height="14"/> [ Isar 3.3.0](https://isar.dev) | Typed, blazing-fast local persistence |
+
 **Key Packages & Tools:**
 - `just_audio`, `record`, and `siri_wave` for pristine voice note experiences.
 - `receive_sharing_intent` & `share_plus` to seamlessly catch shared files/links.
