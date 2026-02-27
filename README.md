@@ -11,32 +11,50 @@
 [![Play Store](https://img.shields.io/badge/Google_Play-4.9★_100+_Downloads-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.azdhaar.notesapp)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-red?style=for-the-badge)](/)
 
-> *"Tired of cluttering your WhatsApp self-chat? So was I. So I built this."*
-> — Mirza AbdulMoeed
 
 </div>
 
 ---
 
-## 🧠 What is NotesApp?
+## 🎯 What is NotesApp?
 
 **NotesApp** reimagines note-taking through the most intuitive interface humans already know — **a messaging app.**
 
-Instead of a blank page staring back at you, every note lives inside a **chat thread** — visual, scrollable, timestamped, and instantly familiar. It's the self-chat experience you've been hacking together on WhatsApp, but built properly from the ground up.
+Instead of a blank page staring back at you, every note lives inside a **chat thread** — visual, scrollable, timestamped, and instantly familiar. Turn the world's most intuitive interface into your private, all-in-one digital notebook. A powerful self-chat engine!
 
-No accounts. No cloud. No subscriptions. **Your data stays on your device. Period.**
+No accounts. No subscriptions. No cloud. **Everything stays secure on your device.** 
+
+A revolutionary note-taking app featuring a custom self-chat engine with **Isar** local persistence and **Riverpod** state management, delivering gorgeous 60fps animations and a seamless, world-class user experience.
+
+**Why I built this?** 
+> I was tired of cluttering my WhatsApp chat to myself but also I saw everyone else doing it too so just built this cuz why the hell not lol
 
 ---
 
 ## ✨ Features
 
-### 📝 Core Experience
-- **Chat-style note interface** — every note is a thread, every entry is a message
-- **Custom note avatars** — personalize each notebook with a photo
-- **Pin important notebooks** — keep what matters at the top
-- **Full-text search** — search across all notes and message content instantly
-- **Smart filters** — sort and filter your notebook list your way
-- **Markdown-style text formatting** — bold, italic, and more via `typeset`
+### 📁 Save Anything, Like a Real Chat
+Attach any media instantly, just like you would in a real messenger:
+- ✅ **Photos & Videos** – Pick from gallery or capture on the go.
+- ✅ **Voice Notes** – Record thoughts with a live waveform visualization.
+- ✅ **Documents** – Save PDFs, Word files, spreadsheets, and more.
+- ✅ **Text & Links** – The basics, made brilliant with markdown-style formatting.
+
+### 🔄 Introducing: Threads for Notes!
+Organize connected thoughts like a social media pro! Create Threads (inspired by X/Threads) right inside your notes to:
+- Plan projects step-by-step.
+- Write long-form ideas or journal entries.
+- Build a story or research topic.
+- **Bonus:** Copy & paste your finished thread directly to social platforms with its formatting intact!
+
+### 💡 Perfect for Organizing:
+- 🛒 Shopping & Grocery Lists (with photos!)
+- 🧳 Travel Plans & Packing Lists
+- 💡 Project Brainstorms & Meeting Notes
+- 📖 Personal Journals & Diary Entries
+- 🍳 Recipe Collections with Video Clips
+- 📚 Study Notes & Research Material
+
 
 ### 📎 Rich Media Support
 | Type | Details |
@@ -68,86 +86,67 @@ No accounts. No cloud. No subscriptions. **Your data stays on your device. Perio
 - **No account required** — open the app and start noting
 - **Local Isar database** — typed, fast, and entirely on-device
 
+
+### 🎨 World-Class UX & Personalization
+- Custom note avatars and per-chat wallpapers
+- Full Light / Dark theme adapting to your system
+- Global and in-chat deep search
+- Inter-app sharing (Share directly from other apps into NotesApp)
+
 ---
 
 ## 📸 Screenshots
 
 <div align="center">
-
-| Home | Chat View | Media Picker |
-|------|-----------|--------------|
-| ![Home Screen](screenshots/home.png) | ![Chat View](screenshots/chat.png) | ![Media Picker](screenshots/picker.png) |
-
-| Rich Media | Media Gallery |
-|------------|---------------|
-| ![Rich Media](screenshots/rich_media.png) | ![Media Gallery](screenshots/gallery.png) |
-
+  <img src="screenshots/image.png" width="30%" alt="NotesApp Home Screen" />
+  <img src="screenshots/image-1.png" width="30%" alt="NotesApp Chat Note" />
+  <img src="screenshots/image-2.png" width="30%" alt="NotesApp Image Viewer" />
 </div>
 
-> 🎬 *Video demo coming soon*
+<br>
 
----
+<div align="center">
+  <img src="screenshots/image-3.png" width="30%" alt="NotesApp Audio Waveform" />
+  <img src="screenshots/image-4.png" width="30%" alt="NotesApp Dark Theme" />
+  <img src="screenshots/image-5.png" width="30%" alt="NotesApp Settings" />
+</div>
 
-## 🚀 Getting Started
+<br>
 
-### Prerequisites
+<div align="center">
+  <img src="screenshots/image-6.png" width="30%" alt="NotesApp Custom Wallpapers" />
+  <img src="screenshots/image-7.png" width="30%" alt="NotesApp Custom Wallpapers 2" />
+  <img src="screenshots/image-8.png" width="30%" alt="NotesApp Folder Colors" />
+</div>
 
-| Requirement | Version |
-|-------------|---------|
-| Flutter | `3.41.2+` |
-| Dart | `3.7+` |
-| Android SDK | `21+` |
+<br>
 
-### Installation
+<div align="center">
+  <img src="screenshots/image-9.png" width="30%" alt="NotesApp Light Theme" />
+</div>
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/TheMirza009/notesapp.git
-cd notesapp
-
-# 2. Install dependencies
-flutter pub get
-
-# 3. Generate Isar schema files
-dart run build_runner build --delete-conflicting-outputs
-
-# 4. Run the app
-flutter run
-```
-
-### Build for Release
-
-```bash
-# Android APK
-flutter build apk --release
-
-# Android App Bundle (Play Store)
-flutter build appbundle --release
-
-# Windows
-flutter build windows --release
-```
+> 🎬 *Videos/GIFs showing our gorgeous 60fps animations are coming soon!*
 
 ---
 
 ## 🛠️ Tech Stack
 
+Built for maximum performance, maintainability, and offline reliability.
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **UI Framework** | ![Flutter](https://img.shields.io/badge/-Flutter-02569B?logo=flutter&logoColor=white) | Cross-platform UI |
-| **Language** | ![Dart](https://img.shields.io/badge/-Dart-0175C2?logo=dart&logoColor=white) | Application logic |
-| **State Management** | [Riverpod 3.x](https://riverpod.dev) | Reactive state, per-feature notifiers |
-| **Local Database** | [Isar Community](https://isar.dev) | Typed, high-performance local persistence |
-| **Media** | `image_picker`, `file_picker`, `camera` | Media capture and selection |
-| **Audio** | `just_audio`, `record`, `siri_wave` | Playback, recording, waveform |
-| **Video** | `video_player`, `video_thumbnail` | Inline video support |
-| **Windows** | `bitsdojo_window` | Native Windows titlebar |
-| **Sharing** | `receive_sharing_intent`, `share_plus` | Inter-app share integration |
-| **Image Processing** | `croppy`, `extended_image`, `blurhash_dart` | Crop, cache, blur placeholders |
+| **UI Framework** | <img src="https://raw.githubusercontent.com/dnfield/flutter_svg/7d374d7107561cbd906d7c0ca26fef02cc01e7c8/example/assets/flutter_logo.svg?sanitize=true" height="18"/> [ Flutter 3.41](https://flutter.dev) | Cross-platform UI delivering 60fps |
+| **Language** | <img src="https://dart.dev/assets/img/logo/dart-192.svg" height="18"/> [ Dart 3.11](https://dart.dev) | Application logic and UI rendering |
+| **State Management** | <img src="https://riverpod.dev/img/logo.svg" height="14"/> [ Riverpod 3.x](https://riverpod.dev) | Reactive state, per-feature notifiers |
+| **Database** | <img src="https://isar.dev/isar.svg" height="14"/> [ Isar 3.3.0](https://isar.dev) | Typed, blazing-fast local persistence |
+**Key Packages & Tools:**
+- `just_audio`, `record`, and `siri_wave` for pristine voice note experiences.
+- `receive_sharing_intent` & `share_plus` to seamlessly catch shared files/links.
+- `bitsdojo_window` for custom native titlebars on our Windows alpha release.
+- `croppy`, `extended_image`, and `blurhash_dart` for smooth media handling.
 
 ---
 
-## 🏗️ Architecture
+## 🛠️ Project Structure
 
 NotesApp follows an **MVVM-inspired architecture** using Riverpod as the ViewModel layer.
 
@@ -183,37 +182,48 @@ lib/
 
 ---
 
-## 📦 Download
+## 🚀 Getting Started
 
-<div align="center">
+Want to see the code running? NotesApp currently supports Android (Stable) and Windows (Alpha).
 
-[![Get it on Google Play](https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png)](https://play.google.com/store/apps/details?id=com.azdhaar.notesapp)
+### Prerequisites
 
-**4.9 ★ Rating &nbsp;·&nbsp; 100+ Downloads &nbsp;·&nbsp; Android 5.0+**
+| Requirement | Version |
+|-------------|---------|
+| Flutter SDK | `3.30+` *(Current build runs on 3.41.2)* |
+| Dart SDK | `3.7+` |
+| Android SDK | API `21+` |
 
-</div>
+### Installation & Build
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/TheMirza009/notesapp.git
+cd notesapp
+
+# 2. Fetch project dependencies
+flutter pub get
+
+# 3. Generate Isar models and Riverpod generated code
+dart run build_runner build --delete-conflicting-outputs
+
+# 4. Run the app
+flutter run
+```
 
 ---
 
-## 🗺️ Roadmap
+## 📦 Download NotesApp
 
-### 🔜 In Progress
-- [ ] Video message support
-- [ ] Undoable chat deletes
-- [ ] Pinnable chat tiles
-- [ ] Reply Anchor system UI compliance
+The ultimate offline self-chat experience is already available on Android devices. 
 
-### 📋 Planned
-- [ ] Cloud sync (optional, opt-in)
-- [ ] Message delivery indicators
-- [ ] Multi-select bulk actions
-- [ ] Audio record overlay with waveform UI
-- [ ] Windows — full feature parity
-
-### 💭 Exploring
-- [ ] End-to-end encrypted cloud backup
-- [ ] Widget support (Android home screen)
-- [ ] iPad / tablet layout
+<div align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.azdhaar.notesapp">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play">
+  </a>
+  <br/>
+  <strong>4.9 ★ Rating &nbsp;·&nbsp; 100+ Downloads</strong>
+</div>
 
 ---
 
@@ -229,20 +239,22 @@ lib/
 ## ⚖️ License
 
 ```
-Copyright © 2025 Mirza AbdulMoeed. All rights reserved.
+Copyright © 2024-2025 Mirza AbdulMoeed. All rights reserved.
 
-This source code is made available for viewing and portfolio purposes only.
-Unauthorized copying, forking, redistribution, or commercial use of this
-codebase, in whole or in part, is strictly prohibited without explicit
-written permission from the author.
+NotesApp is proprietary software. The source code within this repository is 
+made available strictly for portfolio viewing and hiring evaluation purposes. 
+
+Unauthorized copying, forking, redistribution, modification, or commercial 
+use of this codebase—in whole or in part—is strictly prohibited without 
+explicit written permission from the author.
 ```
 
 ---
 
 <div align="center">
 
-**Built with 💙 in Flutter &nbsp;·&nbsp; Designed for the notes you actually use**
+**Built with 💙 in Flutter &nbsp;·&nbsp; Designed for the notes you actually use.**
 
-*If you find this project interesting, consider leaving a ⭐ on GitHub*
+*If you find this project interesting, consider leaving a ⭐ on GitHub!*
 
 </div>
