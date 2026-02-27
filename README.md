@@ -192,8 +192,8 @@ Want to see the code running? NotesApp currently supports Android (Stable) and W
 | Requirement | Version |
 |-------------|---------|
 | Flutter SDK | `3.30+` *(Current build runs on 3.41.2)* |
-| Dart SDK | `3.7+` |
-| Android SDK | API `21+` |
+| Dart SDK | `3.7+`  *(Current build runs on 3.11)* |
+| Android SDK | API `23+` |
 
 ### Installation & Build
 
