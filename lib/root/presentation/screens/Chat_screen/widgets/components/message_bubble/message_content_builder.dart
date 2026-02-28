@@ -21,6 +21,7 @@ import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/component
 import 'package:notesapp/root/presentation/widgets/voice_message/components/voice_controller.dart';
 import 'package:notesapp/root/presentation/widgets/voice_message/components/voice_message_view.dart';
 import 'package:typeset/typeset.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MessageContentBuilder extends StatelessWidget {
   final Message message;
@@ -75,8 +76,15 @@ class MessageContentBuilder extends StatelessWidget {
                   ),
                   linkRecognizerBuilder: (linkText, url) {
                     return TapGestureRecognizer()
-                      ..onTap = () {
-                        debugPrint('URL: $url and Text: $linkText');
+                      ..onTap = () async {
+                        debugPrint(context.screenWidth.toString());
+                        debugPrint("Opening URL: $linkText");
+                        final uri = Uri.parse(
+                          linkText.startsWith('http') ? linkText : 'https://$linkText',
+                        );
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
                       };
                   },
                 ),

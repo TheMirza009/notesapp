@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notesapp/core/extensions/widget_extensions.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/bottom_message_bar.dart';
@@ -17,6 +19,24 @@ class _BottomMessageBarWrapperState extends ConsumerState<BottomMessageBarWrappe
   
   @override
   bool get wantKeepAlive => true;
+
+  void _insertNewline() {
+    if (!kisDesktop) return; // Only for desktop
+    
+    final controller = ref.read(chatStateController.notifier).keyboardController;
+    if (controller != null) {
+      final text = controller.text;
+      final selection = controller.selection;
+      final cursorPos = selection.baseOffset;
+      
+      // Insert a newline at cursor position
+      final newText = text.substring(0, cursorPos) + '\n' + text.substring(cursorPos);
+      controller.text = newText;
+      
+      // Move cursor after the newline
+      controller.selection = TextSelection.collapsed(offset: cursorPos + 1);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +108,21 @@ class _BottomMessageBarWrapperState extends ConsumerState<BottomMessageBarWrappe
         onSend: notifier.sendMessage,
         onImagePasted: (bytes) => notifier.pickImage(imageBytes: bytes),
         onSendThread: notifier.saveThread,
+        onSubmitted: (text) {
+          if (kisDesktop) {
+            notifier.sendMessage(text);
+          }
+        },
+      ).withKeys(
+        onNextLine: kisDesktop ? _insertNewline : null,
+        onEnter: kisDesktop ? () {
+      // On desktop, Enter sends the message
+      final text = notifier.keyboardController?.text ?? '';
+      if (text.isNotEmpty) {
+        notifier.sendMessage(text);
+        notifier.keyboardController.clear();
+      }
+    } : null,
       ),
     );
   }

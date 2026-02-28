@@ -41,3 +41,18 @@ extension StringCaseX on String {
     return threads.length;
   }
 }
+
+extension LinkWrapper on String {
+  String get withWrappedLinks {
+    final urlRegex = RegExp(
+      r'(https?://[^\s]+|www\.[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:/[^\s]*)?)',
+      caseSensitive: false,
+    );
+    return replaceAllMapped(urlRegex, (match) {
+      final url = match.group(0)!;
+      final start = match.start;
+      if (start > 0 && this[start - 1] == '§') return url;
+      return '§$url§';
+    });
+  }
+}

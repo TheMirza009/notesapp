@@ -15,6 +15,7 @@ import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart'
 import 'package:notesapp/root/presentation/screens/Homescreen/homescreen.dart';
 
 class ChatListState {
+  // final List<Folder> folders;
   final List<Chat> chats;
   final Chat? selectedChat;
   final bool isLoading;
@@ -22,6 +23,7 @@ class ChatListState {
   final Message? messageToHighlight;
 
   const ChatListState({
+    // this.folders = const [],
     this.chats = const [],
     this.selectedChat,
     this.isLoading = false,
@@ -30,21 +32,27 @@ class ChatListState {
   });
 
   ChatListState copyWith({
-    List<Chat>? chats,
-    Chat? selectedChat,
-    bool? isLoading,
-    Map<Chat, List<Message>>? searchResults, // Add this
-    Message? messageToHighlight,
-  }) {
-    return ChatListState(
-      chats: chats ?? this.chats,
-      selectedChat: selectedChat ?? this.selectedChat,
-      isLoading: isLoading ?? this.isLoading,
-      searchResults: searchResults ?? this.searchResults, // Add this
-      messageToHighlight: messageToHighlight ?? this.messageToHighlight,
-    );
-  }
+  List<Chat>? chats,
+  Object? selectedChat = _unset,
+  bool? isLoading,
+  Map<Chat, List<Message>>? searchResults,
+  Object? messageToHighlight = _unset,
+}) {
+  return ChatListState(
+    chats: chats ?? this.chats,
+    selectedChat: identical(selectedChat, _unset)
+        ? this.selectedChat
+        : selectedChat as Chat?,
+    isLoading: isLoading ?? this.isLoading,
+    searchResults: searchResults ?? this.searchResults,
+    messageToHighlight: identical(messageToHighlight, _unset)
+        ? this.messageToHighlight
+        : messageToHighlight as Message?,
+  );
 }
+}
+
+const _unset = Object();
 
 /// The provider
 final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>((ref) {
@@ -66,7 +74,8 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
   /// Load all chats from DB
   Future<void> loadChats() async {
     state = state.copyWith(isLoading: true);
-    final loadedChats = await IsarDatabase.loadAllChats();
+    final loadedChats = await IsarDatabase.loadAllChats();  // loadAllFolders()
+    // final loadedChats = await IsarDatabase.loadAllFolders()();  
     _allChats = loadedChats;
     applyFilter(_currentFilter);
     // state = state.copyWith(chats: loadedChats, isLoading: false);
@@ -257,8 +266,10 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
 
   /// clear selectedChat
   void clearSelectedChat() {
-    state = state.copyWith(selectedChat: null);
-  }
+  debugPrint("clearSelectedChat called — before: ${state.selectedChat?.messages.last.text}");
+  state = state.copyWith(selectedChat: null);
+  debugPrint("clearSelectedChat done — after: ${state.selectedChat?.messages.last.text}");
+}
 
   /// Change selected chat title
   void changeSelectedChatTitle(String newTitle) {

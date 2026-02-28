@@ -1,6 +1,7 @@
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/data/models/folder_model.dart';
 import 'package:uuid/uuid.dart';
 import 'message_model.dart';
 import 'media_model.dart';
@@ -26,6 +27,9 @@ class Chat {
   BubbleStyle bubbleStyle = BubbleStyle.opaque;
 
   IsarLinks<Message> messages = IsarLinks<Message>();
+
+  // @Backlink(to: 'chats')
+  // final IsarLink<Folder> folder = IsarLink<Folder>();
 
   Chat() {
     uuid = const Uuid().v7();

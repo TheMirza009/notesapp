@@ -20,6 +20,8 @@ import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/chat_tile.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/doc_icon.dart';
+import 'package:notesapp/root/presentation/screens/Homescreen/platform/desktop/widgets/animated_right_panel.dart';
+import 'package:notesapp/root/presentation/screens/Homescreen/platform/desktop/widgets/desktop_icon_rail.dart';
 import 'package:notesapp/root/presentation/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/presentation/screens/Profile/wrappers/parent_slide_wrapper.dart';
 import 'package:notesapp/root/presentation/screens/Settings/settings_screen.dart';
@@ -44,6 +46,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   ChatlistFilter _filter = ChatlistFilter.oldestCreated;
   bool _isSliding = false;
+  RailTab _selectedTab = RailTab.chats;
   // Chat? _selectedChat;
 
   @override
@@ -76,8 +79,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   Future<void> _selectChat(Chat chat) async {
     ref.read(chatListProvider.notifier).selectChat(chat);
     // setState(() => _selectedChat = chat);
-    await chat.messages.load();
-    await Future.wait(chat.messages.map((m) => m.media.load()));
+     chat.messages.load();
+     Future.wait(chat.messages.map((m) => m.media.load()));
   }
 
   Future<void> _createNewChat() async {
@@ -90,7 +93,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   Future<void> _deleteChatWithFade(Chat chat) async {
     final chatNotifier = ref.read(chatListProvider.notifier);
-    final selectedChat = ref.watch(chatListProvider.select((s) => s.selectedChat));
+    final selectedChat = ref.watch( chatListProvider.select((s) => s.selectedChat), );
 
     chatNotifier.clearSearch();
     setState(() => chatNotifier.isDeleting[chat.isarID] = true);
@@ -166,52 +169,24 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
         trigger: _isSliding,
         child: Scaffold(
           backgroundColor: headerColor,
-          // appBar: AppBar(
-          //   elevation: 0,
-          //   backgroundColor: headerColor,
-          //   shadowColor: Colors.transparent,
-          //   toolbarHeight: 52,
-          //   titleSpacing: 0,
-          //   title: Padding(
-          //     padding: const EdgeInsets.only(left: 8),
-          //     child: Row(
-          //       children: [
-          //         _buildAvatar(isLight),
-          //         const SizedBox(width: 10),
-          //         const Text(
-          //           "NotesApp",
-          //           style: TextStyle(
-          //               fontSize: 18,
-          //               fontFamily: "Poppins",
-          //               fontWeight: FontWeight.w500),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          //   actions: [
-          //     CustomContextMenu(
-          //       icon: const Icon(Icons.more_vert),
-          //       menuItems: homeScreenOptions,
-          //       onSelected: _handleContextMenuAction,
-          //     ),
-          //     const SizedBox(width: 4),
-          //   ],
-          //   systemOverlayStyle: SystemUiOverlayStyle(
-          //     systemNavigationBarColor: isLight
-          //         ? ThemeConstants.hometoolbarLight3
-          //         : ThemeConstants.messageBarDark,
-          //   ),
-          // ),
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _iconRail(headerColor),
+              if (context.screenWidth >= 900)
+              DesktopIconRail(
+                headerColor: headerColor,
+                profileWidget: _buildAvatar(isLight),
+                selectedTab: _selectedTab, // add this to your state
+                onTabSelected: (tab) => setState(() => _selectedTab = tab),
+              ),
               Expanded(
                 child: Container(
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     borderRadius: parentRadius,
-                    border: Border.all(color: dividerColor)
+                    border: Border.all(color: dividerColor),
+                          gradient: isLight ? Gradients.lightBackground : Gradients.darkChatBackground,
+
                   ),
                   child: Row(
                     children: [
@@ -239,6 +214,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           color: headerColor,
           height: double.maxFinite,
           width: WindowsUtils.titlebarHeight,
+          child: Column(
+            children: [
+              
+            ],
+          ),
         );
       }
     );
@@ -270,7 +250,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           Padding(
             padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0, top: 12),
             child: Row(
-              spacing: Platform.isWindows ? 5 : 0,
+              spacing: Platform.isWindows ? 0 : 0,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
@@ -397,10 +377,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                               key: ValueKey(chat.isarID),   // ← widget identity key, unique per item
                               chatTileKey: _getChatKey(chat), // ← the GlobalKey for position lookup
                               chat: chat,
-                              isSelected: ref.watch(
-  chatListProvider.select((s) => s.selectedChat?.isarID == chat.isarID)
-),
+                              isSelected: ref.watch(chatListProvider.select((s) => s.selectedChat?.isarID == chat.isarID)),
                               onTap: () => _selectChat(chat),
+                              onDismissed: (_) => chatNotifier.deleteChatWithUndo(chat),
                               onRightClick: (position) {
                                 CustomContextMenu.showMenuAt(
                                   context,
@@ -414,7 +393,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                                   },
                                 );
                               },
-                              onDismissed: (_) => chatNotifier.deleteChatWithUndo(chat),
                             )
                           : _buildSearchResultTile(chat, matchingMessages),
                       );
@@ -645,42 +623,15 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildRightPanel(bool isLight) {
-     final selectedChat = ref.watch(
-    chatListProvider.select((s) => s.selectedChat),
-  );
-    final headerColor =
-        isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
-    final backgroundGradient =
-        isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    final selectedChat = ref.watch( chatListProvider.select((s) => s.selectedChat));
+    final backgroundGradient = context.isLight ? Gradients.lightBackground : Gradients.darkChatBackground;
 
-    if (selectedChat == null) {
-      return Container(
-        decoration: BoxDecoration(gradient: backgroundGradient),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.edit_note_rounded,
-                  size: 64,
-                  color: ThemeConstants.subtitleLight.withOpacity(0.3)),
-              const SizedBox(height: 16),
-              Text(
-                "Select a note to view",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: ThemeConstants.subtitleLight.withOpacity(0.5),
-                  fontFamily: "Poppins",
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Chat is selected — show ChatScreen inline
-    return const Expanded(child: ChatScreen());
+    return AnimatedRightPanel(
+      selectedChat: selectedChat,
+      chatList: ref.watch(chatListProvider.select((s) => s.chats)),
+      backgroundGradient: backgroundGradient,
+      chatScreen: const ChatScreen(),
+    );
   }
 
   Widget _buildAvatar(bool isLight) {
@@ -766,10 +717,10 @@ class _DesktopChatTile extends ConsumerWidget {
           time: TimeFormat.formatChatTime(chat.date),
           onDismissed: onDismissed,
           onTap: onTap,
-          onLongPress: () {
-            final position = Utils.getObjectPosition(objectKey: chatTileKey); // ← not `key`
-            onRightClick(position);
-          },
+          // onLongPress: () {
+          //   final position = Utils.getObjectPosition(objectKey: chatTileKey); // ← not `key`
+          //   onRightClick(position);
+          // },
           onSecondaryTapUp: (details) => onRightClick(details.globalPosition),
         ),
       ),

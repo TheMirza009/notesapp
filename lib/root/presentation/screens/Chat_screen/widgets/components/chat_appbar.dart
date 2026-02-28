@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/time_format.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/doc_icon.dart';
 import 'package:notesapp/root/presentation/widgets/context_menus/custom_context_menu.dart';
 
@@ -34,27 +36,44 @@ class ChatAppBar extends StatelessWidget {
     this.chatPhotoPath,
     this.showActionsIcon = true,
   });
+@override
+Widget build(BuildContext context) {
+  final isDesktop = context.screenWidth >= 600;
+  final isLight = context.isLight;
 
-  @override
-  Widget build(BuildContext context) {
-    var backgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
-    var textcolor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2;
-    var timeString = "Last edited ${TimeFormat.formatChatSubtitle(lastEdited)}";
-    return AppBar(
-      backgroundColor: backgroundColor,
-      elevation: 1.0,
+  final backgroundColor = isDesktop
+      ? (isLight ? Gradients.silverGrey : Gradients.shadowBlue) // use as LinearGradient below
+      : (isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark);
+
+  final dividerColor = isLight
+      ? ThemeConstants.homeDividerLight
+      : ThemeConstants.darkIconBorder;
+
+  final textColor = isLight ? ThemeConstants.textLight : ThemeConstants.textDark2;
+  final timeString = "Last edited ${TimeFormat.formatChatSubtitle(lastEdited)}";
+  final toolbarHeight = isDesktop ? 60.0 : 65.0;
+
+  return Container(
+    decoration: BoxDecoration(
+      color: isDesktop ? null : backgroundColor,
+      border: isDesktop
+          ? Border(bottom: BorderSide(color: dividerColor, width: 1))
+          : null,
+    ),
+    child: AppBar(
+      backgroundColor: Colors.transparent, // container handles color
+      elevation: isDesktop ? 0 : 1.0,
       titleSpacing: 0,
-      toolbarHeight: 65,
+      toolbarHeight: toolbarHeight,
       leading: leading ?? IconButton(
-        onPressed: () {
-          Navigator.pop(context); // Placeholder
-        },
-        icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+        onPressed: () => Navigator.pop(context),
+        icon: Icon(Icons.arrow_back_ios_new_rounded,
+            color: ThemeConstants.iconColorNeutral),
       ),
       title: InkWell(
         onTap: onTitleTap,
         child: Transform.translate(
-          offset: Offset(-10, 0),
+          offset: const Offset(-10, 0),
           child: SizedBox(
             width: double.maxFinite,
             child: AnimatedSwitcher(
@@ -64,25 +83,21 @@ class ChatAppBar extends StatelessWidget {
               child: Row(
                 key: ValueKey(isSelecting),
                 children: [
+                  // AVATAR
                   chatPhotoPath == null
-                      ? DocumentIcon(size: 40)
+                      ? DocumentIcon(size: isDesktop ? 30 : 40)
                       : Container(
-                        height: 40,
-                        width: 40,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(shape: BoxShape.circle),
-                        child: RepaintBoundary(
-                          child: Image.file(
-                            File(chatPhotoPath!),
-                            fit: BoxFit.cover,
+                          height: isDesktop ? 30 : 40,
+                          width: isDesktop ? 30 : 40,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: const BoxDecoration(shape: BoxShape.circle),
+                          child: RepaintBoundary(
+                            child: Image.file(File(chatPhotoPath!), fit: BoxFit.cover),
                           ),
                         ),
-                      ),
-                  // Icon(
-                  //   Icons.account_circle,
-                  //   size: 50.0, // Icon size inside the circle
-                  // ),
-                  SizedBox(width: ThemeConstants.screenWidth * 0.02,),
+                  SizedBox(width: isDesktop ? 10 : ThemeConstants.screenWidth * 0.02),
+
+                  // TITLE + SUBTITLE
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -90,19 +105,20 @@ class ChatAppBar extends StatelessWidget {
                         title,
                         style: TextStyle(
                           fontFamily: "Poppins",
-                          fontSize: isSelecting! ? 23 : 22, // ThemeConstants.screenWidth * (isSelecting! ? 0.05 : 0.045),
+                          fontSize: isDesktop ? 15 : (isSelecting! ? 23 : 22),
                           fontWeight: FontWeight.w500,
-                          color: textcolor,
+                          color: textColor,
                         ),
                       ),
-                      if (!isSelecting!) Text(
-                        timeString,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.5, // ThemeConstants.screenWidth * 0.03,
-                          color: ThemeConstants.subtitleLight,
+                      if (!isSelecting!)
+                        Text(
+                          timeString,
+                          style: TextStyle(
+                            fontSize: isDesktop ? 11 : 13,
+                            height: 1.5,
+                            color: ThemeConstants.subtitleLight,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -113,15 +129,19 @@ class ChatAppBar extends StatelessWidget {
       ),
       actions: actions ?? [
         IconButton(
+          iconSize: isDesktop ? 18 : 24,
           onPressed: onSearchTap,
-          icon: Icon(Icons.search), // color: ThemeConstants.iconLight),
+          icon: const Icon(Icons.search),
         ),
-        if (showActionsIcon!) CustomContextMenu(
-          icon: Icon(Icons.more_vert), 
-          menuItems: chatScreenOptions, 
-          onSelected: (value) => onOptionsPressed!(value) ,
-          )
+        if (showActionsIcon!)
+          CustomContextMenu(
+            icon: Icon(Icons.more_vert, size: isDesktop ? 18 : 24),
+            menuItems: chatScreenOptions,
+            onSelected: (value) => onOptionsPressed!(value),
+          ),
+        if (isDesktop) const SizedBox(width: 4),
       ],
-    );
-  }
+    ),
+  );
+}
 }

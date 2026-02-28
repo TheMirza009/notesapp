@@ -481,7 +481,7 @@ Future<void> _loadRemainingMessagesSilently(
     await deleteInitMessage();
 
     final newMessage = Message()
-      ..text = text
+      ..text = text.withWrappedLinks
       ..time = DateTime.now()
       ..isSender = true;
 

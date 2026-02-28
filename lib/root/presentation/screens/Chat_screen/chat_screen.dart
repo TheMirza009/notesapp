@@ -84,10 +84,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
     super.build(context);
     // final notifier = ref.read(chatMessagesController.notifier);
     final overlayHandler = ref.read(overlayHandlerProvider);
-    final canPop = ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
     final newChat = ref.read(isNewChat);
     final bubbleStyle = ref.watch(settingsController)?.selectedBubbleStyle ?? BubbleStyle.opaque;
     debugPrint("🔃 ChatScreen rebuilt");
+
+    final isWide = context.screenWidth >= 600;
+    final canPop = isWide ? false : ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
 
     if (newChat) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -99,40 +101,47 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
     return PopScope(
       canPop: canPop,
       onPopInvokedWithResult: (didPop, result) {
-        WindowsUtils.clearTitleBarColorDirect();
-        
-        final state = ref.read(chatStateController);
-        final notifier = ref.read(chatStateController.notifier);
+  WindowsUtils.clearTitleBarColorDirect();
 
-        // intercept back button
-        if (state.showEmojis) {
-          notifier.hideEmojiPicker();
-          return; // prevent popping
-        }
+  final state = ref.read(chatStateController);
+  final notifier = ref.read(chatStateController.notifier);
 
-        if (state.isSearching) {
-          notifier.stopSearching();
-          notifier.closeSearchAndKeyboard();
-          return; // prevent popping
-        }
+  if (state.showEmojis) {
+    notifier.hideEmojiPicker();
+    return;
+  }
 
-        // ✅ nothing to intercept → allow pop
-        notifier.unSelectAllMessages();
-        notifier.cancelEditing();
-        notifier.clearAnchorMessage();
-        notifier.removeChatIfEmpty();
-        overlayHandler.closeAttachmentBoard(instant: true);
-        overlayHandler.hideRecordBar(instant: true);
-        overlayHandler.hideReplyAnchor(instant: true);
-        notifier.cancelAudioRecording();
+  if (state.isSearching) {
+    notifier.stopSearching();
+    notifier.closeSearchAndKeyboard();
+    return;
+  }
 
-        // Experimental to be removed later
-        if (kisDesktop) {
-          ref.read(chatListProvider.notifier).clearSelectedChat();
-        } else {
-          Navigator.pop(context);
-        }
-      },
+  // On desktop, back = clear selection, never a real pop
+  if (isWide) {
+    notifier.unSelectAllMessages();
+    notifier.cancelEditing();
+    notifier.clearAnchorMessage();
+    notifier.removeChatIfEmpty();
+    overlayHandler.closeAttachmentBoard(instant: true);
+    overlayHandler.hideRecordBar(instant: true);
+    overlayHandler.hideReplyAnchor(instant: true);
+    notifier.cancelAudioRecording();
+    ref.read(chatListProvider.notifier).clearSelectedChat();
+    debugPrint("Current chat selected: ${ref.read(chatListProvider).selectedChat}");
+    return; // never actually pops
+  }
+
+  // Mobile — normal pop cleanup
+  notifier.unSelectAllMessages();
+  notifier.cancelEditing();
+  notifier.clearAnchorMessage();
+  notifier.removeChatIfEmpty();
+  overlayHandler.closeAttachmentBoard(instant: true);
+  overlayHandler.hideRecordBar(instant: true);
+  overlayHandler.hideReplyAnchor(instant: true);
+  notifier.cancelAudioRecording();
+},
       child: _ChatScreenBody()
     );
   }

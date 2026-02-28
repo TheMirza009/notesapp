@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/presentation/screens/Chat_Detail/screens/chat_detail_screen_divided.dart';
@@ -38,6 +39,8 @@ class _ChatAppBarWrapperState extends ConsumerState<ChatAppBarWrapper> with Auto
     final chatTitle = chat?.title ?? "New Note";
     final chatPhoto = chat?.chatPhotoPath;
 
+    final isWide = context.screenWidth >= 600;
+
     return AbsorbPointer(
       absorbing: isEditing,
       child: ChatAppBar(
@@ -55,9 +58,15 @@ class _ChatAppBarWrapperState extends ConsumerState<ChatAppBarWrapper> with Auto
                 ),
               )
             : IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (isWide) {
+                    ref.read(chatListProvider.notifier).clearSelectedChat();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
                 icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
+                  isWide ? Icons.close : Icons.arrow_back_ios_new_rounded,
                   color: ThemeConstants.iconColorNeutral,
                 ),
               ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
+import 'package:notesapp/root/data/models/folder_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/data/models/settings_model.dart';
@@ -16,7 +17,7 @@ class IsarDatabase {
     if (_isar != null && _isar!.isOpen) return;
     final dir = kisDesktop ? await getApplicationSupportDirectory() : await getDatabaseDirectory();
     _isar = await Isar.open(
-      [ChatSchema, MessageSchema, MediaSchema, UserSchema, SettingsSchema],
+      [ChatSchema, MessageSchema, MediaSchema, UserSchema, SettingsSchema], // FolderSchema
       directory: dir.path,
       name: 'chat_repo',
     );
@@ -140,4 +141,38 @@ class IsarDatabase {
       await isar.medias.clear();
     });
   }
+
+  ///================================================================
+  /// FOLDER METHODS
+  ///================================================================
+
+  // static Future<List<Folder>> loadAllFolders() async {
+  //   final folders = await isar.folders.where().findAll();
+  //   await Future.wait(folders.map((f) => f.chats.load()));
+  //   return folders;
+  // }
+
+  // static Future<Folder> addNewFolder(String name) async {
+  //   late Folder saved;
+  //   await isar.writeTxn(() async {
+  //     final folder = Folder()..name = name;
+  //     await isar.folders.put(folder);
+  //     saved = folder;
+  //   });
+  //   return saved;
+  // }
+
+  // static Future<void> addChatToFolder(Chat chat, Folder folder) async {
+  //   await isar.writeTxn(() async {
+  //     folder.chats.add(chat);
+  //     await folder.chats.save();
+  //   });
+  // }
+
+  // static Future<void> removeChatFromFolder(Chat chat, Folder folder) async {
+  //   await isar.writeTxn(() async {
+  //     folder.chats.remove(chat);
+  //     await folder.chats.save();
+  //   });
+  // }
 }
