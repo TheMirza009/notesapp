@@ -71,37 +71,35 @@ class _MessageListWrapperState extends ConsumerState<MessageListWrapper>
       initialAlignment = 0.0;
     }
 
-    return Expanded(
-      child: isLoading 
-          ? const LoadIndicator() 
-          : messages.isEmpty
-              ? const NothingToSee()
-              : AbsorbPointer(
-                  absorbing: ref.watch(chatStateController.select((s) => s.isEditing)),
-                  child: ScrollablePositionedList.builder(
-                    key: ValueKey(isLoading), // ✅ Only rebuild on loading state change
-                    itemScrollController: notifier.itemScrollController,
-                    itemPositionsListener: notifier.itemPositionsListener,
-                    itemCount: messages.length + 1,
-                    addSemanticIndexes: true,
-                    initialScrollIndex: initialIndex,
-                    initialAlignment: initialAlignment,
-                    itemBuilder: (context, index) {
-                      if (index == messages.length) {
-                        return const SizedBox(height: 150);
-                      }
-
-                      final message = messages[index];
-                      return ProviderScope(
-                        overrides: [
-                          messageProvider.overrideWithValue(message),
-                        ],
-                        child: const _MessageItemBuilder(),
-                      );
-                    },
-                  ),
+    return isLoading 
+        ? const LoadIndicator() 
+        : messages.isEmpty
+            ? const NothingToSee()
+            : AbsorbPointer(
+                absorbing: ref.watch(chatStateController.select((s) => s.isEditing)),
+                child: ScrollablePositionedList.builder(
+                  key: ValueKey(isLoading), // ✅ Only rebuild on loading state change
+                  itemScrollController: notifier.itemScrollController,
+                  itemPositionsListener: notifier.itemPositionsListener,
+                  itemCount: messages.length + 1,
+                  addSemanticIndexes: true,
+                  initialScrollIndex: initialIndex,
+                  initialAlignment: initialAlignment,
+                  itemBuilder: (context, index) {
+                    if (index == messages.length) {
+                      return const SizedBox(height: 150);
+                    }
+    
+                    final message = messages[index];
+                    return ProviderScope(
+                      overrides: [
+                        messageProvider.overrideWithValue(message),
+                      ],
+                      child: const _MessageItemBuilder(),
+                    );
+                  },
                 ),
-    );
+              );
   }
 }
 

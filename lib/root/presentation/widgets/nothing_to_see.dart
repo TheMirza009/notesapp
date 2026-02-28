@@ -3,7 +3,8 @@ import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:svg_flutter/svg.dart';
 
 class NothingToSee extends StatelessWidget {
-  const NothingToSee({super.key});
+  final String? path;
+  const NothingToSee({super.key, this.path});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class NothingToSee extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(30.0),
           child: SvgPicture.asset(
-            IconPaths.nothing,
+            path ?? IconPaths.nothing,
             colorFilter: ColorFilter.mode(Colors.blueGrey, BlendMode.srcIn),
           ),
         ),

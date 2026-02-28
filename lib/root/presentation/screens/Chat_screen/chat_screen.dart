@@ -25,6 +25,7 @@ import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/wrappers/
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/wrappers/overlays/overlay_handler.dart';
+import 'package:notesapp/root/presentation/screens/Homescreen/platform/desktop/widgets/animated_mesage_list.dart';
 import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
 
 //TODO: 2. Notifier needs robustness and double checks
@@ -157,6 +158,8 @@ class _ChatScreenBody extends ConsumerWidget {
     final appBackgroundColor = context.isLight ? ThemeConstants.toolbarLight : ThemeConstants.messageBarDark;
     final String? chatBackgroundImage = ref.read(chatListProvider).selectedChat?.chatBackgroundPath;
     final bool isEditing = ref.watch(chatStateController.select((s) => s.isEditing));
+    final bool isWide = context.screenWidth >= 600;
+
     return GestureDetector(
         onTap: () {
           notifier.stopSearching();
@@ -197,7 +200,7 @@ class _ChatScreenBody extends ConsumerWidget {
                 children: [
                   const ChatAppBarWrapper(),
                   const ChatSearchBar(),
-                  const MessageListWrapper(),
+                  Expanded(child: isWide ? const AnimatedMessageList() : const MessageListWrapper(), ),
                   const BottomMessageBarWrapper(),
                   const EmojiBoardWrapper(),
                 ],

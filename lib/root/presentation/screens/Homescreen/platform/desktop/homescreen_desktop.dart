@@ -231,9 +231,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
     final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    final double leftPanelWidth = 340;
 
     return Container(
-      width: 340,
+      width: leftPanelWidth,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: backgroundGradient,
@@ -305,8 +306,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       CustomContextMenu.showMenuAt(
                         context,
                         position: Offset(
-                          context.screenWidth,
-                          kToolbarHeight * 2,
+                          leftPanelWidth,
+                          kToolbarHeight,
                         ),
                         showTail: false,
                         menuItems: chatFilterOptions,
@@ -373,7 +374,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         duration: const Duration(milliseconds: 300),
                         builder: (context, value, child) => Opacity(opacity: value, child: child),
                         child: matchingMessages.isEmpty
-                          ? _DesktopChatTile(
+                          ? DesktopChatTile(
                               key: ValueKey(chat.isarID),   // ← widget identity key, unique per item
                               chatTileKey: _getChatKey(chat), // ← the GlobalKey for position lookup
                               chat: chat,
@@ -664,7 +665,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 // Wraps the existing ChatTile with a selected-state highlight and
 // right-click → context menu support (Windows requirement).
 
-class _DesktopChatTile extends ConsumerWidget {
+class DesktopChatTile extends ConsumerWidget {
   final Chat chat;
   final bool isSelected;
   final VoidCallback onTap;
@@ -672,7 +673,7 @@ class _DesktopChatTile extends ConsumerWidget {
   final void Function(DismissDirection) onDismissed;
   final GlobalKey chatTileKey;
 
-  const _DesktopChatTile({
+  const DesktopChatTile({
     super.key,
     required this.chat,
     required this.isSelected,
@@ -691,7 +692,7 @@ class _DesktopChatTile extends ConsumerWidget {
 
     return GestureDetector(
       // Right-click on Windows triggers the same long-press context menu
-      onSecondaryTapUp: (details) => onRightClick(details.globalPosition),
+      // onSecondaryTapUp: (details) => onRightClick(details.localPosition),
       child: AnimatedContainer(
         margin: EdgeInsets.all(8),
         duration: const Duration(milliseconds: 300),
@@ -721,7 +722,7 @@ class _DesktopChatTile extends ConsumerWidget {
           //   final position = Utils.getObjectPosition(objectKey: chatTileKey); // ← not `key`
           //   onRightClick(position);
           // },
-          onSecondaryTapUp: (details) => onRightClick(details.globalPosition),
+          onSecondaryTapUp: (details) => onRightClick(details.globalPosition.translate(-43, -12)),
         ),
       ),
     );

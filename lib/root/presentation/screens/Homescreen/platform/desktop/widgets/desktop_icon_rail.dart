@@ -84,29 +84,32 @@ class _DesktopIconRailState extends State<DesktopIconRail> {
               ),
 
               // BOTTOM TABS
-              Column(
-  children: [
-    ..._bottomTabs.map((tab) {
-      final isProfile = tab == RailTab.profile && widget.profileWidget != null;
-      return _RailIcon(
-        tab: tab,
-        icon: _iconFor(tab),
-        isSelected: widget.selectedTab == tab,
-        isHovered: _hoveredTab == tab,
-        accent: _accent,
-        iconSize: _iconSize,
-        squircleSize: _squircleSize,
-        slotSize: _slotSize,
-        barWidth: _barWidth,
-        showSquircleHighlight: !isProfile, // squircle off for profile avatar
-        customChild: isProfile ? widget.profileWidget : null,
-        onTap: () => widget.onTabSelected(tab),
-        onHover: (v) => setState(() => _hoveredTab = v ? tab : null),
-      );
-    }),
-    const SizedBox(height: 12),
-  ],
-),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ..._bottomTabs.map((tab) {
+                      final isProfile = tab == RailTab.profile && widget.profileWidget != null;
+                      return _RailIcon(
+                        tab: tab,
+                        icon: _iconFor(tab),
+                        isSelected: widget.selectedTab == tab,
+                        isHovered: _hoveredTab == tab,
+                        accent: _accent,
+                        iconSize: _iconSize,
+                        squircleSize: _squircleSize,
+                        slotSize: _slotSize,
+                        barWidth: _barWidth,
+                        showSquircleHighlight: !isProfile, // squircle off for profile avatar
+                        customChild: isProfile ? widget.profileWidget : null,
+                        onTap: () => widget.onTabSelected(tab),
+                        onHover: (v) => setState(() => _hoveredTab = v ? tab : null),
+                      );
+                    }),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -231,7 +234,7 @@ class _RailIconState extends State<_RailIcon>
 
       // SQUIRCLE + ICON — no bar inside anymore
       Padding(
-        padding: const EdgeInsets.only(left: 4.0),
+        padding: const EdgeInsets.only(left: 6.0, right: 4),
         child: SizedBox(
           width: widget.squircleSize,
           height: widget.squircleSize,

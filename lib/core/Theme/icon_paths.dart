@@ -12,6 +12,7 @@ class IconPaths {
   // Vectors
   static const String addNote = "$iconRoot/add_note.svg";
   static const String nothing = "$iconRoot/nothing.svg";
+  static const String selectChat = "$iconRoot/select_a_chat.svg";
 
   // PNGs
   static const String addNoteLight = "$iconRoot/add_note_light.png";
