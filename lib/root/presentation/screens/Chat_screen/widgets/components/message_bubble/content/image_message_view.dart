@@ -9,7 +9,9 @@ import 'package:extended_image/extended_image.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/blurhash_service.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 
@@ -63,8 +65,8 @@ class _ImageMessageViewState extends State<ImageMessageView> {
     final file = widget.message.isVideo ? File(media.thumbnailPath!) : File(media.path!);
     if (!file.existsSync()) return _buildBrokenImage();
 
-    final maxHeight = ThemeConstants.screenHeight * 0.5;
-    final maxWidth = ThemeConstants.screenWidth * 0.7;
+    final maxHeight = (kisDesktop ? context.screenHeight : ThemeConstants.screenHeight) * 0.5;
+    final maxWidth = (kisDesktop ? context.screenWidth : ThemeConstants.screenWidth) * 0.7;
     final aspectRatio = media.aspectRatio ?? 1.0;
 
     return RepaintBoundary(
@@ -96,8 +98,8 @@ class _ImageMessageViewState extends State<ImageMessageView> {
                     child: ExtendedImage.file(
                       file,
                       fit: BoxFit.cover,
-                      cacheHeight: maxHeight ~/ 2, // max(1, maxHeight.toInt()),
-                      cacheWidth: maxWidth ~/ 2, // max(1, maxWidth.toInt()),
+                      cacheHeight: kisDesktop? max(1, maxHeight.toInt())  : maxHeight ~/ 2, // max(1, maxHeight.toInt()),
+                      cacheWidth:  kisDesktop ? max(1, maxWidth.toInt()) : maxWidth ~/ 2, // max(1, maxWidth.toInt()),
                       clearMemoryCacheIfFailed: true,
                       gaplessPlayback: true,
                       cacheRawData: true,

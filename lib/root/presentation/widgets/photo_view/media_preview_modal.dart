@@ -96,7 +96,7 @@ class _MediaPreviewModalState extends State<MediaPreviewModal> with SingleTicker
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height - 
-          (kisWindows ? 0 : (kToolbarHeight / 1.5)),
+          (kisDesktop ? 0 : (kToolbarHeight / 1.5)),
       decoration: const BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.only(

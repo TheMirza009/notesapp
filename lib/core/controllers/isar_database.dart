@@ -14,7 +14,7 @@ class IsarDatabase {
   /// Initialize Isar
   static Future<void> init() async {
     if (_isar != null && _isar!.isOpen) return;
-    final dir = kisWindows ? await getApplicationSupportDirectory() : await getDatabaseDirectory();
+    final dir = kisDesktop ? await getApplicationSupportDirectory() : await getDatabaseDirectory();
     _isar = await Isar.open(
       [ChatSchema, MessageSchema, MediaSchema, UserSchema, SettingsSchema],
       directory: dir.path,

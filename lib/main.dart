@@ -13,7 +13,7 @@ import 'package:notesapp/root/presentation/screens/Homescreen/homescreen.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:notesapp/root/presentation/widgets/windows/windows_titlebar.dart';
 
-bool kisWindows = Platform.isWindows;
+bool kisDesktop = Platform.isWindows;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,7 +91,7 @@ Widget build(BuildContext context) {
       scaffoldMessengerKey: scaffoldMessengerkey,
       navigatorKey: navigatorKey,
       home: const Homescreen(),
-      builder: kisWindows
+      builder: kisDesktop
       ? (context, child) {
         return Column(
           children: [const WindowsTitleBar(), Expanded(child: child!)],

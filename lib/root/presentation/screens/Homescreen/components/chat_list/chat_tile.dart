@@ -15,6 +15,7 @@ class ChatTile extends StatelessWidget {
   final String? chatPhotoPath;
   final VoidCallback? onTap; // Nullable onTap function
   final VoidCallback? onLongPress;
+  final Function(TapUpDetails details)? onSecondaryTapUp;
   final  Function(DismissDirection)? onDismissed;
   final bool? isDismissible;
   final bool? isPinned;
@@ -29,6 +30,7 @@ class ChatTile extends StatelessWidget {
     this.chatIcon,
     this.onTap, // onTap parameter
     this.onLongPress,
+    this.onSecondaryTapUp,
     this.onDismissed,
     this.chatPhotoPath,
     this.trailing,
@@ -69,6 +71,7 @@ class ChatTile extends StatelessWidget {
             InkWell(
               onTap: onTap, // Executes onTap if provided
               onLongPress: onLongPress,
+              onSecondaryTapUp: (details) =>  onSecondaryTapUp?.call(details),
               child: Container(
                 width: Platform.isWindows ? double.infinity : ThemeConstants.screenWidth,
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -102,7 +105,7 @@ class ChatTile extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 // Title Text
-                                kisWindows ? Flexible(
+                                kisDesktop ? Flexible(
                                   child: Text(
                                       title,
                                       style: TextStyle(
@@ -170,7 +173,7 @@ class ChatTile extends StatelessWidget {
                             SizedBox(height: ThemeConstants.screenHeight * 0.002,),
 
                             // Subtitle Text
-                            kisWindows ? Text(
+                            kisDesktop ? Text(
                                 subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
                                 maxLines: 1,
                                 softWrap: false, // Prevent wrapping

@@ -36,7 +36,7 @@ class ShareIntentHandler {
 
   /// Initialize listener for incoming shares
   static void initialize() {
-    if (kisWindows) return;
+    if (kisDesktop) return;
     if (_initialized) return;
     _initialized = true;
 
@@ -60,7 +60,7 @@ class ShareIntentHandler {
   }
 
   static void dispose() {
-    if (!kisWindows) {
+    if (!kisDesktop) {
       _mediaSub?.cancel();
       _initialized = false;
     }

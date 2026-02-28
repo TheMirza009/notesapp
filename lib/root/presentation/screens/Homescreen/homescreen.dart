@@ -18,6 +18,7 @@ import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/presentation/screens/Homescreen/platform/desktop/homescreen_desktop.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_5.dart';
@@ -76,6 +77,19 @@ class HomescreenState extends HomeScreenBaseState {
     final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
     final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
+
+    /// =============================================================
+    /// MAIN DESKTOP COMPONENT
+    /// =============================================================
+    
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth >= 600) {
+      return const HomeScreenDesktop();
+    }
+    
+    /// =============================================================
+    /// MAIN MOBILE COMPONENT
+    /// =============================================================
 
     return PopScope(
       canPop: false,
@@ -258,6 +272,20 @@ class HomescreenState extends HomeScreenBaseState {
                                       onDismissed: (_) async => await chatNotifier.deleteChatWithUndo(chat), // _deleteChatWithFade(chat),// chatNotifier.removeChat( chat, ),
                                       onTap: () async => await navigateToChatScreen(chat),
                                       onLongPress: () {
+                                        final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
+                                        CustomContextMenu.showMenuAt(
+                                          context,
+                                          position: position,
+                                          menuItems: chatTileOptions(chat),
+                                          onSelected: (value) {
+                                            if (value == "delete") {
+                                              _deleteChatWithFade(chat);
+                                            }
+                                            chatNotifier.handleChatHoldOptions(value, chat);
+                                            },
+                                        );
+                                      },
+                                      onSecondaryTapUp: (details) {
                                         final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
                                         CustomContextMenu.showMenuAt(
                                           context,

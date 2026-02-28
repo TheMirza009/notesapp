@@ -4,22 +4,22 @@ import 'package:notesapp/main.dart';
 
 class WindowsUtils {
   static void setTitleBarColor(Color color) {
-    if (!kisWindows) return;
+    if (!kisDesktop) return;
     Future.microtask(() => windowsTitleBarColor.value = color);
   }
 
   static void clearTitleBarColor() {
-    if (!kisWindows) return;
+    if (!kisDesktop) return;
     Future.microtask(() => windowsTitleBarColor.value = null);
   }
 
   static void setTitleBarColorDirect(Color color) {
-    if (!kisWindows) return;
+    if (!kisDesktop) return;
     (windowsTitleBarColor.value = color);
   }
 
   static void clearTitleBarColorDirect() {
-    if (!kisWindows) return;
+    if (!kisDesktop) return;
     (windowsTitleBarColor.value = null);
   }
 }

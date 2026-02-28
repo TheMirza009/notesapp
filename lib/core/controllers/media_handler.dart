@@ -49,7 +49,7 @@ class MediaHandler {
     File file = File(pickedFile.path);
     debugPrint("✅ Picked file: ${file.path}");
 
-    if ((useCroppy ?? false) && !kisWindows) {
+    if ((useCroppy ?? false) && !kisDesktop) {
       final croppedFile = (useCroppy ?? false) ? await _croppyImage(file, navigate: (navigateToCrop ?? false), showCircle: isProfilePicture) : await _cropImage(file); //_croppyImage(file);
       if (croppedFile != null) {
         debugPrint("✂️ Cropped file: ${croppedFile.path}");
@@ -163,7 +163,7 @@ class MediaHandler {
 
     // Optional crop (only for still images, not GIFs)
     if (isProfilePicture &&
-        !kisWindows &&
+        !kisDesktop &&
         !file.path.toLowerCase().endsWith('.gif')) {
       final croppedFile = await _cropImage(file);
       if (croppedFile != null) file = croppedFile;
