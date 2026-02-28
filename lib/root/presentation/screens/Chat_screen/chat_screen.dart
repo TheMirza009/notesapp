@@ -125,6 +125,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
         overlayHandler.hideRecordBar(instant: true);
         overlayHandler.hideReplyAnchor(instant: true);
         notifier.cancelAudioRecording();
+
+        // Experimental to be removed later
+        if (kisDesktop) {
+          ref.read(chatListProvider.notifier).clearSelectedChat();
+        } else {
+          Navigator.pop(context);
+        }
       },
       child: _ChatScreenBody()
     );

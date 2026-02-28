@@ -3,6 +3,8 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
 
 class WindowsUtils {
+  static double? titlebarHeight = 40;
+
   static void setTitleBarColor(Color color) {
     if (!kisDesktop) return;
     Future.microtask(() => windowsTitleBarColor.value = color);

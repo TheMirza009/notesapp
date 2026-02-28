@@ -8,45 +8,62 @@ import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/core/utils/windows_utils.dart';
 
 class WindowsTitleBar extends StatelessWidget {
   const WindowsTitleBar({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final bool isWide = context.screenWidth >= 600;
+    final double iconSize = isWide ? 50 : 20;
+
     return SizedBox(
-      height: 32,
+      height: isWide ? WindowsUtils.titlebarHeight : null,
       child: ValueListenableBuilder<Color?>(
-  valueListenable: windowsTitleBarColor,
-  builder: (context, color, child) {
-    final resolvedColor = color ??
-        (context.isLight
-            ? ThemeConstants.hometoolbarLight
-            : const Color(0xFF1d2b36));
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(color: resolvedColor),
-      child: child!,
-    );
-  },
+        valueListenable: windowsTitleBarColor,
+        builder: (context, color, child) {
+          final fallbackColor = (context.isLight ? ThemeConstants.hometoolbarLight : const Color(0xFF1d2b36));
+          final resolvedColor = isWide ? fallbackColor : (color ?? fallbackColor);
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(color: resolvedColor),
+            child: child!,
+          );
+        },
         child: WindowTitleBarBox(
           child: Row(
             children: [
               // App Icon
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: isWide ? const EdgeInsets.fromLTRB(2, 10, 6, 6) : const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Image.asset(
                   'assets/launcher/windows_logo_04.png',
-                  width: 20,
-                  height: 20,
+                  width: iconSize,
+                  height: iconSize,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
+                    return Icon(
                       Icons.note_alt_outlined,
-                      size: 20,
+                      size: iconSize,
                       color: Colors.white70,
                     );
                   },
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Material(
+                  color: Colors.transparent,
+                  child: const Text(
+                    "NotesApp",
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
               // Draggable area

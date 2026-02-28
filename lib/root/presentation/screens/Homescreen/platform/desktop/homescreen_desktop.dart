@@ -8,8 +8,8 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
-import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/core/utils/windows_utils.dart';
@@ -18,7 +18,6 @@ import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart';
-import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/chat_tile.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/doc_icon.dart';
 import 'package:notesapp/root/presentation/screens/Profile/profile_screen.dart';
@@ -29,7 +28,6 @@ import 'package:notesapp/root/presentation/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
 import 'package:notesapp/root/presentation/widgets/nothing_to_see.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
-import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:typeset/typeset.dart';
 
 class HomeScreenDesktop extends ConsumerStatefulWidget {
@@ -46,7 +44,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   ChatlistFilter _filter = ChatlistFilter.oldestCreated;
   bool _isSliding = false;
-  Chat? _selectedChat;
+  // Chat? _selectedChat;
 
   @override
   void initState() {
@@ -77,7 +75,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   Future<void> _selectChat(Chat chat) async {
     ref.read(chatListProvider.notifier).selectChat(chat);
-    setState(() => _selectedChat = chat);
+    // setState(() => _selectedChat = chat);
     await chat.messages.load();
     await Future.wait(chat.messages.map((m) => m.media.load()));
   }
@@ -87,20 +85,22 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     await newChat.messages.load();
     ref.read(chatListProvider.notifier).selectChat(newChat);
     ref.read(isNewChat.notifier).state = true;
-    setState(() => _selectedChat = newChat);
+    // setState(() => _selectedChat = newChat);
   }
 
   Future<void> _deleteChatWithFade(Chat chat) async {
     final chatNotifier = ref.read(chatListProvider.notifier);
+    final selectedChat = ref.watch(chatListProvider.select((s) => s.selectedChat));
+
     chatNotifier.clearSearch();
     setState(() => chatNotifier.isDeleting[chat.isarID] = true);
     chatNotifier.applyFilter(_filter);
     await Future.delayed(const Duration(milliseconds: 300));
     await chatNotifier.deleteChatWithUndo(chat);
     chatNotifier.isDeleting.remove(chat.isarID);
-    if (_selectedChat?.isarID == chat.isarID) {
-      setState(() => _selectedChat = null);
-    }
+    if (selectedChat?.isarID == chat.isarID) {
+    chatNotifier.clearSelectedChat(); // already exists in your notifier
+  }
   }
 
   void _handleContextMenuAction(String value) {
@@ -140,32 +140,129 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.brightnessOf(context) == Brightness.light;
+    final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    final parentRadius = BorderRadius.only(topLeft: Radius.circular(10));
+    final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {},
+      child: ParentSlideWrapper(
+        overlay: RepaintBoundary(
+          child: ProfileScreen(
+            leading: IconButton(
+              onPressed: () {
+                setState(() => _isSliding = false);
+                WindowsUtils.clearTitleBarColorDirect();
+              },
+              icon: Icon(Icons.arrow_back_ios_new_rounded,
+                  color: ThemeConstants.iconColorNeutral),
+            ),
+          ),
+        ),
+        trigger: _isSliding,
+        child: Scaffold(
+          backgroundColor: headerColor,
+          // appBar: AppBar(
+          //   elevation: 0,
+          //   backgroundColor: headerColor,
+          //   shadowColor: Colors.transparent,
+          //   toolbarHeight: 52,
+          //   titleSpacing: 0,
+          //   title: Padding(
+          //     padding: const EdgeInsets.only(left: 8),
+          //     child: Row(
+          //       children: [
+          //         _buildAvatar(isLight),
+          //         const SizedBox(width: 10),
+          //         const Text(
+          //           "NotesApp",
+          //           style: TextStyle(
+          //               fontSize: 18,
+          //               fontFamily: "Poppins",
+          //               fontWeight: FontWeight.w500),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          //   actions: [
+          //     CustomContextMenu(
+          //       icon: const Icon(Icons.more_vert),
+          //       menuItems: homeScreenOptions,
+          //       onSelected: _handleContextMenuAction,
+          //     ),
+          //     const SizedBox(width: 4),
+          //   ],
+          //   systemOverlayStyle: SystemUiOverlayStyle(
+          //     systemNavigationBarColor: isLight
+          //         ? ThemeConstants.hometoolbarLight3
+          //         : ThemeConstants.messageBarDark,
+          //   ),
+          // ),
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _iconRail(headerColor),
+              Expanded(
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: parentRadius,
+                    border: Border.all(color: dividerColor)
+                  ),
+                  child: Row(
+                    children: [
+                      _buildLeftPanel(isLight),
+                      Expanded(child: _buildRightPanel(isLight)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  
   // PANEL BUILDERS
+
+  Widget _iconRail(Color headerColor) {
+    return ValueListenableBuilder(
+      valueListenable: windowsTitleBarColor,
+      builder: (context, value, child) {
+        return Container(
+          color: headerColor,
+          height: double.maxFinite,
+          width: WindowsUtils.titlebarHeight,
+        );
+      }
+    );
+  }
 
   Widget _buildLeftPanel(bool isLight) {
     final chatNotifier = ref.read(chatListProvider.notifier);
-    final chatlist =
-        ref.watch(chatListProvider.select((state) => state.chats));
-    final isLoading =
-        ref.watch(chatListProvider.select((state) => state.isLoading));
-    final headerColor =
-        isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
-    final dividerColor = isLight
-        ? ThemeConstants.homeDividerLight
-        : ThemeConstants.darkIconBorder;
-    final backgroundGradient =
-        isLight ? Gradients.lightBackground : Gradients.darkBackground;
+    final chatlist = ref.watch(chatListProvider.select((state) => state.chats));
+    final isLoading = ref.watch(chatListProvider.select((state) => state.isLoading));
+    final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
+    final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
+    final backgroundGradient = isLight ? Gradients.lightBackground : Gradients.darkBackground;
 
     return Container(
       width: 340,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: backgroundGradient,
+        color: headerColor,
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(10)),
         border: Border(
-          right: BorderSide(
-            color: dividerColor,
-            width: 1,
+          right: BorderSide(color: dividerColor, width: 1),
+          // top: BorderSide(color: dividerColor, width: 1)
           ),
-        ),
       ),
       child: Column(
         children: [
@@ -278,66 +375,57 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           // CHAT LIST
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : chatlist.isEmpty
-                    ? const NothingToSee()
-                    : ListView.separated(
-                        itemCount: chatlist.length,
-                        itemBuilder: (context, index) {
-                          final chat = chatlist[index];
-                          final searchResults = ref.watch(chatListProvider
-                              .select((state) => state.searchResults));
-                          final matchingMessages =
-                              searchResults[chat] ?? [];
-
-                          return TweenAnimationBuilder<double>(
-                            tween: Tween(
-                              begin: chatNotifier.isDeleting[chat.isarID] ==
-                                      true
-                                  ? 1.0
-                                  : 0.0,
-                              end: chatNotifier.isDeleting[chat.isarID] == true
-                                  ? 0.0
-                                  : 1.0,
-                            ),
-                            duration: const Duration(milliseconds: 300),
-                            builder: (context, value, child) =>
-                                Opacity(opacity: value, child: child),
-                            child: matchingMessages.isEmpty
-                                ? _DesktopChatTile(
-                                    key: ValueKey(chat.isarID),   // ← widget identity key, unique per item
-                                    chatTileKey: _getChatKey(chat), // ← the GlobalKey for position lookup
-                                    chat: chat,
-                                    isSelected: _selectedChat?.isarID == chat.isarID,
-                                    onTap: () => _selectChat(chat),
-                                    onRightClick: (position) {
-                                      CustomContextMenu.showMenuAt(
-                                        context,
-                                        position: position,
-                                        menuItems: chatTileOptions(chat),
-                                        onSelected: (value) {
-                                          if (value == "delete") {
-                                            _deleteChatWithFade(chat);
-                                          }
-                                          chatNotifier
-                                              .handleChatHoldOptions(value, chat);
-                                        },
-                                      );
-                                    },
-                                    onDismissed: (_) =>
-                                        chatNotifier.deleteChatWithUndo(chat),
-                                  )
-                                : _buildSearchResultTile(
-                                    chat, matchingMessages),
-                          );
-                        },
-                        separatorBuilder: (context, index) => Divider(
-                          thickness: 0.5,
-                          indent: 24,
-                          height: 1,
-                          color: dividerColor,
+            ? const Center(child: CircularProgressIndicator())
+            : chatlist.isEmpty
+                ? const NothingToSee()
+                : ListView.separated(
+                    itemCount: chatlist.length,
+                    itemBuilder: (context, index) {
+                      final chat = chatlist[index];
+                      final searchResults = ref.watch(chatListProvider.select((state) => state.searchResults));
+                      final matchingMessages = searchResults[chat] ?? [];
+                        
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(
+                          begin: chatNotifier.isDeleting[chat.isarID] == true ? 1.0 : 0.0,
+                          end: chatNotifier.isDeleting[chat.isarID] == true ? 0.0 : 1.0,
                         ),
-                      ),
+                        duration: const Duration(milliseconds: 300),
+                        builder: (context, value, child) => Opacity(opacity: value, child: child),
+                        child: matchingMessages.isEmpty
+                          ? _DesktopChatTile(
+                              key: ValueKey(chat.isarID),   // ← widget identity key, unique per item
+                              chatTileKey: _getChatKey(chat), // ← the GlobalKey for position lookup
+                              chat: chat,
+                              isSelected: ref.watch(
+  chatListProvider.select((s) => s.selectedChat?.isarID == chat.isarID)
+),
+                              onTap: () => _selectChat(chat),
+                              onRightClick: (position) {
+                                CustomContextMenu.showMenuAt(
+                                  context,
+                                  position: position,
+                                  menuItems: chatTileOptions(chat),
+                                  onSelected: (value) {
+                                    if (value == "delete") {
+                                      _deleteChatWithFade(chat);
+                                    }
+                                    chatNotifier.handleChatHoldOptions(value, chat);
+                                  },
+                                );
+                              },
+                              onDismissed: (_) => chatNotifier.deleteChatWithUndo(chat),
+                            )
+                          : _buildSearchResultTile(chat, matchingMessages),
+                      );
+                    },
+                    separatorBuilder: (context, index) => Divider(
+                      thickness: 0.5,
+                      indent: 24,
+                      height: 1,
+                      color: dividerColor,
+                    ),
+                  ),
           ),
 
           // NEW NOTE BUTTON
@@ -557,34 +645,35 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildRightPanel(bool isLight) {
+     final selectedChat = ref.watch(
+    chatListProvider.select((s) => s.selectedChat),
+  );
     final headerColor =
         isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final backgroundGradient =
         isLight ? Gradients.lightBackground : Gradients.darkBackground;
 
-    if (_selectedChat == null) {
-      return Expanded(
-        child: Container(
-          decoration: BoxDecoration(gradient: backgroundGradient),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.edit_note_rounded,
-                    size: 64,
-                    color: ThemeConstants.subtitleLight.withOpacity(0.3)),
-                const SizedBox(height: 16),
-                Text(
-                  "Select a note to view",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: ThemeConstants.subtitleLight.withOpacity(0.5),
-                    fontFamily: "Poppins",
-                    fontWeight: FontWeight.w400,
-                  ),
+    if (selectedChat == null) {
+      return Container(
+        decoration: BoxDecoration(gradient: backgroundGradient),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_note_rounded,
+                  size: 64,
+                  color: ThemeConstants.subtitleLight.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              Text(
+                "Select a note to view",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: ThemeConstants.subtitleLight.withOpacity(0.5),
+                  fontFamily: "Poppins",
+                  fontWeight: FontWeight.w400,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
@@ -616,79 +705,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
         WindowsUtils.setTitleBarColorDirect(
             isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.brightnessOf(context) == Brightness.light;
-    final headerColor =
-        isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {},
-      child: ParentSlideWrapper(
-        overlay: RepaintBoundary(
-          child: ProfileScreen(
-            leading: IconButton(
-              onPressed: () {
-                setState(() => _isSliding = false);
-                WindowsUtils.clearTitleBarColorDirect();
-              },
-              icon: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: ThemeConstants.iconColorNeutral),
-            ),
-          ),
-        ),
-        trigger: _isSliding,
-        child: Scaffold(
-          backgroundColor: headerColor,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: headerColor,
-            shadowColor: Colors.transparent,
-            toolbarHeight: 52,
-            titleSpacing: 0,
-            title: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Row(
-                children: [
-                  _buildAvatar(isLight),
-                  const SizedBox(width: 10),
-                  const Text(
-                    "NotesApp",
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: "Poppins",
-                        fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              CustomContextMenu(
-                icon: const Icon(Icons.more_vert),
-                menuItems: homeScreenOptions,
-                onSelected: _handleContextMenuAction,
-              ),
-              const SizedBox(width: 4),
-            ],
-            systemOverlayStyle: SystemUiOverlayStyle(
-              systemNavigationBarColor: isLight
-                  ? ThemeConstants.hometoolbarLight3
-                  : ThemeConstants.messageBarDark,
-            ),
-          ),
-          body: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildLeftPanel(isLight),
-              _buildRightPanel(isLight),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
