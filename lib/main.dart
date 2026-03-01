@@ -13,7 +13,7 @@ import 'package:notesapp/root/presentation/screens/Homescreen/homescreen.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:notesapp/root/presentation/widgets/windows/windows_titlebar.dart';
 
-bool kisDesktop = (Platform.isWindows || Platform.isLinux);
+bool kisDesktop = (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
