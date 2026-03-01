@@ -73,7 +73,7 @@ class ChatTile extends StatelessWidget {
               onLongPress: onLongPress,
               onSecondaryTapUp: (details) =>  onSecondaryTapUp?.call(details),
               child: Container(
-                width: Platform.isWindows ? double.infinity : ThemeConstants.screenWidth,
+                width: kisDesktop ? double.infinity : ThemeConstants.screenWidth,
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 child: Row(
                   children: [

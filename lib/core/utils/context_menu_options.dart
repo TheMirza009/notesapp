@@ -230,6 +230,15 @@ List<PopupMenuItem<String>> get bubbleColor => [
 
 /// Options: Chat Screen
 List<PopupMenuItem<String>> get galleryOptions => [
+  
+  PopupMenuItem(
+    value: 'saveMedia',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.saveImage),
+      text: "Save to Gallery",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
   PopupMenuItem(
     value: 'croppy',
     child: buildOptionTile(

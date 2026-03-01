@@ -115,14 +115,15 @@ class _BottomMessageBarWrapperState extends ConsumerState<BottomMessageBarWrappe
         },
       ).withKeys(
         onNextLine: kisDesktop ? _insertNewline : null,
-        onEnter: kisDesktop ? () {
-      // On desktop, Enter sends the message
-      final text = notifier.keyboardController?.text ?? '';
-      if (text.isNotEmpty) {
-        notifier.sendMessage(text);
-        notifier.keyboardController.clear();
-      }
-    } : null,
+        onEnter: kisDesktop
+            ? () {
+              // On desktop, Enter sends the message
+              final text = notifier.keyboardController?.text ?? '';
+              if (text.isNotEmpty) {
+                notifier.sendMessage(text);
+                notifier.keyboardController.clear();
+              }
+            } : null,
       ),
     );
   }

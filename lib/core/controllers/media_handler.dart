@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:croppy/croppy.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:isar_community/isar.dart';
@@ -373,6 +374,68 @@ static Future<Media?> saveAudio(String audioPath) async {
 
     debugPrint("✅ Received file handled: $media");
     return media;
+  }
+
+
+  ///=========================================================
+  /// SAVE TO STORAGE METHODS PUBLIC
+  ///=========================================================
+  
+  static Future<bool> saveMediaToGallery(Media media, BuildContext context) async {
+  final path = media.path;
+  if (path == null) {
+    _showToast(context, 'No file to save');
+    return false;
+  }
+
+  try {
+    if (kisDesktop) {
+      final outputDir = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Save to...',
+      );
+      if (outputDir == null) return false;
+
+      final destination = '$outputDir${Platform.pathSeparator}${media.name}';
+      await File(path).copy(destination);
+      _showToast(context, 'Saved to $outputDir');
+      return true;
+    } else {
+      switch (media.type) {
+        case Mediatype.video:
+          await Gal.putVideo(path);
+        case Mediatype.image:
+          await Gal.putImage(path);
+        default:
+          // Documents/audio — copy to downloads folder
+          final outputDir = await FilePicker.platform.getDirectoryPath(
+            dialogTitle: 'Save to...',
+          );
+          if (outputDir == null) return false;
+          final destination = '$outputDir${Platform.pathSeparator}${media.name}';
+          await File(path).copy(destination);
+      }
+      _showToast(context, 'Saved to gallery');
+      return true;
+    }
+  } catch (e) {
+    _showToast(context, 'Failed to save');
+    debugPrint('❌ saveMediaToGallery error: $e');
+    return false;
+  }
+}
+
+  static void _showToast(BuildContext context, String message) {
+    ScaffoldMessenger.of(navigatorKey.currentContext ?? context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark2),),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.fixed,
+        backgroundColor: context.isLight 
+        ? ThemeConstants.hometoolbarLight2 
+        : ThemeConstants.darkAppbar,
+        // action: SnackBarAction(label: 'Dismiss', onPressed: ScaffoldMessenger.of(context).clearSnackBars, textColor: ThemeConstants.sinisterSeed,),
+      ),
+    );
   }
 
 

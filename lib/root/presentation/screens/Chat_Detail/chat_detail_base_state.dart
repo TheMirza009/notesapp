@@ -164,6 +164,9 @@ abstract class ChatDetailBase extends ConsumerState<ChatDetailScreen> {
 
   void handleGalleryOptions(BuildContext context, WidgetRef ref, String value, Media image) async {
     switch (value) {
+    case 'saveMedia':
+      await MediaHandler.saveMediaToGallery(image, context);
+      break;
       case "shareImage":
         await Utils.shareToApps(XFile(image.path!));
         break;

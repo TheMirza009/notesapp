@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:intl/intl.dart';
+import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/controllers/video_handler.dart';
@@ -194,6 +196,15 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                 actions:
                     (widget.showOptions == true && widget.isCamera != true)
                         ? [
+                          IconButton(
+                            // icon: Icon(CupertinoIcons.arrow_down_to_line, color: ThemeConstants.textDark2, fontWeight: FontWeight.w500,), // vectorBuild(IconPaths.saveImage, color: Colors.white),
+                            // icon: Icon(Icons.download_for_offline, color: ThemeConstants.textDark2, fontWeight: FontWeight.w500,), // vectorBuild(IconPaths.saveImage, color: Colors.white),
+                            icon: vectorBuild(IconPaths.download2, scale: 1.1, color: ThemeConstants.textDark2),
+                            onPressed: () async {
+                              final Media media = widget.galleryItems[currentIndex];
+                              await MediaHandler.saveMediaToGallery(media, context);
+                            }
+                          ),
                           Consumer(
                             builder: (context, ref, child) {
                               return CustomContextMenu(

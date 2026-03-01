@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
   emoji_picker_flutter
   file_selector_windows
+  gal
   isar_community_flutter_libs
   pasteboard
   record_windows
