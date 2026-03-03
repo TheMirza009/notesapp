@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/doc_icon.dart';
 
@@ -73,7 +74,7 @@ class ChatTile extends StatelessWidget {
               onLongPress: onLongPress,
               onSecondaryTapUp: (details) =>  onSecondaryTapUp?.call(details),
               child: Container(
-                width: kisDesktop ? double.infinity : ThemeConstants.screenWidth,
+                width: kisDesktop ? double.infinity : context.screenWidth,
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 child: Row(
                   children: [
@@ -115,7 +116,7 @@ class ChatTile extends StatelessWidget {
                                       ),
                                     ),
                                 ) : SizedBox(
-                                  width: ThemeConstants.screenWidth * ((trailing == null) ? 0.58 : 0.5), // Adjust width for title
+                                  width: context.screenWidth * ((trailing == null) ? 0.58 : 0.5), // Adjust width for title
                                   child: Text(
                                     title,
                                     style: TextStyle(
@@ -183,7 +184,7 @@ class ChatTile extends StatelessWidget {
                                   color: ThemeConstants.subtitleLight,
                                 ),
                               ) : SizedBox(
-                              width: ThemeConstants.screenWidth * 0.6, // Adjust width for subtitle
+                              width: context.screenWidth * 0.6, // Adjust width for subtitle
                               child: Text(
                                 subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
                                 maxLines: 1,

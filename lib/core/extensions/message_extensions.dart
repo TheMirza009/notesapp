@@ -28,11 +28,14 @@ extension MessageX on Message {
     final bool isVideo = media.value?.type == Mediatype.video; // && (text.isEmpty);
     final bool isDocument = media.value?.type == Mediatype.document; // && (text.isEmpty);
     final bool isThread = media.value?.type == Mediatype.thread; // && (text.isEmpty);
+    final bool isLink = text?.contains(RegExp(r'§([^§]+)§')) ?? false;
     
     if (isPhoto) return "📷 Photo";
     if (isVideo) return "📽️ Video";
     if (isDocument) return "📄 Document";
     if (isThread) return "🧵 ${text.getThreadLength()} Threads";
+    if (isLink) return (text ?? '').unwrappedLink;
+    
     return text ?? "No notes to show";
   }
 }

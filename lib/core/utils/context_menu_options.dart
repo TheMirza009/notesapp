@@ -291,6 +291,14 @@ List<PopupMenuItem<String>> get galleryOptions => [
 
 List<PopupMenuItem<String>> get galleryVideoOptions => [
   PopupMenuItem(
+    value: 'saveMedia',
+    child: buildOptionTile(
+      icon: vectorBuild(IconPaths.saveImage),
+      text: "Save to Gallery",
+      textColor: ThemeConstants.textDark2
+    ),
+  ),
+  PopupMenuItem(
     value: 'shareImage',
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.shareIcon2),

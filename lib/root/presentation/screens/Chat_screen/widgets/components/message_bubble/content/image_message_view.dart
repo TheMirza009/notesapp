@@ -65,8 +65,15 @@ class _ImageMessageViewState extends State<ImageMessageView> {
     final file = widget.message.isVideo ? File(media.thumbnailPath!) : File(media.path!);
     if (!file.existsSync()) return _buildBrokenImage();
 
-    final maxHeight = (kisDesktop ? context.screenHeight : ThemeConstants.screenHeight) * 0.5;
-    final maxWidth = (kisDesktop ? context.screenWidth : ThemeConstants.screenWidth) * 0.7;
+    // AFTER — guard against zero:
+    final screenH = kisDesktop ? context.screenHeight : ThemeConstants.screenHeight;
+    final screenW = kisDesktop ? context.screenWidth : ThemeConstants.screenWidth;
+    final maxHeight = (screenH > 0 ? screenH : 800) * 0.5;
+    final maxWidth = (screenW > 0 ? screenW : 400) * 0.7;
+
+    // Then guard cache values:
+    final cacheH = max(1, (maxHeight * 0.5).toInt());
+    final cacheW = max(1, (maxWidth * 0.5).toInt());
     final aspectRatio = media.aspectRatio ?? 1.0;
 
     return RepaintBoundary(
@@ -98,8 +105,8 @@ class _ImageMessageViewState extends State<ImageMessageView> {
                     child: ExtendedImage.file(
                       file,
                       fit: BoxFit.cover,
-                      cacheHeight: kisDesktop? max(1, maxHeight.toInt())  : maxHeight ~/ 2, // max(1, maxHeight.toInt()),
-                      cacheWidth:  kisDesktop ? max(1, maxWidth.toInt()) : maxWidth ~/ 2, // max(1, maxWidth.toInt()),
+                      cacheHeight: cacheH,
+                      cacheWidth: cacheW,
                       clearMemoryCacheIfFailed: true,
                       gaplessPlayback: true,
                       cacheRawData: true,

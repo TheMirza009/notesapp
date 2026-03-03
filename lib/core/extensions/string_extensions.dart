@@ -55,4 +55,11 @@ extension LinkWrapper on String {
       return '§$url§';
     });
   }
+
+  String get unwrappedLink {
+    return replaceAllMapped(
+      RegExp(r'§([^§]+)§'),
+      (match) => '🔗 ${match.group(1)}',
+    );
+  }
 }

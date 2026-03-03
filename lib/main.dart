@@ -33,7 +33,7 @@ void main() async {
   // IMPORTANT: Don’t block first frame
   await IsarDatabase.init();
 
-  if (!Platform.isWindows) {
+  if (!kisDesktop) {
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -73,9 +73,9 @@ class _MyAppState extends ConsumerState<MyApp> {
 Widget build(BuildContext context) {
   final themeProvider = ref.watch(themeNotifierProvider);
 
-  if (!Platform.isWindows) {
+  if (!kisDesktop) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: true,
       title: 'NotesApp',
       theme: themeProvider,
       scaffoldMessengerKey: scaffoldMessengerkey,

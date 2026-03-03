@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/controllers/tutorial/tutorial_service.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/extensions/message_extensions.dart';
@@ -42,6 +43,14 @@ class Homescreen extends ConsumerStatefulWidget {
 }
 
 class HomescreenState extends HomeScreenBaseState {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TutorialService.showHomeScreenHelp(); // resetAll();
+    });
+  }
 
   final Map<int, GlobalKey> _chatKeys = {};
   
@@ -375,7 +384,7 @@ class HomescreenState extends HomeScreenBaseState {
                               separatorBuilder:
                                   (context, index) => Divider(
                                     thickness: 1,
-                                    indent: ThemeConstants.screenWidth * 0.07,
+                                    indent: context.screenWidth * 0.07,
                                     color: dividerColor,
                                   ),
                             ),
@@ -513,7 +522,11 @@ class HomescreenState extends HomeScreenBaseState {
     return Expanded(
       child: RichText(
         text: TextSpan(
-          style: TextStyle(overflow: TextOverflow.fade, fontFamily: 'Poppins', fontSize: 12, color: ThemeConstants.subtitleLight),
+          style: TextStyle(
+            overflow: TextOverflow.fade, 
+            fontFamily: 'Poppins', 
+            fontSize: 12, color: ThemeConstants.subtitleLight,
+          ),
           children: spans,
         ),
         maxLines: 2,
