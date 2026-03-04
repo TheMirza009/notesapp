@@ -113,6 +113,7 @@ class ProfileScreenState extends ProfileScreenBaseState {
                   // nameBuilderBordered(),
                   nameBuilderSimple(),
                   // SizedBox(height: 50),
+                  // In profile_screen.dart — replace the TileContainer call with this:
                   TileContainer.solidBox(
                     backgroundColor: Colors.transparent,
                     dividerColor: context.isLight ? dividerColor : null,
@@ -122,9 +123,22 @@ class ProfileScreenState extends ProfileScreenBaseState {
                     borderThickness: 2,
                     dividerThickness: 2,
                     items: [
-                      TileItem(title: "Settings", icon: vectorBuild(IconPaths.setting1, scale: 1.3), onTap: navigateToSettings),
-                      TileItem(title: "Refer a friend", icon: vectorBuild(IconPaths.mailHeart, scale: 1.3), onTap: () async => await refer()),
-                      TileItem(title: "Contact us", icon: vectorBuild(IconPaths.mail, scale: 1.3), onTap: () async => await contactUs()),
+                      TileItem(
+                        title: "Settings",
+                        icon: vectorBuild(IconPaths.setting1, scale: 1.3),
+                        onTap: navigateToSettings,
+                      ),
+                      TileItem(title: "Backup & Restore", icon: vectorBuild(IconPaths.floppy4, scale: 1.3), onTap: navigateToBackup),
+                      TileItem(
+                        title: "Refer a friend",
+                        icon: vectorBuild(IconPaths.mailHeart, scale: 1.3),
+                        onTap: () async => await refer(),
+                      ),
+                      TileItem(
+                        title: "Contact us",
+                        icon: vectorBuild(IconPaths.mail, scale: 1.3),
+                        onTap: () async => await contactUs(),
+                      ),
                     ],
                   ),
                 ],

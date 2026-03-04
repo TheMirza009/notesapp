@@ -44,14 +44,6 @@ class Homescreen extends ConsumerStatefulWidget {
 
 class HomescreenState extends HomeScreenBaseState {
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      TutorialService.showHomeScreenHelp(); // resetAll();
-    });
-  }
-
   final Map<int, GlobalKey> _chatKeys = {};
   
 
@@ -100,296 +92,309 @@ class HomescreenState extends HomeScreenBaseState {
     /// MAIN MOBILE COMPONENT
     /// =============================================================
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        final now = DateTime.now();
-
-        if (isSliding) {
-          setState(() => isSliding = false);
-        } else if (lastBackPress == null || now.difference(lastBackPress!) > const Duration(seconds: 2)) {
-          lastBackPress = now;
-          Utils.showGlobalSnackBar("Press again to exit.", Colors.blueGrey);
-        } else {
-          SystemNavigator.pop();
-        }
-      },
-      child: ParentSlideWrapper(
-        overlay: RepaintBoundary(
-          child: ProfileScreen(
-            leading: IconButton(
-              onPressed: () {
-                setState(() => isSliding = false);
-                WindowsUtils.clearTitleBarColorDirect();
-                // WindowsUtils.setTitleBarColorDirect(context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
-                },
-              icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+    return AbsorbPointer(
+      absorbing: tutorialActive,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          final now = DateTime.now();
+      
+          if (isSliding) {
+            setState(() => isSliding = false);
+          } else if (lastBackPress == null || now.difference(lastBackPress!) > const Duration(seconds: 2)) {
+            lastBackPress = now;
+            Utils.showGlobalSnackBar("Press again to exit.", Colors.blueGrey);
+          } else {
+            SystemNavigator.pop();
+          }
+        },
+        child: ParentSlideWrapper(
+          overlay: RepaintBoundary(
+            child: ProfileScreen(
+              leading: IconButton(
+                onPressed: () {
+                  setState(() => isSliding = false);
+                  WindowsUtils.clearTitleBarColorDirect();
+                  // WindowsUtils.setTitleBarColorDirect(context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
+                  },
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeConstants.iconColorNeutral),
+              ),
             ),
           ),
-        ),
-        trigger: isSliding,
-        child: Scaffold(
-          floatingActionButton: CustomIconButton(
-            size: 60,
-            splashColor: const Color.fromARGB(14, 96, 125, 139),
-            onPressed: createNewChat,
-            icon: Image.asset(IconPaths.addNoteLight, scale: 10),
-          ),
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: headerColor,
-            shadowColor: Colors.transparent,
-            toolbarHeight: 65,
-            title: const Text("NotesApp", style: TextStyle(fontSize: 22, fontFamily: "Poppins", fontWeight: FontWeight.w500)),
-            leading: Padding(padding: const EdgeInsets.only(left: 12), child: circularAvatar(isLight)),
-            actions: [
-              // IconButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (_) => VideoGalleryPlayer(media: Media.fromFilePath(samplePhone)))), icon: Icon(Icons.play_arrow)),
-              CustomContextMenu(
-                icon: const Icon(Icons.more_vert),
-                menuItems: homeScreenOptions,
-                onSelected: handleContextMenuAction,
-              ),
-            ],
-            systemOverlayStyle: SystemUiOverlayStyle(
-              systemNavigationBarColor: context.isLight ? ThemeConstants.hometoolbarLight3 :ThemeConstants.messageBarDark,
-            ) ,
-          ),
-          body: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: Container(
-              // height: context.screenHeight,
-              // width: context.screenWidth,
-              padding: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(gradient: backgroundGradient),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
-                    child: Row(
-                      spacing: Platform.isWindows ? 5 : 0,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 40),
-                            child: SearchBar(
-                              focusNode: searchFocusNode,
-                              controller: searchController,
-                              autoFocus: false,
-                              shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
-                              padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                              shadowColor: WidgetStatePropertyAll(Colors.transparent),
-                              backgroundColor: WidgetStatePropertyAll(headerColor),
-                              leading: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10.0,
-                                ),
-                                child: Icon(
-                                  Icons.search,
-                                  color: ThemeConstants.iconLight,
-                                ),
-                              ),
-                              trailing: [
-                                searchController.text.isNotEmpty
-                                  ? IconButton(
-                                    icon: Icon(Icons.clear_rounded),
-                                    onPressed: clearSearch,
-                                  )
-                                  : SizedBox.shrink(),
-                              ],
-                              hintText: "Search in notes...",
-                              hintStyle: WidgetStatePropertyAll(
-                                TextStyle(
-                                  color: ThemeConstants.iconLight,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              onChanged: (value) async {
-                                if (value.isNotEmpty) {
-                                  await chatNotifier.searchMessages(value);
-                                } else {
-                                  chatNotifier.clearSearch();
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: IconButton(
-                            onPressed: () {
-                              CustomContextMenu.showMenuAt(
-                                context,
-                                position: Offset(
-                                  context.screenWidth,
-                                  kToolbarHeight * 2,
-                                ),
-                                showTail: false,
-                                menuItems: chatFilterOptions,
-                                onSelected: (value) {
-                                  final selectedFilter = ChatlistFilter.values
-                                      .firstWhere((f) => f.name == value);
-                                  chatNotifier.applyFilter(selectedFilter);
-                                },
-                                triangleHorizontalOffset: 200,
-                              );
-                              // Navigator.push(
-                              //   context,
-                              //   CupertinoPageRoute(
-                              //     builder: (_) => ProfileScreen(),
-                              //   ),
-                              // );
-                              // ref.read(chatListProvider.notifier).applyFilter(ChatlistFilter.oldestCreated);
-                            },
-                            icon: Icon(
-                              Icons.filter_list,
-                              color: ThemeConstants.iconLight,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: isLoading ? LoadIndicator() : chatlist.isEmpty
-                            ? const NothingToSee() 
-                            : ListView.separated(
-                              itemCount: chatlist.length,
-                              itemBuilder: (context, index) {
-                                final chat = chatlist[index];
-                                final searchResults = ref.watch(
-                                  chatListProvider.select(
-                                    (state) => state.searchResults,
+          trigger: isSliding,
+          child: Scaffold(
+            floatingActionButton: CustomIconButton(
+              size: 60,
+              splashColor: const Color.fromARGB(14, 96, 125, 139),
+              onPressed: createNewChat,
+              icon: Image.asset(IconPaths.addNoteLight, scale: 10),
+            ),
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: headerColor,
+              shadowColor: Colors.transparent,
+              toolbarHeight: 65,
+              title: GestureDetector(
+                onTap: () async {
+    await TutorialService.resetAll();
+    setState(() => tutorialActive = true);
+    TutorialService.showHomeScreenHelp(
+      onDismissed: () {
+        if (mounted) setState(() => tutorialActive = false);
+      },
+    );
+  },
+                child: const Text("NotesApp", style: TextStyle(fontSize: 22, fontFamily: "Poppins", fontWeight: FontWeight.w500))),
+              leading: Padding(padding: const EdgeInsets.only(left: 12), child: circularAvatar(isLight)),
+              actions: [
+                // IconButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (_) => VideoGalleryPlayer(media: Media.fromFilePath(samplePhone)))), icon: Icon(Icons.play_arrow)),
+                CustomContextMenu(
+                  icon: const Icon(Icons.more_vert),
+                  menuItems: homeScreenOptions,
+                  onSelected: handleContextMenuAction,
+                ),
+              ],
+              systemOverlayStyle: SystemUiOverlayStyle(
+                systemNavigationBarColor: context.isLight ? ThemeConstants.hometoolbarLight3 :ThemeConstants.messageBarDark,
+              ) ,
+            ),
+            body: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: Container(
+                // height: context.screenHeight,
+                // width: context.screenWidth,
+                padding: const EdgeInsets.only(top: 12),
+                decoration: BoxDecoration(gradient: backgroundGradient),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0, bottom: 8, right: 0),
+                      child: Row(
+                        spacing: Platform.isWindows ? 5 : 0,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 40),
+                              child: SearchBar(
+                                focusNode: searchFocusNode,
+                                controller: searchController,
+                                autoFocus: false,
+                                shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12))),
+                                padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                                shadowColor: WidgetStatePropertyAll(Colors.transparent),
+                                backgroundColor: WidgetStatePropertyAll(headerColor),
+                                leading: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0,
                                   ),
-                                );
-                                final matchingMessages = searchResults[chat] ?? [];
-                                // print(searchResults);
-                                return TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: chatNotifier.isDeleting[chat.isarID] == true ? 1.0 : 0.0, end: chatNotifier.isDeleting[chat.isarID] == true ? 0.0 : 1.0),
-                                  duration: const Duration(milliseconds: 300),
-                                  builder: (context, value, child) => Opacity(opacity: value, child: child),
-                                  child: matchingMessages.isEmpty
-                                    ? ChatTile(
-                                      key: _getChatKey(chat),
-                                      isPinned: chat.isPinned,
-                                      title: chat.title ?? "New Note",
-                                      subtitle: chat.loadLastMessageTextFormatted(),
-                                      chatPhotoPath: chat.chatPhotoPath,
-                                      time: TimeFormat.formatChatTime( chat.date, ),
-                                      onDismissed: (_) async => await chatNotifier.deleteChatWithUndo(chat), // _deleteChatWithFade(chat),// chatNotifier.removeChat( chat, ),
-                                      onTap: () async => await navigateToChatScreen(chat),
-                                      onLongPress: () {
-                                        final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
-                                        CustomContextMenu.showMenuAt(
-                                          context,
-                                          position: position,
-                                          menuItems: chatTileOptions(chat),
-                                          onSelected: (value) {
-                                            if (value == "delete") {
-                                              _deleteChatWithFade(chat);
-                                            }
-                                            chatNotifier.handleChatHoldOptions(value, chat);
-                                            },
-                                        );
-                                      },
-                                      onSecondaryTapUp: (details) {
-                                        final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
-                                        CustomContextMenu.showMenuAt(
-                                          context,
-                                          position: position,
-                                          menuItems: chatTileOptions(chat),
-                                          onSelected: (value) {
-                                            if (value == "delete") {
-                                              _deleteChatWithFade(chat);
-                                            }
-                                            chatNotifier.handleChatHoldOptions(value, chat);
-                                            },
-                                        );
-                                      },
+                                  child: Icon(
+                                    Icons.search,
+                                    color: ThemeConstants.iconLight,
+                                  ),
+                                ),
+                                trailing: [
+                                  searchController.text.isNotEmpty
+                                    ? IconButton(
+                                      icon: Icon(Icons.clear_rounded),
+                                      onPressed: clearSearch,
                                     )
-                                    : Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              TypeSet("_${matchingMessages.length} matches found", style: TextStyle(color: ThemeConstants.subtitleLight),),
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Row(
-                                                    spacing: 10,
-                                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                                    children: [
-                                                      chat.chatPhotoPath == null
-                                                          ? DocumentIcon(size: 25, iconPadding: EdgeInsets.all(2), borderWidth: 2,)
-                                                          : Container(
-                                                            margin: EdgeInsets.only( top: 5, ),
-                                                            height: 25,
-                                                            width: 25,
-                                                            clipBehavior: Clip.antiAlias,
-                                                            decoration: BoxDecoration( shape: BoxShape.circle),
-                                                            child: Image.file(
-                                                              File( chat.chatPhotoPath!, ),
-                                                              fit: BoxFit .cover,
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            chat.title ??
-                                                                "New Note",
-                                                            style: TextStyle(
-                                                              fontSize: 17,
-                                                            ),
-                                                          ),
-                                                    ],
-                                                  ),
-                                                  Text( TimeFormat.formatChatTime( chat.date, ), style: TextStyle(fontSize: 12, color: ThemeConstants.subtitleLight),)
-                                                    ],
-                                                  ),
-                                                ],
-                                          ),
-                                        ),
-
-                                        // ChatTile(
-                                        //   title: chat.title ?? "New Note",
-                                        //   subtitle: chat.loadLastMessage(),
-                                        //   chatPhotoPath: chat.chatPhotoPath,
-                                        //   time: TimeFormat.formatChatTime( chat.date, ),
-                                        //   onDismissed: (_) => chatNotifier .removeChat(chat),
-                                        //   onTap: () async {
-                                        //     if (matchingMessages.isNotEmpty) {
-                                        //       ref.read(chatListProvider.notifier).navigateAndHighlight(context, matchingMessages.first, chat);
-                                        //     } else {
-                                        //       await navigateToChatScreen(chat);
-                                        //     }
-                                        //   },
-                                        // ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric( horizontal: 16.0, vertical: 8.0, ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: matchingMessages.map( 
-                                              (message) => _buildMessagePreview(message, searchController.text, chat), ).toList(),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                );
-                              },
-                              separatorBuilder:
-                                  (context, index) => Divider(
-                                    thickness: 1,
-                                    indent: context.screenWidth * 0.07,
-                                    color: dividerColor,
+                                    : SizedBox.shrink(),
+                                ],
+                                hintText: "Search in notes...",
+                                hintStyle: WidgetStatePropertyAll(
+                                  TextStyle(
+                                    color: ThemeConstants.iconLight,
+                                    fontWeight: FontWeight.w500,
                                   ),
+                                ),
+                                onChanged: (value) async {
+                                  if (value.isNotEmpty) {
+                                    await chatNotifier.searchMessages(value);
+                                  } else {
+                                    chatNotifier.clearSearch();
+                                  }
+                                },
+                              ),
                             ),
-                  ),
-                ],
+                          ),
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: IconButton(
+                              onPressed: () {
+                                CustomContextMenu.showMenuAt(
+                                  context,
+                                  position: Offset(
+                                    context.screenWidth,
+                                    kToolbarHeight * 2,
+                                  ),
+                                  showTail: false,
+                                  menuItems: chatFilterOptions,
+                                  onSelected: (value) {
+                                    final selectedFilter = ChatlistFilter.values
+                                        .firstWhere((f) => f.name == value);
+                                    chatNotifier.applyFilter(selectedFilter);
+                                  },
+                                  triangleHorizontalOffset: 200,
+                                );
+                                // Navigator.push(
+                                //   context,
+                                //   CupertinoPageRoute(
+                                //     builder: (_) => ProfileScreen(),
+                                //   ),
+                                // );
+                                // ref.read(chatListProvider.notifier).applyFilter(ChatlistFilter.oldestCreated);
+                              },
+                              icon: Icon(
+                                Icons.filter_list,
+                                color: ThemeConstants.iconLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: isLoading ? LoadIndicator() : chatlist.isEmpty
+                              ? const NothingToSee() 
+                              : ListView.separated(
+                                itemCount: chatlist.length,
+                                itemBuilder: (context, index) {
+                                  final chat = chatlist[index];
+                                  final searchResults = ref.watch(
+                                    chatListProvider.select(
+                                      (state) => state.searchResults,
+                                    ),
+                                  );
+                                  final matchingMessages = searchResults[chat] ?? [];
+                                  // print(searchResults);
+                                  return TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: chatNotifier.isDeleting[chat.isarID] == true ? 1.0 : 0.0, end: chatNotifier.isDeleting[chat.isarID] == true ? 0.0 : 1.0),
+                                    duration: const Duration(milliseconds: 300),
+                                    builder: (context, value, child) => Opacity(opacity: value, child: child),
+                                    child: matchingMessages.isEmpty
+                                      ? ChatTile(
+                                        key: _getChatKey(chat),
+                                        isPinned: chat.isPinned,
+                                        title: chat.title ?? "New Note",
+                                        subtitle: chat.loadLastMessageTextFormatted(),
+                                        chatPhotoPath: chat.chatPhotoPath,
+                                        time: TimeFormat.formatChatTime( chat.date, ),
+                                        onDismissed: (_) async => await chatNotifier.deleteChatWithUndo(chat), // _deleteChatWithFade(chat),// chatNotifier.removeChat( chat, ),
+                                        onTap: () async => await navigateToChatScreen(chat),
+                                        onLongPress: () {
+                                          final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
+                                          CustomContextMenu.showMenuAt(
+                                            context,
+                                            position: position,
+                                            menuItems: chatTileOptions(chat),
+                                            onSelected: (value) {
+                                              if (value == "delete") {
+                                                _deleteChatWithFade(chat);
+                                              }
+                                              chatNotifier.handleChatHoldOptions(value, chat);
+                                              },
+                                          );
+                                        },
+                                        onSecondaryTapUp: (details) {
+                                          final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );
+                                          CustomContextMenu.showMenuAt(
+                                            context,
+                                            position: position,
+                                            menuItems: chatTileOptions(chat),
+                                            onSelected: (value) {
+                                              if (value == "delete") {
+                                                _deleteChatWithFade(chat);
+                                              }
+                                              chatNotifier.handleChatHoldOptions(value, chat);
+                                              },
+                                          );
+                                        },
+                                      )
+                                      : Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                TypeSet("_${matchingMessages.length} matches found", style: TextStyle(color: ThemeConstants.subtitleLight),),
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Row(
+                                                      spacing: 10,
+                                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                                      children: [
+                                                        chat.chatPhotoPath == null
+                                                            ? DocumentIcon(size: 25, iconPadding: EdgeInsets.all(2), borderWidth: 2,)
+                                                            : Container(
+                                                              margin: EdgeInsets.only( top: 5, ),
+                                                              height: 25,
+                                                              width: 25,
+                                                              clipBehavior: Clip.antiAlias,
+                                                              decoration: BoxDecoration( shape: BoxShape.circle),
+                                                              child: Image.file(
+                                                                File( chat.chatPhotoPath!, ),
+                                                                fit: BoxFit .cover,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              chat.title ??
+                                                                  "New Note",
+                                                              style: TextStyle(
+                                                                fontSize: 17,
+                                                              ),
+                                                            ),
+                                                      ],
+                                                    ),
+                                                    Text( TimeFormat.formatChatTime( chat.date, ), style: TextStyle(fontSize: 12, color: ThemeConstants.subtitleLight),)
+                                                      ],
+                                                    ),
+                                                  ],
+                                            ),
+                                          ),
+      
+                                          // ChatTile(
+                                          //   title: chat.title ?? "New Note",
+                                          //   subtitle: chat.loadLastMessage(),
+                                          //   chatPhotoPath: chat.chatPhotoPath,
+                                          //   time: TimeFormat.formatChatTime( chat.date, ),
+                                          //   onDismissed: (_) => chatNotifier .removeChat(chat),
+                                          //   onTap: () async {
+                                          //     if (matchingMessages.isNotEmpty) {
+                                          //       ref.read(chatListProvider.notifier).navigateAndHighlight(context, matchingMessages.first, chat);
+                                          //     } else {
+                                          //       await navigateToChatScreen(chat);
+                                          //     }
+                                          //   },
+                                          // ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric( horizontal: 16.0, vertical: 8.0, ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: matchingMessages.map( 
+                                                (message) => _buildMessagePreview(message, searchController.text, chat), ).toList(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  );
+                                },
+                                separatorBuilder:
+                                    (context, index) => Divider(
+                                      thickness: 1,
+                                      indent: context.screenWidth * 0.07,
+                                      color: dividerColor,
+                                    ),
+                              ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

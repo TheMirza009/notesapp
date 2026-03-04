@@ -96,8 +96,8 @@ class TutorialService {
   // ─── Public screen-specific methods ─────────────────────────────────────
   // Call these from initState. Each checks the flag and shows if unseen.
 
-  static Future<void> showHomeScreenHelp() =>
-      _showIfUnseen(TutorialKey.homeScreen);
+  static Future<void> showHomeScreenHelp({VoidCallback? onDismissed}) =>
+    _showIfUnseen(TutorialKey.homeScreen, onDismissed: onDismissed);
 
   static Future<void> showChatScreenHelp() =>
       _showIfUnseen(TutorialKey.chatScreen);
@@ -148,42 +148,39 @@ class TutorialService {
 
   // ─── Internal ─────────────────────────────────────────────────────────────
 
-  static Future<void> _showIfUnseen(TutorialKey key) async {
+  static Future<void> _showIfUnseen(
+    TutorialKey key, {
+    VoidCallback? onDismissed,
+  }) async {
     final seen = await hasSeen(key);
     if (seen) return;
-    await _show(key);
+    await _show(key, onDismissed: onDismissed);
   }
 
-  static Future<void> _show(TutorialKey key) async {
-    final config = _tutorials[key];
-    assert(config != null, 'No TutorialConfig found for $key — add it to _tutorials');
-    if (config == null) return;
+  static Future<void> _show(TutorialKey key, {VoidCallback? onDismissed}) async {
+  final config = _tutorials[key];
+  assert(config != null, 'No TutorialConfig found for $key');
+  if (config == null) return;
 
-    final overlay = navigatorKey.currentState?.overlay;
-    if (overlay == null) return;
+  final overlay = navigatorKey.currentState?.overlay;
+  if (overlay == null) return;
 
-    // Dismiss any existing tutorial before showing a new one
-    dismiss();
+  dismiss();
 
-    _activeEntry = OverlayEntry(
-      builder: (_) => _TutorialOverlay(
-        config: config,
-        onDismiss: () async {
-          dismiss();
-          await _markSeen(key);
-        },
-      ),
-    );
+  _activeEntry = OverlayEntry(
+    builder: (_) => _TutorialOverlay(
+      config: config,
+      onDismiss: () async {
+        dismiss();
+        await _markSeen(key);
+        onDismissed?.call();
+      },
+    ),
+  );
 
-    // Wait for first frame so overlay is mounted and sized correctly
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_activeEntry != null) {
-        Future.delayed(Duration(seconds: 2), () {
-          overlay.insert(_activeEntry!);
-        });
-      }
-    });
-  }
+  // Insert directly — caller is responsible for any delay before calling _show
+  overlay.insert(_activeEntry!);
+}
 
   static Future<void> _markSeen(TutorialKey key) async {
     final prefs = await SharedPreferences.getInstance();

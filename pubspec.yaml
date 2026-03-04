@@ -34,6 +34,9 @@ dependencies:
   isar_community: ^3.3.0
   isar_community_flutter_libs: ^3.3.0
   path_provider: ^2.1.5
+  gal: ^2.3.2
+  archive: ^4.0.9
+  crypto: ^3.0.7
 
   # Utilities
   contextmenu: ^3.0.0
@@ -70,7 +73,7 @@ dependencies:
   flutter_native_splash: ^2.4.7
   flutter_launcher_icons: ^0.14.4
   bitsdojo_window: ^0.1.6
-  gal: ^2.3.2
+
   
 dev_dependencies:
   flutter_test:

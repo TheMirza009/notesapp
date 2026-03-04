@@ -16,23 +16,39 @@ import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart'
 import 'package:notesapp/root/presentation/screens/Settings/settings_screen.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
+import 'package:notesapp/core/controllers/tutorial/tutorial_service.dart';
 import 'homescreen.dart';
 
 abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   final FocusNode searchFocusNode = FocusNode(canRequestFocus: false);
   final TextEditingController searchController = TextEditingController();
+  bool tutorialActive = false;
   bool isSliding = false;
   ChatlistFilter filter = ChatlistFilter.oldestCreated;
   DateTime? lastBackPress;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(userController.notifier).loadUser();
-      ref.read(chatListProvider.notifier).applyFilter(filter);
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ref.read(userController.notifier).loadUser();
+    ref.read(chatListProvider.notifier).applyFilter(filter);
+    TutorialService.resetAll();
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth >= 600) return;
+
+    setState(() => tutorialActive = true);
+
+    Future.delayed(const Duration(seconds: 1), () {
+      TutorialService.showHomeScreenHelp(
+        onDismissed: () {
+          if (mounted) setState(() => tutorialActive = false);
+        },
+      );
     });
-  }
+  });
+}
 
   @override
   void dispose() {
@@ -66,6 +82,7 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
 }
 
   Future<void> createNewChat() async {
+    if (tutorialActive) return;
     final newChat = await ref.read(chatListProvider.notifier).addChat();
     await newChat.messages.load();
     ref.read(chatListProvider.notifier).selectChat(newChat);

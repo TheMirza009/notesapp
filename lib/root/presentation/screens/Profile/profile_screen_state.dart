@@ -8,6 +8,7 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/constants.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/root/presentation/screens/Backup/backup_screen.dart';
 import 'package:notesapp/root/presentation/widgets/crop/crop_screen.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
 import 'package:notesapp/root/presentation/widgets/crop/croppyImage.dart';
@@ -109,6 +110,10 @@ abstract class ProfileScreenBaseState extends ConsumerState<ProfileScreen> {
   /// Menu callbacks
   Future<void> navigateToSettings() async {
     Navigator.push(context, CupertinoPageRoute(builder: (_) => SettingsScreen()));
+  }
+
+  Future<void> navigateToBackup() async {
+    Navigator.push(context, CupertinoPageRoute(builder: (_) => BackupScreen()));
   }
 
   Future<void> refer() async {
