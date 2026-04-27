@@ -95,7 +95,7 @@ Widget build(BuildContext context) {
                             child: Image.file(File(chatPhotoPath!), fit: BoxFit.cover),
                           ),
                         ),
-                  SizedBox(width: isDesktop ? 10 : ThemeConstants.screenWidth * 0.02),
+                  SizedBox(width: isDesktop ? 10 : context.screenWidth * 0.02),
 
                   // TITLE + SUBTITLE
                   Column(

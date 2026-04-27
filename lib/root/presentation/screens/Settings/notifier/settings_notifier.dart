@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/settings_model.dart';
 
 class SettingsNotifier extends StateNotifier<Settings?> {
@@ -49,6 +50,24 @@ class SettingsNotifier extends StateNotifier<Settings?> {
 
   Future<void> toggleChatOrder() async {
     final updated = state?.toggleChatDisplayOrder() ?? state!.copyWith(chatDisplayAscending: false);
+    await update(updated);
+  }
+
+  Future<void> toggleTheme() async {
+    final current = state ?? Settings();
+    final updated = current.toggleTheme();
+    await update(updated);
+  }
+
+  Future<void> setTheme(bool isLight) async {
+    final current = state ?? Settings(isLightMode: isLight);
+    final updated = current.copyWith(isLightMode: isLight);
+    await update(updated);
+  }
+
+  Future<void> setChatListFilter(ChatlistFilter filter) async {
+    final current = state ?? Settings(chatListFilter: filter);
+    final updated = current.copyWith(chatListFilter: filter);
     await update(updated);
   }
 }

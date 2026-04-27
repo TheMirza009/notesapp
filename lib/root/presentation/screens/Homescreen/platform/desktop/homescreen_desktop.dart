@@ -14,6 +14,7 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/domain/usecases/delete_chat_usecase.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
@@ -24,6 +25,7 @@ import 'package:notesapp/root/presentation/screens/Homescreen/platform/desktop/w
 import 'package:notesapp/root/presentation/screens/Homescreen/platform/desktop/widgets/desktop_icon_rail.dart';
 import 'package:notesapp/root/presentation/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/presentation/screens/Profile/wrappers/parent_slide_wrapper.dart';
+import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Settings/settings_screen.dart';
 import 'package:notesapp/root/presentation/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_button.dart';
@@ -44,7 +46,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode(canRequestFocus: false);
 
-  ChatlistFilter _filter = ChatlistFilter.oldestCreated;
   bool _isSliding = false;
   RailTab _selectedTab = RailTab.chats;
   // Chat? _selectedChat;
@@ -54,8 +55,25 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(userController.notifier).loadUser();
-      ref.read(chatListProvider.notifier).applyFilter(_filter);
+      _checkPendingDeletions();
     });
+  }
+
+  Future<void> _checkPendingDeletions() async {
+    final useCase = ref.read(deleteChatUseCaseProvider);
+    final count = await useCase.getAndClearPendingDeletions();
+    if (count > 0 && mounted) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return CustomAlertDialog(
+            title: "Chats Restored",
+            content: "Deleted chats were restored due to the app closing unexpectedly.",
+            iconData: Mdi.restore,
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -93,17 +111,17 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   Future<void> _deleteChatWithFade(Chat chat) async {
     final chatNotifier = ref.read(chatListProvider.notifier);
-    final selectedChat = ref.watch( chatListProvider.select((s) => s.selectedChat), );
+    final deleteUseCase = ref.read(deleteChatUseCaseProvider);
+    final selectedChat = ref.read(chatListProvider).selectedChat;
 
     chatNotifier.clearSearch();
     setState(() => chatNotifier.isDeleting[chat.isarID] = true);
-    chatNotifier.applyFilter(_filter);
     await Future.delayed(const Duration(milliseconds: 300));
-    await chatNotifier.deleteChatWithUndo(chat);
+    deleteUseCase.queueDelete(chat);
     chatNotifier.isDeleting.remove(chat.isarID);
     if (selectedChat?.isarID == chat.isarID) {
-    chatNotifier.clearSelectedChat(); // already exists in your notifier
-  }
+      chatNotifier.clearSelectedChat(); 
+    }
   }
 
   void _handleContextMenuAction(String value) {
@@ -303,6 +321,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   alignment: Alignment.topCenter,
                   child: IconButton(
                     onPressed: () {
+                      final currentFilter = ref.read(settingsController)?.chatListFilter ?? ChatlistFilter.oldestCreated;
                       CustomContextMenu.showMenuAt(
                         context,
                         position: Offset(
@@ -310,11 +329,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                           kToolbarHeight,
                         ),
                         showTail: false,
-                        menuItems: chatFilterOptions,
+                        menuItems: chatFilterOptions(currentFilter),
                         onSelected: (value) {
                           final selectedFilter = ChatlistFilter.values
-                              .firstWhere((f) => f.name == value);
-                          chatNotifier.applyFilter(selectedFilter);
+                                .firstWhere((f) => f.name == value);
+                          ref.read(settingsController.notifier).setChatListFilter(selectedFilter);
                         },
                         triangleHorizontalOffset: 200,
                       );
@@ -380,7 +399,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                               chat: chat,
                               isSelected: ref.watch(chatListProvider.select((s) => s.selectedChat?.isarID == chat.isarID)),
                               onTap: () => _selectChat(chat),
-                              onDismissed: (_) => chatNotifier.deleteChatWithUndo(chat),
+                              onDismissed: (_) => ref.read(deleteChatUseCaseProvider).queueDelete(chat),
                               onRightClick: (position) {
                                 CustomContextMenu.showMenuAt(
                                   context,

@@ -39,6 +39,35 @@ Widget buildOptionTile({
   );
 }
 
+/// Helper: build filter option row tile with checkmark and color
+Widget buildFilterOptionTile({
+  required Widget icon,
+  required String text,
+  required bool isSelected,
+  Color? color,
+}) {
+  return Row(
+    spacing: 10,
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(3.0),
+        child: icon,
+      ),
+      Text(
+        text,
+        style: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          fontSize: 16,
+          // color: isSelected ? color : null,
+        ),
+      ),
+      if (isSelected) 
+        Icon(Icons.check, color: color, size: 18),
+    ],
+  );
+}
+
 /// Helper: SVG icon with default theme color
 Widget vectorBuild(String svgPath, {double? scale, Color? color}) {
   Widget svg = SvgPicture.string(
@@ -114,40 +143,50 @@ List<PopupMenuItem<String>> chatTileOptions(Chat chat) => [
 ];
 
 /// Options: Chat Filter
-List<PopupMenuItem<String>> get chatFilterOptions => [
+List<PopupMenuItem<String>> chatFilterOptions(ChatlistFilter currentFilter) => [
   PopupMenuItem(
     value: ChatlistFilter.alphabetical.name,
-    child: buildOptionTile(
-      icon: vectorBuild(IconPaths.sortAZ, scale: 1.3),
+    child: buildFilterOptionTile(
+      icon: vectorBuild(IconPaths.sortAZ, scale: 1.3, color: currentFilter == ChatlistFilter.alphabetical ? ThemeConstants.sinisterSeed : null),
       text: "Alphabetical",
+      isSelected: currentFilter == ChatlistFilter.alphabetical,
+      color: ThemeConstants.sinisterSeed,
     ),
   ),
   PopupMenuItem(
     value: ChatlistFilter.newestCreated.name,
-    child: buildOptionTile(
-      icon: vectorBuild(IconPaths.sortUP, scale: 1.3),
+    child: buildFilterOptionTile(
+      icon: vectorBuild(IconPaths.sortUP, scale: 1.3, color: currentFilter == ChatlistFilter.newestCreated ? ThemeConstants.sinisterSeed : null),
       text: "Newest created",
+      isSelected: currentFilter == ChatlistFilter.newestCreated,
+      color: ThemeConstants.sinisterSeed,
     ),
   ),
   PopupMenuItem(
     value: ChatlistFilter.oldestCreated.name,
-    child: buildOptionTile(
-      icon: vectorBuild(IconPaths.sortDOWN, scale: 1.3),
+    child: buildFilterOptionTile(
+      icon: vectorBuild(IconPaths.sortDOWN, scale: 1.3, color: currentFilter == ChatlistFilter.oldestCreated ? ThemeConstants.sinisterSeed : null),
       text: "Oldest created",
+      isSelected: currentFilter == ChatlistFilter.oldestCreated,
+      color: ThemeConstants.sinisterSeed,
     ),
   ),
   PopupMenuItem(
     value: ChatlistFilter.newestModified.name,
-    child: buildOptionTile(
-      icon: SizedBox(width: 18, child: vectorBuild(IconPaths.sortNEW, scale: 1.3)),
+    child: buildFilterOptionTile(
+      icon: SizedBox(width: 18, child: vectorBuild(IconPaths.sortNEW, scale: 1.3, color: currentFilter == ChatlistFilter.newestModified ? ThemeConstants.sinisterSeed : null)),
       text: "Newest modified",
+      isSelected: currentFilter == ChatlistFilter.newestModified,
+      color: ThemeConstants.sinisterSeed,
     ),
   ),
   PopupMenuItem(
     value: ChatlistFilter.oldestModified.name,
-    child: buildOptionTile(
-      icon: SizedBox(width: 18, child: vectorBuild(IconPaths.sortOLD, scale: 1.3)),
+    child: buildFilterOptionTile(
+      icon: SizedBox(width: 18, child: vectorBuild(IconPaths.sortOLD, scale: 1.3, color: currentFilter == ChatlistFilter.oldestModified ? ThemeConstants.sinisterSeed : null)),
       text: "Oldest modified",
+      isSelected: currentFilter == ChatlistFilter.oldestModified,
+      color: ThemeConstants.sinisterSeed,
     ),
   ),
 ];

@@ -10,12 +10,9 @@ import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/message_bubble/message_bubble.dart';
 import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
-import 'package:notesapp/root/presentation/screens/Settings/widgets/emerging_circle.dart';
 import 'package:notesapp/root/presentation/screens/Settings/widgets/rounded_tile.dart';
 import 'package:notesapp/root/presentation/widgets/context_menus/custom_context_menu.dart';
-import 'package:notesapp/root/presentation/widgets/theme_switch.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 
 final GlobalKey tile1 = GlobalKey();
@@ -123,12 +120,14 @@ class SettingsScreen extends ConsumerWidget {
 void handleThemeOptions(WidgetRef ref, String value) {
   switch (value) {
     case 'light':
-      ref.read(themeNotifierProvider.notifier).setLightTheme();
+      ref.read(settingsController.notifier).setTheme(true);
       break;
     case 'dark':
-      ref.read(themeNotifierProvider.notifier).setDarkTheme();
+      ref.read(settingsController.notifier).setTheme(false);
       break;
     case 'systemDefault':
+      // For now, system default isn't persistent in SettingsModel (bool only).
+      // We'll just trigger it in memory or we could extend SettingsModel later.
       ref.read(themeNotifierProvider.notifier).setSystemDefaultTheme();
       break;
     default:

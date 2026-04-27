@@ -5,6 +5,7 @@ import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
+import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Backup/backup_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Backup/widgets/backup_hero_icon.dart';
@@ -26,7 +27,7 @@ class BackupScreen extends ConsumerWidget {
           _showSnackbar(
             context,
             message: next.isExport
-                ? 'Backup ready — share sheet opened!'
+                ? (kisDesktop ? 'Backup saved successfully!' : 'Backup ready — share sheet opened!')
                 : 'Import complete! Your notes have been merged.',
             icon: Icons.check_circle_outline_rounded,
             color: Colors.green,

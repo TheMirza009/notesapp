@@ -11,6 +11,7 @@ import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/chat_screen.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/homescreen.dart';
 
@@ -56,7 +57,17 @@ const _unset = Object();
 
 /// The provider
 final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>((ref) {
-  return ChatListNotifier();
+  final initialFilter = ref.read(settingsController)?.chatListFilter ?? ChatlistFilter.oldestCreated;
+  final notifier = ChatListNotifier(initialFilter);
+  
+  // Listen for filter changes in settings and apply them to the notifier
+  ref.listen(settingsController.select((s) => s?.chatListFilterIndex), (prev, next) {
+    if (next != null) {
+      notifier.applyFilter(ChatlistFilter.values[next]);
+    }
+  });
+
+  return notifier;
 });
 
 
@@ -64,10 +75,9 @@ final chatListProvider = StateNotifierProvider<ChatListNotifier, ChatListState>(
 class ChatListNotifier extends StateNotifier<ChatListState> {
   List<Chat> _allChats = [];// master list, source of truth
   ChatlistFilter _currentFilter = ChatlistFilter.oldestCreated; // default
-  // Track pending deletions properly
-  final Map<int, _PendingDelete> _pendingDeletes = {};
   final Map<int, bool> isDeleting = {};
-  ChatListNotifier() : super(const ChatListState()) {
+  ChatListNotifier(ChatlistFilter initialFilter) : super(const ChatListState()) {
+    _currentFilter = initialFilter;
     loadChats();
   }
 
@@ -335,69 +345,9 @@ Future<void> togglePinChat(Chat chat) async {
   applyFilter(_currentFilter); // ✅ Re-apply filter to maintain order
 }
 
-  /// Main delete method with undo support
-  Future<void> deleteChatWithUndo(Chat chat) async {
-    // Prevent duplicate deletions
-    if (_pendingDeletes.containsKey(chat.isarID)) {
-      debugPrint("⚠️ Chat ${chat.isarID} is already pending deletion");
-      return;
-    }
-
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) {
-      // Fallback: delete immediately if no context
-      await removeChat(chat);
-      return;
-    }
-
-    FocusManager.instance.primaryFocus?.unfocus();
-
-    // Create pending delete entry BEFORE any state changes
-    final pendingDelete = _PendingDelete(chat);
-    _pendingDeletes[chat.isarID] = pendingDelete;
-    isDeleting[chat.isarID] = true;
-
-    // Remove from UI (not DB)
-    _tempRemoveChat(chat);
-
-    // Show Snackbar
-    final scaffold = ScaffoldMessenger.of(ctx);
-    scaffold.hideCurrentSnackBar();
-
-    final snackBar = SnackBar(
-      padding: const EdgeInsets.all(12),
-      backgroundColor: ctx.isLight 
-        ? ThemeConstants.hometoolbarLight2 
-        : ThemeConstants.darkAppbar,
-      content: Text(
-        "Chat deleted",
-        style: TextStyle(
-          fontFamily: "Poppins",
-          color: ctx.isLight 
-            ? ThemeConstants.textLight 
-            : ThemeConstants.textDark2,
-        ),
-      ),
-      duration: const Duration(seconds: 4),
-      action: SnackBarAction(
-        label: "Undo",
-        textColor: ctx.isLight ? ThemeConstants.sinisterSeed : ThemeConstants.sinisterSeedHighlight,
-        onPressed: () => _restoreChat(chat.isarID),
-      ),
-    );
-
-    scaffold.showSnackBar(snackBar);
- await Future.delayed(const Duration(seconds: 4, milliseconds: 100));
-
-    // Check if still pending (not restored)
-    final pending = _pendingDeletes[chat.isarID];
-    if (pending != null && !pending.isRestored && !pending.isCommitted) {
-      await _commitDelete(chat.isarID);
-    }
-  }
 
   /// Temporarily remove chat from UI only
-  void _tempRemoveChat(Chat chat) {
+  void tempRemoveChat(Chat chat) {
     // Remove from master list
     _allChats = _allChats.where((c) => c.isarID != chat.isarID).toList();
 
@@ -416,132 +366,20 @@ Future<void> togglePinChat(Chat chat) async {
   }
 
   /// Restore a chat from pending deletion
-  void _restoreChat(int chatId) {
-    final pending = _pendingDeletes[chatId];
-    if (pending == null) {
-      debugPrint("⚠️ Cannot restore chat $chatId - not found in pending deletes");
-      return;
-    }
-
-    // Check if already restored or committed
-    if (pending.isRestored) {
-      debugPrint("⚠️ Chat $chatId already restored");
-      return;
-    }
-
-    if (pending.isCommitted) {
-      debugPrint("⚠️ Chat $chatId already committed to deletion");
-      return;
-    }
-
-    // Mark as restored FIRST to prevent race condition
-    pending.isRestored = true;
-    isDeleting.remove(chatId);
-
-    final chat = pending.chat;
-
-    // Add back to master list if not present
-    if (!_allChats.any((c) => c.isarID == chatId)) {
-      _allChats.add(chat);
-      debugPrint("✅ Restored chat $chatId to master list");
-    } else {
-      debugPrint("⚠️ Chat $chatId already in master list");
-    }
-
-    // Re-apply current filter to restore proper ordering
-    applyFilter(_currentFilter);
-
-    // Clean up after a delay to ensure state is updated
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _pendingDeletes.remove(chatId);
-    });
-  }
-
-  /// Commit the deletion to database
-  Future<void> _commitDelete(int chatId) async {
-    final pending = _pendingDeletes[chatId];
-    if (pending == null) {
-      debugPrint("ℹ️ Cannot commit delete for chat $chatId - already cleaned up");
-      return;
-    }
-
-    // Check if already restored (user clicked undo just before commit)
-    if (pending.isRestored) {
-      debugPrint("ℹ️ Chat $chatId was restored, skipping deletion");
-      _pendingDeletes.remove(chatId);
-      isDeleting.remove(chatId);
-      return;
-    }
-
-    // Prevent double-commit
-    if (pending.isCommitted) {
-      debugPrint("⚠️ Chat $chatId already committed - ignoring duplicate commit");
-      return;
-    }
-
-    // Mark as committed to prevent restore after this point
-    pending.isCommitted = true;
-
-    try {
-      // Delete from database
-      await IsarDatabase.isar.writeTxn(() async {
-        await IsarDatabase.isar.chats.delete(chatId);
-      });
-      
-      debugPrint("✅ Committed deletion of chat $chatId");
-    } catch (e) {
-      // If deletion fails, restore the chat
-      debugPrint("❌ Failed to delete chat $chatId: $e");
-      pending.isCommitted = false;
-      pending.isRestored = false; // Reset flags
-      _restoreChat(chatId);
-      return;
-    }
-
-    // Clean up tracking maps
-    isDeleting.remove(chatId);
-    _pendingDeletes.remove(chatId);
-
-    // Ensure it's removed from state (should already be gone)
-    _allChats = _allChats.where((c) => c.isarID != chatId).toList();
-    
-    final updatedChats = state.chats.where((c) => c.isarID != chatId).toList();
-    final newSelectedChat = state.selectedChat?.isarID == chatId 
-      ? null 
-      : state.selectedChat;
-
-    state = state.copyWith(
-      chats: updatedChats,
-      selectedChat: newSelectedChat,
-    );
-  }
-
-  /// Public method to restore - called from Homescreen if needed
   void restoreTempChat(Chat chat) {
-    _restoreChat(chat.isarID);
-  }
-
-  /// Check if chat is currently pending deletion
-  bool isChatPendingDelete(int chatId) {
-    final pending = _pendingDeletes[chatId];
-    return pending != null && !pending.isRestored && !pending.isCommitted;
-  }
-
-  /// Cancel all pending deletions (e.g., on app close)
-  void cancelAllPendingDeletes() {
-    final pendingIds = _pendingDeletes.keys.toList();
-    for (final id in pendingIds) {
-      _restoreChat(id);
+    if (!_allChats.any((c) => c.isarID == chat.isarID)) {
+      _allChats.add(chat);
     }
+    applyFilter(_currentFilter);
   }
+
   void handleChatHoldOptions(String value, Chat chat) {
     switch (value) {
       case 'pin':
         chat.isPinned ? unpinChat(chat) : pinChat(chat);
         break;
       case 'delete':
-        // removeChat(chat);
-        // _deleteChatWithFade
+        // Delegate to Use Case from UI instead
         break;
       default:
     }
@@ -589,14 +427,4 @@ Future<void> togglePinChat(Chat chat) async {
     state = state.copyWith(chats: combinedChats);
   }
 }
-
-
-class _PendingDelete {
-  final Chat chat;
-  bool isRestored;
-  bool isCommitted;
-
-  _PendingDelete(this.chat)
-      : isRestored = false,
-      isCommitted = false;
-}
+

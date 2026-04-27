@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
+import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 
 part 'settings_model.g.dart';
 
@@ -13,33 +14,56 @@ class Settings {
 
   bool chatDisplayAscending = true; // True = start from top of chat || False = start from bottom of chat
   bool isLightMode = false;
+  int chatListFilterIndex = ChatlistFilter.oldestCreated.index;
 
   Settings({
     BubbleStyle? selectedBubbleStyle,
     this.chatDisplayAscending = true,
     this.isLightMode = false,
+    ChatlistFilter? chatListFilter,
   }) {
     if (selectedBubbleStyle != null) {
       selectedBubbleStyleIndex = selectedBubbleStyle.index;
+    }
+    if (chatListFilter != null) {
+      chatListFilterIndex = chatListFilter.index;
     }
   }
 
   /// Getter/Setter wrapper for convenience — not stored directly.
   @ignore
-  BubbleStyle get selectedBubbleStyle => BubbleStyle.values[selectedBubbleStyleIndex];
+  BubbleStyle get selectedBubbleStyle {
+    if (selectedBubbleStyleIndex < 0 || selectedBubbleStyleIndex >= BubbleStyle.values.length) {
+      return BubbleStyle.opaque;
+    }
+    return BubbleStyle.values[selectedBubbleStyleIndex];
+  }
 
   @ignore
   set selectedBubbleStyle(BubbleStyle style) => selectedBubbleStyleIndex = style.index;
+
+  @ignore
+  ChatlistFilter get chatListFilter {
+    if (chatListFilterIndex < 0 || chatListFilterIndex >= ChatlistFilter.values.length) {
+      return ChatlistFilter.oldestCreated;
+    }
+    return ChatlistFilter.values[chatListFilterIndex];
+  }
+
+  @ignore
+  set chatListFilter(ChatlistFilter filter) => chatListFilterIndex = filter.index;
 
   Settings copyWith({
     BubbleStyle? selectedBubbleStyle,
     bool? chatDisplayAscending,
     bool? isLightMode,
+    ChatlistFilter? chatListFilter,
   }) {
     return Settings(
       selectedBubbleStyle: selectedBubbleStyle ?? this.selectedBubbleStyle,
       chatDisplayAscending: chatDisplayAscending ?? this.chatDisplayAscending,
       isLightMode: isLightMode ?? this.isLightMode,
+      chatListFilter: chatListFilter ?? this.chatListFilter,
     );
   }
 

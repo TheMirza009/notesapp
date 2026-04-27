@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
 
 
 class ThemeNotifier extends StateNotifier<ThemeData> {
-  ThemeNotifier() : super(_initialTheme);
+  ThemeNotifier(bool? isLight) : super(_getTheme(isLight));
+
+  static ThemeData _getTheme(bool? isLight) {
+    if (isLight == null) {
+      return _initialTheme;
+    }
+    return isLight ? _lightTheme : _darkTheme;
+  }
 
   /// isDark bool
   bool get isDark => state.brightness == Brightness.dark;
@@ -79,4 +87,8 @@ class ThemeNotifier extends StateNotifier<ThemeData> {
   }
 }
 
-final themeNotifierProvider = StateNotifierProvider<ThemeNotifier, ThemeData>((ref) => ThemeNotifier());
+final themeNotifierProvider = StateNotifierProvider<ThemeNotifier, ThemeData>((ref) {
+  final isLight = ref.watch(settingsController.select((s) => s?.isLightMode));
+  return ThemeNotifier(isLight);
+});
+

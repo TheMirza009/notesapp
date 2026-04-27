@@ -22,13 +22,18 @@ const SettingsSchema = CollectionSchema(
       name: r'chatDisplayAscending',
       type: IsarType.bool,
     ),
-    r'isLightMode': PropertySchema(
+    r'chatListFilterIndex': PropertySchema(
       id: 1,
+      name: r'chatListFilterIndex',
+      type: IsarType.long,
+    ),
+    r'isLightMode': PropertySchema(
+      id: 2,
       name: r'isLightMode',
       type: IsarType.bool,
     ),
     r'selectedBubbleStyleIndex': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'selectedBubbleStyleIndex',
       type: IsarType.long,
     ),
@@ -65,8 +70,9 @@ void _settingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeBool(offsets[0], object.chatDisplayAscending);
-  writer.writeBool(offsets[1], object.isLightMode);
-  writer.writeLong(offsets[2], object.selectedBubbleStyleIndex);
+  writer.writeLong(offsets[1], object.chatListFilterIndex);
+  writer.writeBool(offsets[2], object.isLightMode);
+  writer.writeLong(offsets[3], object.selectedBubbleStyleIndex);
 }
 
 Settings _settingsDeserialize(
@@ -77,10 +83,11 @@ Settings _settingsDeserialize(
 ) {
   final object = Settings(
     chatDisplayAscending: reader.readBoolOrNull(offsets[0]) ?? true,
-    isLightMode: reader.readBoolOrNull(offsets[1]) ?? false,
+    isLightMode: reader.readBoolOrNull(offsets[2]) ?? false,
   );
+  object.chatListFilterIndex = reader.readLong(offsets[1]);
   object.id = id;
-  object.selectedBubbleStyleIndex = reader.readLong(offsets[2]);
+  object.selectedBubbleStyleIndex = reader.readLong(offsets[3]);
   return object;
 }
 
@@ -94,8 +101,10 @@ P _settingsDeserializeProp<P>(
     case 0:
       return (reader.readBoolOrNull(offset) ?? true) as P;
     case 1:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readLong(offset)) as P;
     case 2:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 3:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -201,6 +210,61 @@ extension SettingsQueryFilter
         FilterCondition.equalTo(
           property: r'chatDisplayAscending',
           value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+  chatListFilterIndexEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'chatListFilterIndex', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+  chatListFilterIndexGreaterThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'chatListFilterIndex',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+  chatListFilterIndexLessThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'chatListFilterIndex',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+  chatListFilterIndexBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'chatListFilterIndex',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
         ),
       );
     });
@@ -352,6 +416,19 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByChatListFilterIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatListFilterIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy>
+  sortByChatListFilterIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatListFilterIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> sortByIsLightMode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isLightMode', Sort.asc);
@@ -391,6 +468,19 @@ extension SettingsQuerySortThenBy
   thenByChatDisplayAscendingDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'chatDisplayAscending', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByChatListFilterIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatListFilterIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy>
+  thenByChatListFilterIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'chatListFilterIndex', Sort.desc);
     });
   }
 
@@ -441,6 +531,12 @@ extension SettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Settings, Settings, QDistinct> distinctByChatListFilterIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'chatListFilterIndex');
+    });
+  }
+
   QueryBuilder<Settings, Settings, QDistinct> distinctByIsLightMode() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isLightMode');
@@ -467,6 +563,12 @@ extension SettingsQueryProperty
   chatDisplayAscendingProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'chatDisplayAscending');
+    });
+  }
+
+  QueryBuilder<Settings, int, QQueryOperations> chatListFilterIndexProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'chatListFilterIndex');
     });
   }
 

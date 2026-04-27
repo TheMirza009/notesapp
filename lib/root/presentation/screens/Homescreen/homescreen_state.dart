@@ -17,6 +17,7 @@ import 'package:notesapp/root/presentation/screens/Settings/settings_screen.dart
 import 'package:notesapp/root/presentation/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
 import 'package:notesapp/core/controllers/tutorial/tutorial_service.dart';
+import 'package:notesapp/root/domain/usecases/delete_chat_usecase.dart';
 import 'homescreen.dart';
 
 abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
@@ -26,29 +27,65 @@ abstract class HomeScreenBaseState extends ConsumerState<Homescreen> {
   bool isSliding = false;
   ChatlistFilter filter = ChatlistFilter.oldestCreated;
   DateTime? lastBackPress;
-
-  @override
+  
+@override
 void initState() {
   super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+  WidgetsBinding.instance.addPostFrameCallback((_) async { // Note the async here
     ref.read(userController.notifier).loadUser();
     ref.read(chatListProvider.notifier).applyFilter(filter);
-    TutorialService.resetAll();
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth >= 600) return;
+    // 1. Check if the tutorial SHOULD show
+    bool needsTutorial = await TutorialService.shouldShow(TutorialKey.homeScreen);
 
-    setState(() => tutorialActive = true);
+    if (!needsTutorial) {
+      // If no tutorial is needed, ensure the flag is false and exit early
+      if (mounted) setState(() => tutorialActive = false);
+      return;
+    }
 
+    // 2. Only lock the UI if we are actually going to show it
+    if (mounted) setState(() => tutorialActive = true);
+
+    // Safety unlock (5s fallback)
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted && tutorialActive) {
+        setState(() => tutorialActive = false);
+        TutorialService.dismiss();
+      }
+    });
+
+    // Show the tutorial
     Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return;
       TutorialService.showHomeScreenHelp(
         onDismissed: () {
           if (mounted) setState(() => tutorialActive = false);
         },
       );
     });
+
+    _checkPendingDeletions();
   });
 }
+
+  Future<void> _checkPendingDeletions() async {
+    final useCase = ref.read(deleteChatUseCaseProvider);
+    final count = await useCase.getAndClearPendingDeletions();
+    if (count > 0 && mounted) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return CustomAlertDialog(
+            title: "Chats Restored",
+            content: "Deleted chats were restored due to the app closing unexpectedly.",
+            iconData: Mdi.restore,
+          );
+        },
+      );
+    }
+  }
+
 
   @override
   void dispose() {

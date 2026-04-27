@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
@@ -188,18 +189,39 @@ class BackupService {
       // ── Step 8: Share via system sheet ───────────────────────────────────────
       // SharePlus returns a result — dismissed means user cancelled without saving.
       // In that case clean up the archive so it doesn't accumulate in app storage.
-      onProgress(0.97, 'Opening share sheet...');
-      final shareResult = await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(archivePath)],
-          subject: 'NotesApp Backup',
-          text: 'notes_backup_$timestamp.$_backupExtension',
-        ),
-      );
+      onProgress(0.97, Platform.isWindows ? 'Opening save dialog...' : 'Opening share sheet...');
 
-      if (shareResult.status == ShareResultStatus.dismissed) {
-        await _safeDelete(archivePath);
-        throw const BackupCancelledException();
+      if (Platform.isWindows || Platform.isLinux) {
+        // Windows — native Save As dialog via file_picker
+        final String? selectedPath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Backup',
+          fileName: 'notes_backup_$timestamp.$_backupExtension',
+          type: FileType.custom,
+          allowedExtensions: [_backupExtension],
+        );
+
+        if (selectedPath == null) {
+          await _safeDelete(archivePath);
+          throw const BackupCancelledException();
+        }
+
+        await File(archivePath).copy(selectedPath);
+      } else {
+        // Mobile — system share sheet
+        // Dismissed means user cancelled without saving — clean up the archive
+        // so it doesn't accumulate in app storage.
+        final shareResult = await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(archivePath)],
+            subject: 'NotesApp Backup',
+            text: 'notes_backup_$timestamp.$_backupExtension',
+          ),
+        );
+
+        if (shareResult.status == ShareResultStatus.dismissed) {
+          await _safeDelete(archivePath);
+          throw const BackupCancelledException();
+        }
       }
 
       onProgress(1.0, 'Backup complete!');
@@ -248,8 +270,7 @@ class BackupService {
       // ── Step 3: Extract to temp dir ──────────────────────────────────────────
       onProgress(0.1, 'Extracting archive...');
       final tempDir = await getTemporaryDirectory();
-      extractDir =
-          '${tempDir.path}/notesapp_import_${DateTime.now().millisecondsSinceEpoch}';
+      extractDir = '${tempDir.path}/notesapp_import_${DateTime.now().millisecondsSinceEpoch}';
       await Directory(extractDir).create(recursive: true);
 
       await _extractArchive(
@@ -274,7 +295,7 @@ class BackupService {
       }
 
       // ── Step 4b: Rename so Isar can open it (Use a UNIQUE name) ─────────────
-      // We use 'imported_repo' to prevent clashing with your main 'chat_repo'
+      // We use 'imported_repo' to prevent clashing with main 'chat_repo'
       final renamedDbRepo = File('$extractDir/imported_repo.isar');
       await extractedRawDB.rename(renamedDbRepo.path);
       debugPrint('🗄️ Renamed isar.db → imported_repo.isar at ${renamedDbRepo.path}');
@@ -301,8 +322,7 @@ class BackupService {
         await _restoreMediaFiles(
           extractDir: extractDir,
           appDir: appDir,
-          onProgress: (p) =>
-              onProgress(0.8 + (p * 0.15), 'Restoring media...'),
+          onProgress: (p) => onProgress(0.8 + (p * 0.15), 'Restoring media...'),
         );
       } finally {
         await importedIsar.close();
@@ -329,47 +349,48 @@ class BackupService {
   // ─── Archive Creation ────────────────────────────────────────────────────────
 
   static Future<void> _createArchive({
-    required String outputPath,
-    required File dbFile,
-    required List<File> mediaFiles,
-    required Directory mediaBaseDir,
-    required BackupManifest manifest,
-    required _InternalProgress onProgress,
-  }) async {
-    final encoder = ZipFileEncoder();
-    encoder.create(outputPath);
+  required String outputPath,
+  required File dbFile,
+  required List<File> mediaFiles,
+  required Directory mediaBaseDir,
+  required BackupManifest manifest,
+  required _InternalProgress onProgress,
+}) async {
+  final encoder = ZipFileEncoder();
+  encoder.create(outputPath);
 
-    try {
-      // Manifest — validity marker, stored uncompressed for fast reads
-      final manifestBytes = utf8.encode(jsonEncode(manifest.toJson()));
-      encoder.addArchiveFile(
-        ArchiveFile.noCompress(
-          BackupManifest.fileName,
-          manifestBytes.length,
-          manifestBytes,
-        ),
-      );
+  try {
+    // 1. Manifest
+    final manifestBytes = utf8.encode(jsonEncode(manifest.toJson()));
+    encoder.addArchiveFile(ArchiveFile.noCompress(
+      BackupManifest.fileName,
+      manifestBytes.length,
+      manifestBytes,
+    ));
 
-      // Raw Isar DB — already binary, compression adds overhead with little gain
-      await encoder.addFile(dbFile, _dbFileName);
+    // 2. Database
+    await encoder.addFile(dbFile, _dbFileName);
 
-      // Media files — preserve relative paths
-      final total = mediaFiles.length;
-      for (int i = 0; i < total; i++) {
-        final file = mediaFiles[i];
-        final relativePath = file.path
-            .replaceFirst(
-              '${mediaBaseDir.path}${Platform.pathSeparator}',
-              '',
-            )
-            .replaceAll(Platform.pathSeparator, '/');
-        await encoder.addFile(file, relativePath);
-        onProgress(total == 0 ? 1.0 : (i + 1) / total);
-      }
-    } finally {
-      encoder.close();
+    // 3. Media Files
+    final total = mediaFiles.length;
+    for (int i = 0; i < total; i++) {
+      final file = mediaFiles[i];
+      
+      // CRITICAL: Get path relative to the app documents directory
+      // This strips 'C:\Users\...\Documents\' on Windows 
+      // or '/data/user/0/.../app_flutter/' on Android.
+      final relativePath = p.relative(file.path, from: mediaBaseDir.path);
+      
+      // ZIP standards require forward slashes regardless of OS
+      final zipEntryName = relativePath.replaceAll('\\', '/');
+      
+      await encoder.addFile(file, zipEntryName);
+      onProgress(total == 0 ? 1.0 : (i + 1) / total);
     }
+  } finally {
+    encoder.close();
   }
+}
 
   // ─── Archive Extraction ───────────────────────────────────────────────────────
 
@@ -385,7 +406,7 @@ class BackupService {
 
     for (int i = 0; i < total; i++) {
       final file = files[i];
-      final targetFile = File('$targetDir/${file.name}');
+      final targetFile = File('$targetDir${Platform.pathSeparator}${file.name}');
       await targetFile.parent.create(recursive: true);
       await targetFile.writeAsBytes(file.content as List<int>);
       onProgress(total == 0 ? 1.0 : (i + 1) / total);
@@ -429,6 +450,9 @@ static Future<void> _upsertChats({
     final target = IsarDatabase.isar;
     final sourceChats = await source.chats.where().findAll();
     
+    // Get the current device's app directory to reconstruct media paths
+    final appDir = await getApplicationDocumentsDirectory();
+    
     debugPrint('📦 Source has ${sourceChats.length} chats to import');
     
     if (sourceChats.isEmpty) {
@@ -440,19 +464,25 @@ static Future<void> _upsertChats({
 
     for (int i = 0; i < total; i++) {
       final sourceChat = sourceChats[i];
+
+      // Define a helper to re-map the chat photo path
+      String? translateChatPhotoPath(String? originalPath) {
+        if (originalPath == null || originalPath.isEmpty) return null;
+
+        // Strip old device path and join with current appDir
+        final fileName = p.basename(originalPath);
+        return p.canonicalize(p.join(appDir.path, _mediaFolder, fileName));
+      }
       
-      // 1. LOAD EVERYTHING FROM SOURCE FIRST (Outside the target transaction)
+      // 1. LOAD EVERYTHING FROM SOURCE FIRST
       await sourceChat.messages.load();
       final sourceMessages = sourceChat.messages.toList();
       
-      // Pre-load media for all messages to avoid lazy-loading inside the txn
       for (final msg in sourceMessages) {
         await msg.media.load();
       }
 
-      debugPrint('💬 Chat ${sourceChat.uuid}: ${sourceMessages.length} messages');
-
-      // 2. NOW START THE TARGET TRANSACTION
+      // 2. START THE TARGET TRANSACTION
       await target.writeTxn(() async {
         final existing = await target.chats
             .where()
@@ -468,19 +498,18 @@ static Future<void> _upsertChats({
             ..preview = sourceChat.preview
             ..date = sourceChat.date
             ..isPinned = sourceChat.isPinned
-            ..chatPhotoPath = sourceChat.chatPhotoPath
+            ..chatPhotoPath = translateChatPhotoPath(sourceChat.chatPhotoPath)
             ..bubbleStyle = sourceChat.bubbleStyle;
           await target.chats.put(targetChat);
-          debugPrint('✅ Inserted new chat: ${targetChat.uuid}');
         } else {
-          // Update if source is newer
+          // Update existing chat if the backup version is newer
           if (sourceChat.date.isAfter(existing.date)) {
             existing
               ..title = sourceChat.title
               ..preview = sourceChat.preview
               ..date = sourceChat.date
               ..isPinned = sourceChat.isPinned
-              ..chatPhotoPath = sourceChat.chatPhotoPath
+              ..chatPhotoPath = translateChatPhotoPath(sourceChat.chatPhotoPath)
               ..bubbleStyle = sourceChat.bubbleStyle;
             await target.chats.put(existing);
             targetChat = existing;
@@ -492,6 +521,7 @@ static Future<void> _upsertChats({
         await targetChat.messages.load();
 
         for (final sourceMsg in sourceMessages) {
+          // Check for message existence using UUID/ID to avoid duplicates
           final exists = await target.messages
               .filter()
               .idEqualTo(sourceMsg.id)
@@ -507,24 +537,37 @@ static Future<void> _upsertChats({
 
           await target.messages.put(newMsg);
 
-          // sourceMsg.media is already loaded now, so this is safe:
+          // ─── MEDIA PATH RE-MAPPING ─────────────────────────────────────────
           final sourceMedia = sourceMsg.media.value;
-          if (sourceMedia != null) {
+          if (sourceMedia != null && sourceMedia.path != null) {
+            // Use ! because we just checked that path is not null
+            final fileName = p.basename(sourceMedia.path!);
+            
+            // Reconstruct the path for the CURRENT device's filesystem
+            final newLocalPath = p.join(appDir.path, _mediaFolder, fileName);
+            
+            String? newThumbPath;
+            if (sourceMedia.thumbnailPath != null) {
+              final thumbName = p.basename(sourceMedia.thumbnailPath!);
+              newThumbPath = p.join(appDir.path, _mediaFolder, thumbName);
+            }
+
             final newMedia = Media()
               ..name = sourceMedia.name
-              ..path = sourceMedia.path
+              ..path = newLocalPath 
               ..extension = sourceMedia.extension
               ..type = sourceMedia.type
               ..fileSize = sourceMedia.fileSize
               ..aspectRatio = sourceMedia.aspectRatio
               ..blurHash = sourceMedia.blurHash
               ..duration = sourceMedia.duration
-              ..thumbnailPath = sourceMedia.thumbnailPath;
+              ..thumbnailPath = newThumbPath; 
 
             await target.medias.put(newMedia);
             newMsg.media.value = newMedia;
             await newMsg.media.save();
           }
+          // ───────────────────────────────────────────────────────────────────
 
           targetChat.messages.add(newMsg);
         }
@@ -542,32 +585,31 @@ static Future<void> _upsertChats({
   // ─── Media Restoration ────────────────────────────────────────────────────────
 
   static Future<void> _restoreMediaFiles({
-    required String extractDir,
-    required Directory appDir,
-    required _InternalProgress onProgress,
-  }) async {
-    final mediaSource = Directory('$extractDir/$_mediaFolder');
-    if (!await mediaSource.exists()) return;
+  required String extractDir,
+  required Directory appDir,
+  required _InternalProgress onProgress,
+}) async {
+  final mediaSource = Directory(p.join(extractDir, _mediaFolder));
+  if (!await mediaSource.exists()) return;
 
-    final files = await _collectMediaFiles(mediaSource);
-    final total = files.length;
+  final files = await _collectMediaFiles(mediaSource);
+  final total = files.length;
 
-    for (int i = 0; i < total; i++) {
-      final file = files[i];
-      final relativePath =
-          file.path.replaceFirst('${mediaSource.parent.path}/', '');
-      final targetPath = '${appDir.path}/$relativePath';
-      final targetFile = File(targetPath);
+  for (int i = 0; i < total; i++) {
+    final file = files[i];
+    final fileName = p.basename(file.path);
+    
+    // Ensure the target path is built exactly how the DB upsert builds it
+    final targetPath = p.canonicalize(p.join(appDir.path, _mediaFolder, fileName));
+    final targetFile = File(targetPath);
 
-      if (!await targetFile.exists()) {
-        await targetFile.parent.create(recursive: true);
-        await file.copy(targetPath);
-      }
-
-      onProgress(total == 0 ? 1.0 : (i + 1) / total);
+    if (!await targetFile.exists()) {
+      await targetFile.parent.create(recursive: true);
+      await file.copy(targetPath);
     }
+    onProgress((i + 1) / total);
   }
-
+}
   // ─── Integrity Verification ───────────────────────────────────────────────────
 
   static Future<void> _verifyArchiveIntegrity({
@@ -596,14 +638,14 @@ static Future<void> _upsertChats({
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
-static Future<String> _getDbPath() async {
-  final dir = kisDesktop
-      ? await getApplicationSupportDirectory()
-      : await IsarDatabase.getDatabaseDirectory();
-  final path = '${dir.path}/chat_repo.isar';
-  debugPrint('🗄️ DB path resolved: $path');
-  return path;
-}
+  static Future<String> _getDbPath() async {
+    final dir = kisDesktop
+        ? await getApplicationSupportDirectory()
+        : await IsarDatabase.getDatabaseDirectory();
+    final path = '${dir.path}/chat_repo.isar';
+    debugPrint('🗄️ DB path resolved: $path');
+    return path;
+  }
 
   static Future<List<File>> _collectMediaFiles(Directory dir) async {
     if (!await dir.exists()) return [];

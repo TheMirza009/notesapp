@@ -15,6 +15,7 @@ import 'package:notesapp/core/utils/time_format.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
+import 'package:notesapp/root/domain/usecases/delete_chat_usecase.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
@@ -27,6 +28,7 @@ import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/wrappers/
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/doc_icon.dart';
 import 'package:notesapp/root/presentation/screens/Profile/wrappers/parent_slide_wrapper.dart';
 import 'package:notesapp/root/presentation/screens/Profile/profile_screen.dart';
+import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/presentation/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_button.dart';
 import 'package:notesapp/root/presentation/widgets/nothing_to_see.dart';
@@ -54,6 +56,7 @@ class HomescreenState extends HomeScreenBaseState {
   
   Future<void> _deleteChatWithFade(Chat chat) async {
     final chatNotifier = ref.read(chatListProvider.notifier);
+    final deleteUseCase = ref.read(deleteChatUseCaseProvider);
     ref.read(chatListProvider.notifier).clearSearch();
     // Trigger fade-out
     setState(() => chatNotifier.isDeleting[chat.isarID] = true);
@@ -63,7 +66,7 @@ class HomescreenState extends HomeScreenBaseState {
     await Future.delayed(const Duration(milliseconds: 300));
 
     // Now delete from database + state
-    await ref.read(chatListProvider.notifier).deleteChatWithUndo(chat);  //removeChat(chat);
+    deleteUseCase.queueDelete(chat);
 
     // Clean up fade flag (in case the list is rebuilt later)
     chatNotifier.isDeleting.remove(chat.isarID);
@@ -224,6 +227,7 @@ class HomescreenState extends HomeScreenBaseState {
                             alignment: Alignment.topCenter,
                             child: IconButton(
                               onPressed: () {
+                                final currentFilter = ref.read(settingsController)?.chatListFilter ?? ChatlistFilter.oldestCreated;
                                 CustomContextMenu.showMenuAt(
                                   context,
                                   position: Offset(
@@ -231,20 +235,14 @@ class HomescreenState extends HomeScreenBaseState {
                                     kToolbarHeight * 2,
                                   ),
                                   showTail: false,
-                                  menuItems: chatFilterOptions,
+                                  menuItems: chatFilterOptions(currentFilter),
                                   onSelected: (value) {
                                     final selectedFilter = ChatlistFilter.values
                                         .firstWhere((f) => f.name == value);
-                                    chatNotifier.applyFilter(selectedFilter);
+                                    ref.read(settingsController.notifier).setChatListFilter(selectedFilter);
                                   },
                                   triangleHorizontalOffset: 200,
                                 );
-                                // Navigator.push(
-                                //   context,
-                                //   CupertinoPageRoute(
-                                //     builder: (_) => ProfileScreen(),
-                                //   ),
-                                // );
                                 // ref.read(chatListProvider.notifier).applyFilter(ChatlistFilter.oldestCreated);
                               },
                               icon: Icon(
@@ -282,7 +280,7 @@ class HomescreenState extends HomeScreenBaseState {
                                         subtitle: chat.loadLastMessageTextFormatted(),
                                         chatPhotoPath: chat.chatPhotoPath,
                                         time: TimeFormat.formatChatTime( chat.date, ),
-                                        onDismissed: (_) async => await chatNotifier.deleteChatWithUndo(chat), // _deleteChatWithFade(chat),// chatNotifier.removeChat( chat, ),
+                                        onDismissed: (_) => ref.read(deleteChatUseCaseProvider).queueDelete(chat),
                                         onTap: () async => await navigateToChatScreen(chat),
                                         onLongPress: () {
                                           final position = Utils.getObjectPosition( objectKey: _getChatKey( chat, ), );

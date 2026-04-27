@@ -92,6 +92,7 @@ class TutorialService {
 
   static const _prefix = 'tutorial_seen_';
   static OverlayEntry? _activeEntry;
+  static VoidCallback? _activeDismissCallback;
 
   // ─── Public screen-specific methods ─────────────────────────────────────
   // Call these from initState. Each checks the flag and shows if unseen.
@@ -114,6 +115,15 @@ class TutorialService {
   // ─── Force show — ignores the seen flag (e.g. from a "Show tips" button) ─
 
   static Future<void> forceShow(TutorialKey key) => _show(key);
+
+  static Future<bool> shouldShow(TutorialKey key) async {
+    final seen = await hasSeen(key);
+    // Also add your tablet check here so the logic is centralized
+    final isTablet =
+        (navigatorKey.currentContext != null) &&
+        (MediaQuery.sizeOf(navigatorKey.currentContext!).width >= 600);
+    return !seen && !isTablet;
+  }
 
   // ─── Reset a specific tutorial (user can re-trigger it) ──────────────────
 
@@ -141,10 +151,16 @@ class TutorialService {
 
   // ─── Dismiss active overlay imperatively (e.g. on screen dispose) ────────
 
-  static void dismiss() {
+static void dismiss() {
+  if (_activeDismissCallback != null) {
+    final callback = _activeDismissCallback!;
+    _activeDismissCallback = null; // clear BEFORE calling to prevent re-entry
+    callback();
+  } else {
     _activeEntry?.remove();
     _activeEntry = null;
   }
+}
 
   // ─── Internal ─────────────────────────────────────────────────────────────
 
@@ -156,8 +172,8 @@ class TutorialService {
     if (seen) return;
     await _show(key, onDismissed: onDismissed);
   }
-
-  static Future<void> _show(TutorialKey key, {VoidCallback? onDismissed}) async {
+  
+static Future<void> _show(TutorialKey key, {VoidCallback? onDismissed}) async {
   final config = _tutorials[key];
   assert(config != null, 'No TutorialConfig found for $key');
   if (config == null) return;
@@ -165,20 +181,29 @@ class TutorialService {
   final overlay = navigatorKey.currentState?.overlay;
   if (overlay == null) return;
 
-  dismiss();
+  // Dismiss existing without animation — it's being replaced
+  _activeDismissCallback = null;
+  _activeEntry?.remove();
+  _activeEntry = null;
 
   _activeEntry = OverlayEntry(
     builder: (_) => _TutorialOverlay(
       config: config,
       onDismiss: () async {
-        dismiss();
+        // At this point _handleDismiss already ran the animation.
+        // Just clean up entry + mark seen + notify caller.
+        _activeEntry?.remove();
+        _activeEntry = null;
+        _activeDismissCallback = null;
         await _markSeen(key);
         onDismissed?.call();
+      },
+      onRegisterDismiss: (callback) {
+        _activeDismissCallback = callback;
       },
     ),
   );
 
-  // Insert directly — caller is responsible for any delay before calling _show
   overlay.insert(_activeEntry!);
 }
 
@@ -195,10 +220,12 @@ class TutorialService {
 class _TutorialOverlay extends StatefulWidget {
   final TutorialConfig config;
   final VoidCallback onDismiss;
+  final void Function(VoidCallback) onRegisterDismiss;
 
   const _TutorialOverlay({
     required this.config,
     required this.onDismiss,
+    required this.onRegisterDismiss,
   });
 
   @override
@@ -219,6 +246,9 @@ class _TutorialOverlayState extends State<_TutorialOverlay>
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
+
+    // Register our animated dismiss with the service
+    widget.onRegisterDismiss(_handleDismiss);
   }
 
   @override
@@ -241,9 +271,9 @@ class _TutorialOverlayState extends State<_TutorialOverlay>
         child: SizedBox.expand(
           child: CustomPaint(
             painter: CutoutOverlayPainter(
-    cutoutRect: _anchorToRect(widget.config.anchor, MediaQuery.sizeOf(context)),
-    radius: 35, // match roughly the FAB size
-  ),
+              cutoutRect: _anchorToRect(widget.config.anchor, MediaQuery.sizeOf(context)),
+              radius: 35, // match roughly the FAB size
+            ),
             child: SafeArea(
               child: Stack(
                 children: [
