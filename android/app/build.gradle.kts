@@ -73,6 +73,20 @@ android {
             isShrinkResources = false
         }
     }
+
+    flavorDimensions += "env"
+
+    productFlavors {
+        create("production") {
+            dimension = "env"
+            applicationId = "com.azdhaar.notesapp"
+        }
+        create("rc") {
+            dimension = "env"
+            applicationId = "com.azdhaar.notesapp.rc"
+            versionNameSuffix = "-rc"
+        }
+    }
 }
 
 flutter {

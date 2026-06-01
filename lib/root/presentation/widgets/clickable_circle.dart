@@ -1,4 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
+
+@Preview(name: 'Clickable Circle')
+Widget previewClickableCircle() { // 👈 Change return type from 'ClickableCircle' to 'Widget'
+  return ClickableCircle(
+    size: 60.0, 
+    onTap: () => print('Tapped!'),
+    child: const Icon(Icons.car_crash, color: Colors.white), 
+  );
+}
+
+@Preview(name: 'Drop Down') 
+Widget previewDropDown() {
+  return DropdownButton<String>(
+    items: [
+      DropdownMenuItem(value: 'Option 1', child: Text('Option 1')),
+      DropdownMenuItem(value: 'Option 2', child: Text('Option 2')),
+    ],
+    onChanged: (value) {
+      print('Selected: $value');
+    },
+    hint: Text('Select an option'),
+  );
+}
 
 class ClickableCircle extends StatefulWidget {
   final Widget child;  // This can be any widget (Icon, Image, etc.)

@@ -5,11 +5,11 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
+import 'package:notesapp/core/utils/constants.dart';
 import 'package:notesapp/core/utils/context_menu_options.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/transitions.dart';
 import 'package:notesapp/core/utils/windows_utils.dart';
-import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Profile/profile_screen.dart';
 import 'package:notesapp/root/presentation/screens/Settings/settings_screen.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
@@ -286,8 +286,6 @@ void _handleContextMenuAction(
   BuildContext context,
   WidgetRef ref,
 ) {
-  final chatNotifier = ref.read(chatListProvider.notifier);
-
   switch (value) {
     case "profile":
       Navigator.of(context, rootNavigator: true).push(
@@ -299,25 +297,13 @@ void _handleContextMenuAction(
   slideFromLeftRoute(const SettingsScreen()),
 );
       break;
-    case "deleteAll":
+    case "about":
       showDialog(
         context: context,
         builder: (_) => CustomAlertDialog(
-          title: "Delete all notes",
-          content: "Are you sure you want to delete all notes?",
-          iconColor: Colors.redAccent,
-          iconData: Mdi.delete_empty_outline,
-          iconSize: 25,
-          option: TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              chatNotifier.clearChats();
-            },
-            child: const Text(
-              "Delete",
-              style: TextStyle(color: Colors.redAccent),
-            ),
-          ),
+          title: "About",
+          content: "Notes App  v${Constants.version}\nA chat-based note-taking app.",
+          iconData: Mdi.information_outline,
         ),
       );
       break;

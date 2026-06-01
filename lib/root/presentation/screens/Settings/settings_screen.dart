@@ -8,16 +8,18 @@ import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/data/enums/bubble_style.dart';
-import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Settings/notifier/settings_notifier.dart';
 import 'package:notesapp/root/presentation/screens/Settings/widgets/rounded_tile.dart';
 import 'package:notesapp/root/presentation/widgets/context_menus/custom_context_menu.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
 
 final GlobalKey tile1 = GlobalKey();
 final GlobalKey tile2 = GlobalKey();
 final GlobalKey tile3 = GlobalKey();
+final GlobalKey tile4 = GlobalKey();
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -35,6 +37,8 @@ class SettingsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: ListView(
             children: [
+              
+              // THEME TILE
               RoundedTile(
                 key: tile1,
                 margins: EdgeInsets.only(bottom: 10),
@@ -53,6 +57,8 @@ class SettingsScreen extends ConsumerWidget {
                 );
                 },
               ),
+
+              // BUBBLE STYLE TILE
               RoundedTile(
                 key: tile2,
                 margins: EdgeInsets.only(bottom: 10),
@@ -70,31 +76,66 @@ class SettingsScreen extends ConsumerWidget {
                 );
                 },
               ),
+
+              // START CHAT FROM BOTTOM TILE
               RoundedTile(
-        key: tile3,
-        margins: EdgeInsets.only(bottom: 10),
-        leading: vectorBuild(IconPaths.chatOrder, color: baseColor, scale: 0.8), // Icon(Icons.vertical_align_bottom),
-        title: Text("Start Chat from Bottom"),
-        trailing: Switch.adaptive(
-      value: !(ref.watch(settingsController)?.chatDisplayAscending ?? true),
-      onChanged: (value) async {
-        // Save setting
-        await ref.read(settingsController.notifier).setChatOrder(!value);
-        
-        // ✅ Force complete rebuild by disposing and recreating notifier
-        final currentChat = ref.read(chatListProvider).selectedChat;
-        if (currentChat != null) {
-          // Clear current state
-          ref.invalidate(chatStateController);
-          
-          // Small delay to ensure clean slate
-          await Future.delayed(const Duration(milliseconds: 1));
-          
-          // Rebuild will trigger with new setting
-        }
-      },
-        ),
-      ),
+                key: tile3,
+                margins: EdgeInsets.only(bottom: 10),
+                leading: vectorBuild(
+                  IconPaths.chatOrder,
+                  color: baseColor,
+                  scale: 0.8,
+                ), // Icon(Icons.vertical_align_bottom),
+                title: Text("Start Chat from Bottom"),
+                trailing: Switch.adaptive(
+                  value: !(ref.watch(settingsController)?.chatDisplayAscending ?? true),
+                  onChanged: (value) async {
+                    // Save setting
+                    await ref
+                        .read(settingsController.notifier)
+                        .setChatOrder(!value);
+
+                    // ✅ Force complete rebuild by disposing and recreating notifier
+                    final currentChat = ref.read(chatListProvider).selectedChat;
+                    if (currentChat != null) {
+                      // Clear current state
+                      ref.invalidate(chatStateController);
+
+                      // Small delay to ensure clean slate
+                      await Future.delayed(const Duration(milliseconds: 1));
+
+                      // Rebuild will trigger with new setting
+                    }
+                  },
+                ),
+              ),
+
+              // DELETE ALL CHATS TILE
+              RoundedTile(
+                key: tile4,
+                margins: EdgeInsets.only(bottom: 10),
+                leading: Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: Text("Delete All Chats", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => CustomAlertDialog(
+                      title: "Delete all chats",
+                      content: "Are you sure you want to delete all chats?",
+                      iconColor: Colors.redAccent,
+                      iconData: Mdi.delete_empty_outline,
+                      iconSize: 25,
+                      option: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ref.read(chatListProvider.notifier).clearChats();
+                        },
+                        child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ),
+                  );
+                },
+              ),
               // EmergingCircle()
             ],
           ),

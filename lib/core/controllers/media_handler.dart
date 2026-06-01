@@ -326,6 +326,11 @@ static Future<Media?> saveAudio(String audioPath) async {
   }) async {
     if (filePath.isEmpty) return null;
 
+    // ✅ Handle URLs (browser sharing)
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return Media.fromLink(filePath);
+    }
+
     final file = File(filePath);
     if (!await file.exists()) {
       debugPrint("⚠️ Received file does not exist at path: $filePath");

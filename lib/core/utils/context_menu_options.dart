@@ -116,10 +116,10 @@ List<PopupMenuItem<String>> get homeScreenOptions => [
     ),
   ),
   PopupMenuItem(
-    value: 'deleteAll',
+    value: 'about',
     child: buildOptionTile(
-      icon: vectorBuild(IconPaths.trash1),
-      text: "Delete All",
+      icon: vectorBuild(IconPaths.infoSquare),
+      text: "About",
     ),
   ),
 ];

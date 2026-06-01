@@ -47,4 +47,7 @@ app.*.map.json
 # keystore
 android/key.properties
 *.jks
-*.keystore
+*.
+
+# deployment
+deployment/.env.ps1

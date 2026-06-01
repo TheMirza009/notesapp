@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notesapp/core/Theme/gradients.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
+import 'package:notesapp/core/utils/constants.dart';
 import 'package:notesapp/core/controllers/user_provider.dart';
 import 'package:notesapp/core/extensions/chat_extensions.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
@@ -125,7 +126,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   void _handleContextMenuAction(String value) {
-    final chatNotifier = ref.read(chatListProvider.notifier);
     switch (value) {
       case "profile":
         setState(() => _isSliding = true);
@@ -138,23 +138,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
         WindowsUtils.setTitleBarColorDirect(
             context.isLight ? Gradients.silverSunlight2 : Gradients.shadowBlue);
         break;
-      case "deleteAll":
+      case "about":
         showDialog(
           context: context,
           builder: (_) => CustomAlertDialog(
-            title: "Delete all notes",
-            content: "Are you sure you want to delete all notes?",
-            iconColor: Colors.redAccent,
-            iconData: Mdi.delete_empty_outline,
-            iconSize: 25,
-            option: TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                chatNotifier.clearChats();
-              },
-              child: const Text("Delete",
-                  style: TextStyle(color: Colors.redAccent)),
-            ),
+            title: "About",
+            content: "Notes App  v${Constants.version}\nA chat-based note-taking app.",
+            iconData: Mdi.information_outline,
           ),
         );
         break;

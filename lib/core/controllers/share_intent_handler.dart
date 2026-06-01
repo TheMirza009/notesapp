@@ -2,33 +2,29 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
-import 'package:notesapp/root/data/models/media_model.dart';
-import 'package:notesapp/root/data/models/message_model.dart';
-import 'package:notesapp/root/presentation/screens/Chat_Forward/chat_forward_screen.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:uuid/uuid.dart';
-import 'package:flutter/foundation.dart';
-import 'dart:async';
-import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:notesapp/core/controllers/media_handler.dart';
-import 'package:notesapp/core/extensions/media_extensions.dart';
-import 'package:notesapp/core/utils/global_keys.dart';
+import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_Forward/chat_forward_screen.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:uuid/uuid.dart';
 
+/// A centralized handler for processing incoming share intents from other applications.
+///
+/// This class manages the lifecycle of sharing subscriptions and routes shared content
+/// (files, media, or URLs) to the appropriate application flow.
+///
+/// ### Supported Content Types (per AndroidManifest.xml):
+/// - **Text & URLs**: `text/*` (Captures shared plain text and browser links)
+/// - **Media**: `image/*`, `video/*`, `audio/*`
+/// - **Documents**: PDF, MS Office (Word, Excel, PPT), RTF, OpenDocument (ODT, ODS, ODP)
+/// - **Archives**: ZIP, RAR, 7Z, TAR, GZIP, BZIP2
+/// - **E-books**: EPUB, MOBI, AZW3
 class ShareIntentHandler {
   static StreamSubscription? _mediaSub;
   static bool _initialized = false;
@@ -87,7 +83,7 @@ class ShareIntentHandler {
 
         final message = Message()
           ..id = const Uuid().v7()
-          ..text = _getTypeString(mediaFile)
+          ..text = mediaFile.type == Mediatype.link ? mediaFile.path! : _getTypeString(mediaFile)
           ..time = DateTime.now()
           ..isSender = true
           ..media.value = mediaFile;
@@ -124,9 +120,11 @@ String _getTypeString(Media mediaFile) {
           ? '🎧 Audio'
           : mediaFile.isDocument
               ? '📃 Document'
-              : mediaFile.isVideo 
-                ? "📽️ Video" 
-                : '❓ Unknown';
+              : mediaFile.isVideo
+                  ? "📽️ Video"
+                  : mediaFile.type == Mediatype.link
+                      ? '🔗 Link'
+                      : '❓ Unknown';
 }
 
 
@@ -159,7 +157,7 @@ class ShareScreen extends StatelessWidget {
               final message =
                   Message()
                     ..id = const Uuid().v7()
-                    ..text = getTypeString(mediaFile) // or leave empty if you want
+                    ..text = mediaFile.type == Mediatype.link ? mediaFile.path! : getTypeString(mediaFile)
                     ..time = DateTime.now()
                     ..isSender = true
                     ..media.value = mediaFile;
@@ -233,6 +231,7 @@ String getTypeString(Media mediaFile) {
         : mediaFile.isAudio ? '🎧 Audio'
         : mediaFile.isDocument ? '📃 Document'
         : mediaFile.isVideo ? '🎞️ Video'
+        : mediaFile.type == Mediatype.link ? '🔗 Link'
         : '❓ Unknown',
   };
 }

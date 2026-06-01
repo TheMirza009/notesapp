@@ -90,7 +90,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
     debugPrint("🔃 ChatScreen rebuilt");
 
     final isWide = context.screenWidth >= 600;
-    final canPop = isWide ? false : ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis)) && overlayHandler.allClosed;
+    final canPop = isWide ? false : ref.watch(chatStateController.select((s) => !s.isSearching && !s.showEmojis && !s.isSelecting)) && overlayHandler.allClosed;
 
     if (newChat) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,6 +131,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
     ref.read(chatListProvider.notifier).clearSelectedChat();
     debugPrint("Current chat selected: ${ref.read(chatListProvider).selectedChat}");
     return; // never actually pops
+  }
+
+  if (state.isSelecting) {
+    notifier.unSelectAllMessages();
+    return;
   }
 
   // Mobile — normal pop cleanup

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python -c ' *)",
+      "Bash(python3 -m pip install python-docx -q)",
+      "Bash(py -m pip install python-docx -q)",
+      "PowerShell(pip install python-docx -q)"
+    ]
+  }
+}

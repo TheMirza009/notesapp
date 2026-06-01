@@ -90,7 +90,7 @@ class MessageContentBuilder extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          ), 
           Align(
             alignment: Alignment.bottomRight,
             child: Text(

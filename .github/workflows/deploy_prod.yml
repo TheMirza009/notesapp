@@ -1,0 +1,71 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Release notes'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=../upload-keystore.jks
+          EOF
+
+      - name: Build AAB
+        run: flutter build appbundle --release --flavor production
+
+      - name: Write release notes
+        run: |
+          mkdir -p distribution/whatsnew
+          printf '%s' "${{ github.event.inputs.release_notes }}" > distribution/whatsnew/whatsnew-en-US
+
+      - name: Upload to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT }}
+          packageName: com.azdhaar.notesapp
+          releaseFiles: build/app/outputs/bundle/productionRelease/app-production-release.aab
+          track: production
+          rollout: 1.0
+          whatsNewDirectory: distribution/whatsnew
+
+      - name: Send notification email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "\U0001F680 Live on Play Store — ${{ github.sha }}"
+          body: |
+            Commit: ${{ github.sha }}
+
+            Release Notes:
+            ${{ github.event.inputs.release_notes }}
+          to: ${{ secrets.TESTER_EMAILS }}
+          from: ${{ secrets.MAIL_USERNAME }}
