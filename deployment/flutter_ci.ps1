@@ -123,8 +123,9 @@ function _Invoke-UploadWithProgress {
     $fileStream = [System.IO.File]::OpenRead($FilePath)
     $progStream = [ProgressStream]::new($fileStream, $fileStream.Length)
     $content    = [System.Net.Http.StreamContent]::new($progStream)
-    $content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new(
+    $content.Headers.ContentType   = [System.Net.Http.Headers.MediaTypeHeaderValue]::new(
         "application/vnd.android.package-archive")
+    $content.Headers.ContentLength = $fileStream.Length
 
     $client = [System.Net.Http.HttpClient]::new()
     $client.Timeout = [System.TimeSpan]::FromMinutes(10)
@@ -268,8 +269,16 @@ function deploy-test {
                 prerelease = $true
                 draft      = $false
             } | ConvertTo-Json
-            Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/releases" `
-                -Method Post -Headers $headers -Body $releaseObj
+            try {
+                Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/releases" `
+                    -Method Post -Headers $headers -Body $releaseObj
+            } catch {
+                $sc = $null; try { $sc = $_.Exception.Response.StatusCode.value__ } catch {}
+                if ($sc -ne 422) { throw }
+                # Release already exists — fetch it
+                Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/releases/tags/$tagName" `
+                    -Headers $headers
+            }
         }
 
         $uploadUrl = $release.upload_url -replace '\{.*\}', ''
