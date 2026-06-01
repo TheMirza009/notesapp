@@ -1,6 +1,6 @@
 # NotesApp — Technical Context (Source of Truth)
 
-> **Version:** 2.1.1+6 · **Last Updated:** 2026-04-27
+> **Version:** 2.1.1+6 · **Last Updated:** 2026-06-01
 > **Audience:** AI agents performing bug fixes, feature development, and refactoring.
 > **Rule:** Read this file in full before modifying any source code.
 
@@ -23,8 +23,8 @@
 - **100% offline** — no cloud, no analytics, no network calls (link preview feature must be opt-in if added).
 - **Privacy-first** — all data stays on-device.
 - **Self-chat paradigm** — every note is a "message" inside a "chat thread". No multi-user concepts.
-- **Clean Monolith** — widgets stay inline unless used ≥3 times across ≥3 files (see `markdowns/clean_monolith.md`).
-- **Simplicity-first** — no over-engineering, no premature abstractions (see `markdowns/claude.md`).
+- **Clean Monolith** — widgets stay inline unless used ≥3 times across ≥3 files (see `markdowns/workflows/clean_monolith.md`).
+- **Simplicity-first** — no over-engineering, no premature abstractions (see `markdowns/workflows/claude.md`).
 
 ---
 
@@ -35,16 +35,22 @@ notesapp/
 ├── android/                          # Android platform files
 ├── windows/                          # Windows platform files (alpha)
 ├── markdowns/
-│   ├── claude.md                     # AI agent behavioral rules
-│   ├── clean_monolith.md             # Widget extraction rules
-│   ├── NotesApp_Feature_Requests.docx # Backlog (bugs + features)
-│   └── context.md                    # ← THIS FILE
+│   ├── docs/
+│   │   ├── context.md                # ← THIS FILE
+│   │   ├── DEPLOYMENT.md             # CI/CD and deployment notes
+│   │   └── NotesApp_Feature_Requests.docx # Backlog (bugs + features)
+│   └── workflows/
+│       ├── claude.md                 # AI agent behavioral rules
+│       ├── clean_monolith.md         # Widget extraction rules
+│       ├── Hardcut.md                # Hard refactor guidelines
+│       └── class_refactor.md        # Class refactor workflow
 ├── lib/
 │   ├── main.dart                     # App entry point
 │   ├── core/                         # Feature-agnostic services
 │   │   ├── Theme/
 │   │   │   ├── theme_constants.dart  # Color palette (light + dark)
-│   │   │   └── gradients.dart        # Background gradients
+│   │   │   ├── gradients.dart        # Background gradients
+│   │   │   └── icon_paths.dart       # Icon asset path constants
 │   │   ├── controllers/
 │   │   │   ├── isar_database.dart    # Singleton DB controller
 │   │   │   ├── media_handler.dart    # Image/doc/audio pick+save
@@ -52,23 +58,34 @@ notesapp/
 │   │   │   ├── video_handler.dart    # Video metadata + thumbnails
 │   │   │   ├── blurhash_service.dart # BlurHash encode/decode cache
 │   │   │   ├── recording_handler.dart # Audio recording
+│   │   │   ├── camera_handler.dart   # Camera lifecycle management
 │   │   │   ├── share_intent_handler.dart # Android share-to-app
 │   │   │   ├── theme_provider.dart   # ThemeNotifier (light/dark)
+│   │   │   ├── user_provider.dart    # User profile provider
+│   │   │   ├── tutorial/
+│   │   │   │   └── tutorial_service.dart # Homescreen tutorial overlay logic
 │   │   │   └── backup/
 │   │   │       └── backup_service.dart # Export/import .notesbackup
 │   │   ├── extensions/
-│   │   │   ├── chat_extensions.dart    # Chat → last message helpers
-│   │   │   ├── media_extensions.dart   # Media type checks, list helpers
-│   │   │   ├── message_extensions.dart # Message type checks, display text
-│   │   │   ├── context_extensions.dart # BuildContext → theme/size shortcuts
-│   │   │   ├── string_extensions.dart  # Thread JSON codec, URL wrapping
-│   │   │   └── widget_extensions.dart  # Keyboard shortcut builder
+│   │   │   ├── chat_extensions.dart         # Chat → last message helpers
+│   │   │   ├── chat_list_extension.dart     # List<Chat> helpers (mostly archived/commented)
+│   │   │   ├── chat_list_isar_extensions.dart # Isar-backed list helpers
+│   │   │   ├── media_extensions.dart        # Media type checks, list helpers
+│   │   │   ├── message_extensions.dart      # Message type checks, display text
+│   │   │   ├── message_list_extensions.dart # List<Message> helpers
+│   │   │   ├── context_extensions.dart      # BuildContext → theme/size shortcuts
+│   │   │   ├── string_extensions.dart       # Thread JSON codec, URL wrapping
+│   │   │   ├── time_extensions.dart         # DateTime → 12-hour string
+│   │   │   └── widget_extensions.dart       # Keyboard shortcut builder
 │   │   └── utils/
 │   │       ├── utils.dart            # Snackbar, clipboard, share, navigation
 │   │       ├── global_keys.dart      # ScaffoldMessenger, Navigator, titlebar keys
 │   │       ├── constants.dart        # Version, email, Play Store URL
+│   │       ├── context_menu_options.dart # Context menu option definitions
+│   │       ├── rebuild_counter.dart  # Debug rebuild tracking utility
 │   │       ├── time_format.dart      # Date/time formatting helpers
-│   │       └── transitions.dart      # Slide-from-left/right page routes
+│   │       ├── transitions.dart      # Slide-from-left/right page routes
+│   │       └── windows_utils.dart    # Windows-specific utilities
 │   └── root/                         # Feature-specific domain + UI
 │       ├── data/
 │       │   ├── models/
@@ -81,26 +98,33 @@ notesapp/
 │       │   ├── enums/
 │       │   │   ├── media_type.dart        # Mediatype enum
 │       │   │   ├── bubble_style.dart      # BubbleStyle enum
-│       │   │   └── bubble_color.dart      # BubbleColor enum
+│       │   │   ├── bubble_color.dart      # BubbleColor enum
+│       │   │   ├── chatlist_filter.dart   # ChatlistFilter enum
+│       │   │   └── chat_media.dart        # ChatMedia enum (photos/videos/documents/links)
 │       │   └── chat_list_provider/
-│       │       ├── chat_list_notifier.dart # Master chat list state
-│       │       ├── chat_list_state.dart    # ChatListState model
+│       │       ├── chat_list_notifier.dart # Master chat list state + ChatListState (inline)
 │       │       └── extensions/
 │       │           └── chatlist_folder_extension.dart
+│       ├── domain/
+│       │   └── usecases/
+│       │       └── delete_chat_usecase.dart # Undo-delete logic extracted from ChatListNotifier
 │       └── presentation/
 │           ├── screens/
 │           │   ├── Homescreen/           # Chat list / home
 │           │   │   ├── homescreen.dart
+│           │   │   ├── homescreen_state.dart
 │           │   │   ├── components/
-│           │   │   │   ├── chat_list/    # Chat tile widgets
-│           │   │   │   └── main/         # AppBar, FAB, etc.
+│           │   │   │   └── chat_list/    # Chat tile widgets
 │           │   │   └── platform/
 │           │   │       └── desktop/      # Windows-specific layout
+│           │   │           ├── homescreen_desktop.dart
+│           │   │           └── widgets/  # Desktop panel widgets
 │           │   ├── Chat_screen/          # Message view
 │           │   │   ├── chat_screen.dart
 │           │   │   ├── notifier/
 │           │   │   │   ├── chat_state.dart          # Immutable ChatState
-│           │   │   │   └── chat_state_notifier.dart  # ChatStateNotifier (1778 LOC)
+│           │   │   │   ├── chat_state_notifier.dart  # ChatStateNotifier (1777 LOC)
+│           │   │   │   └── old_notifiers/            # 5 archived notifier files (unused)
 │           │   │   ├── bodies/
 │           │   │   │   └── chat_screen_glass_body.dart
 │           │   │   └── widgets/
@@ -128,29 +152,54 @@ notesapp/
 │           │   │           ├── emoji_board_wrapper.dart
 │           │   │           ├── emerging_overlay.dart
 │           │   │           ├── attachment/
+│           │   │           │   ├── attachment_wrapper.dart
+│           │   │           │   ├── desaturator.dart
 │           │   │           │   └── overlay_controller.dart
 │           │   │           └── overlays/
 │           │   │               └── overlay_handler.dart
 │           │   ├── Chat_Detail/          # Chat info / media gallery
 │           │   │   ├── chat_detail_screen.dart
+│           │   │   ├── chat_detail_notifier.dart  # ChatDetailNotifier + ChatDetailState
+│           │   │   ├── chat_detail_base_state.dart
 │           │   │   ├── screens/
 │           │   │   │   ├── chat_detail_screen_divided.dart
 │           │   │   │   └── chat_media_screen.dart
 │           │   │   └── widgets/
 │           │   │       └── info_bottom_sheet.dart
 │           │   ├── Chat_Forward/         # Forward message to another chat
-│           │   │   └── chat_forward_screen.dart
+│           │   │   ├── chat_forward_screen.dart
+│           │   │   ├── notifier/
+│           │   │   │   └── selected_chat_notifier.dart
+│           │   │   └── widgets/
+│           │   │       ├── blurred_appbar.dart
+│           │   │       ├── expanding_searchbar.dart
+│           │   │       ├── selection_check.dart
+│           │   │       └── send_button.dart
 │           │   ├── Settings/
 │           │   │   ├── settings_screen.dart
-│           │   │   └── notifier/
-│           │   │       └── settings_notifier.dart
+│           │   │   ├── notifier/
+│           │   │   │   └── settings_notifier.dart
+│           │   │   └── widgets/
+│           │   │       ├── bordered_container.dart
+│           │   │       ├── emerging_circle.dart
+│           │   │       └── rounded_tile.dart
 │           │   ├── Backup/
 │           │   │   ├── backup_screen.dart
-│           │   │   └── backup_notifier.dart
+│           │   │   ├── backup_notifier.dart
+│           │   │   └── widgets/
+│           │   │       └── backup_hero_icon.dart
 │           │   ├── Camera/
-│           │   │   └── camera_screen.dart
+│           │   │   ├── camera_screen.dart
+│           │   │   ├── camera_grid_overlay.dart
+│           │   │   ├── camera_mode_selector.dart
+│           │   │   └── camera_tool_panel.dart
 │           │   └── Profile/
-│           │       └── profile_screen.dart
+│           │       ├── profile_screen.dart
+│           │       ├── profile_screen_state.dart
+│           │       ├── widgets/
+│           │       │   ├── pulldown_wrapper/
+│           │       │   └── tile_container.dart
+│           │       └── wrappers/         # Hero, slide, reverse-cupertino page routes
 │           └── widgets/                  # Shared reusable widgets
 │               ├── photo_view/
 │               │   ├── gallery_view_wrapper.dart
@@ -160,9 +209,28 @@ notesapp/
 │               │   ├── croppy_custom_cropper.dart
 │               │   ├── croppy_example.dart
 │               │   └── croppy_settings_modal.dart
+│               ├── crop/
+│               │   ├── crop_screen.dart
+│               │   └── croppyImage.dart
 │               ├── voice_message/
 │               │   └── components/       # Audio waveform + player
-│               └── custom_icon_dialogue.dart
+│               ├── context_menus/        # Custom context menu widgets
+│               │   ├── custom_context_menu.dart
+│               │   ├── custom_context_menu_2.dart
+│               │   └── triangular_tail.dart
+│               ├── video_view/
+│               │   ├── seek_indicators.dart
+│               │   └── video_gallery_player.dart
+│               ├── windows/
+│               │   ├── titlebar_popup.dart
+│               │   └── windows_titlebar.dart
+│               ├── clickable_circle.dart
+│               ├── custom_icon_button.dart
+│               ├── custom_icon_dialogue.dart
+│               ├── glass_container.dart
+│               ├── glass_icon_dialogue.dart
+│               ├── nothing_to_see.dart
+│               └── theme_switch.dart
 ```
 
 ---
@@ -233,7 +301,8 @@ dart run build_runner build --delete-conflicting-outputs
 | `id` | `Id` | Always `0` (singleton) |
 | `isLightMode` | `bool` | Theme preference |
 | `chatDisplayAscending` | `bool` | Message sort order |
-| `selectedBubbleStyle` | `BubbleStyle` | Enum stored as index |
+| `selectedBubbleStyle` | `BubbleStyle` | Enum stored as index (`selectedBubbleStyleIndex`) |
+| `chatListFilter` | `ChatlistFilter` | Chat sort order; stored as index (`chatListFilterIndex`) |
 
 **Methods:** `copyWith()`, `setBubbleStyle()`, `setChatOrder()`, `toggleChatDisplayOrder()`, `toggleTheme()`.
 **Singleton pattern:** Only one Settings object exists at `id = 0`.
@@ -262,6 +331,17 @@ enum BubbleStyle { normal, glass, opaque }
 ```dart
 enum BubbleColor { seed, blue, green, purple, orange, red, pink }
 ```
+
+### `ChatlistFilter` (`chatlist_filter.dart`)
+```dart
+enum ChatlistFilter { alphabetical, newestCreated, newestModified, oldestCreated, oldestModified }
+```
+
+### `ChatMedia` (`chat_media.dart`)
+```dart
+enum ChatMedia { photos, videos, documents, links }
+```
+Used by `Chat_Detail` media tab filtering.
 
 ---
 
@@ -321,8 +401,7 @@ Extends `MediaHandler` with video-specific workflows:
 
 ### 5.5 ThemeProvider (`theme_provider.dart`)
 
-`ThemeNotifier extends StateNotifier<ThemeMode>`. Manages light/dark toggle. 
-**Known bug:** Does not persist `isLightMode` back to Isar Settings — see Feature Requests bug #16.
+`ThemeNotifier extends StateNotifier<ThemeMode>`. Manages light/dark toggle. Persists theme preference to Isar via `SettingsNotifier.toggleTheme()` / `setTheme()`.
 
 ### 5.6 BackupService (`backup/backup_service.dart`)
 
@@ -430,45 +509,47 @@ All state is managed through Riverpod. **Never create a new state management mec
 
 | Provider | Type | Class | File |
 |---|---|---|---|
-| `chatListProvider` | `NotifierProvider` | `ChatListNotifier` | `chat_list_notifier.dart` |
+| `chatListProvider` | `StateNotifierProvider` | `ChatListNotifier` | `chat_list_notifier.dart` |
 | `chatStateController` | `NotifierProvider` | `ChatStateNotifier` | `chat_state_notifier.dart` |
 | `settingsController` | `StateNotifierProvider` | `SettingsNotifier` | `settings_notifier.dart` |
+| `chatDetailProvider` | `NotifierProvider` | `ChatDetailNotifier` | `chat_detail_notifier.dart` |
 | `backupProvider` | `StateNotifierProvider` | `BackupNotifier` | `backup_notifier.dart` |
 | `overlayHandlerProvider` | (varies) | `OverlayHandler` | `overlay_handler.dart` |
 | `overlayControllerProvider` | (varies) | `OverlayController` | `overlay_controller.dart` |
 
-### 8.2 ChatListNotifier (`chat_list_notifier.dart` — 602 LOC)
+### 8.2 ChatListNotifier (`chat_list_notifier.dart` — 429 LOC)
 
 **Purpose:** Master controller for the homescreen chat list.
 
-**State:** `ChatListState` containing:
+**State:** `ChatListState` (defined inline in the same file):
 ```dart
 class ChatListState {
-  final List<Chat> chats;           // All chats
-  final List<Chat> filteredChats;   // Search-filtered subset
-  final Chat? selectedChat;         // Currently open chat
-  final Message? messageToHighlight;// Cross-screen highlight target
-  final List<Message> searchResults;// Global search results
-  final bool isSearching;
-  final String searchQuery;
+  final List<Chat> chats;                       // All chats
+  final Chat? selectedChat;                     // Currently open chat
+  final bool isLoading;                         // Hydration in-progress flag
+  final Map<Chat, List<Message>> searchResults; // Global search results keyed by chat
+  final Message? messageToHighlight;            // Cross-screen highlight target
 }
 ```
+
+**Filter support:** `ChatListNotifier` accepts a `ChatlistFilter` on construction (read from `settingsController`) and listens to filter changes via `ref.listen`. Call `applyFilter(ChatlistFilter)` to re-sort.
 
 **Key methods:**
 
 | Method | Purpose |
 |---|---|
-| `loadChats()` | Hydrate from Isar, sorted by last message time |
+| `loadChats()` | Hydrate from Isar, apply current filter |
 | `selectChat(chat)` | Set `selectedChat`, triggers `ChatStateNotifier.build()` |
-| `createChat(name, emoji)` | Create via `IsarDatabase.createChat()`, add to state |
+| `createChat()` | Create new chat via `IsarDatabase.addNewChat()`, add to state |
 | `removeChat(chat)` | Immediate removal from state + Isar |
-| `deleteChatWithUndo(chat, context)` | Soft-delete → SnackBar with Undo → hard-delete after timeout |
-| `deleteAllChats()` | Nuclear delete with confirmation |
+| `deleteChatWithUndo(chat, context)` | Delegates to `DeleteChatUseCase`: soft-delete → SnackBar with Undo → hard-delete after timeout |
+| `deleteAllChats()` | Nuclear delete |
 | `searchChats(query)` | Filter `chats` by name/last-message text |
 | `togglePin(chat)` | Toggle `isPinned`, re-sort |
 | `renameChat(chat, name)` | Update name in Isar + state |
-| `globalSearch(query)` | Search across all messages in all chats |
+| `globalSearch(query)` | Search across all messages in all chats; results in `Map<Chat, List<Message>>` |
 | `clearHighlight()` | Reset `messageToHighlight` |
+| `applyFilter(filter)` | Re-sort `chats` by the given `ChatlistFilter` |
 
 **Pending Delete Pattern:**
 ```
@@ -607,7 +688,30 @@ hydrateMessages() →
 
 **Chat screen options:** `chatInfo`, `chatMedia`, `search`, `clearChat` (with dialog).
 
-### 8.4 SettingsNotifier (`settings_notifier.dart`)
+### 8.4 ChatDetailNotifier (`chat_detail_notifier.dart`)
+
+**Purpose:** Manages media loading and chat photo/title updates for the Chat Detail screen.
+
+**State:** `ChatDetailState`:
+```dart
+class ChatDetailState {
+  final Chat? chat;
+  final List<Media> photos;
+  final List<Media> documents;
+}
+```
+
+| Method | Purpose |
+|---|---|
+| `getMedia()` | Load all media for the selected chat, split into photos + documents |
+| `saveAndUpdateChatPhoto(media)` | Replace chat avatar with a new photo |
+| `updateChatPhoto()` | Persist updated photo to Isar |
+| `updateTitle(title)` | Rename the chat |
+| `openImage()` | Set `imageOpened` flag for photo viewer state |
+
+---
+
+### 8.5 SettingsNotifier (`settings_notifier.dart`)
 
 **Purpose:** Manages singleton Settings object.
 
@@ -618,10 +722,11 @@ hydrateMessages() →
 | `setBubbleStyle(style)` | Update bubble style |
 | `setChatOrder(ascending)` | Set chat display order |
 | `toggleChatOrder()` | Toggle ascending/descending |
+| `toggleTheme()` | Toggle light/dark and persist to Isar |
+| `setTheme(isLight)` | Set theme explicitly and persist |
+| `setChatListFilter(filter)` | Update `ChatlistFilter` preference and persist |
 
-**Note:** No `toggleTheme()` method exists — this is a known gap (bug #16).
-
-### 8.5 BackupNotifier (`backup_notifier.dart`)
+### 8.6 BackupNotifier (`backup_notifier.dart`)
 
 **State:** `BackupState` with `BackupStatus` enum (`idle`, `inProgress`, `completed`, `error`, `cancelled`).
 
@@ -641,6 +746,7 @@ hydrateMessages() →
 |---|---|---|
 | `homescreen.dart` | `ChatListNotifier` | `chatListProvider` |
 | `chat_screen.dart` | `ChatStateNotifier` | `chatStateController` |
+| `chat_detail_screen.dart` | `ChatDetailNotifier` | `chatDetailProvider` |
 | `settings_screen.dart` | `SettingsNotifier` | `settingsController` |
 | `backup_screen.dart` | `BackupNotifier` | `backupProvider` |
 | `profile_screen.dart` | (direct Isar) | N/A |
@@ -813,13 +919,13 @@ dart run build_runner build --delete-conflicting-outputs
 
 > Source: `markdowns/NotesApp_Feature_Requests.docx`
 
-### Sprint 1: P0 Bugs (Fix First)
+### Sprint 1: P0 Bugs
 
 | # | Bug | Status | Key File(s) |
 |---|---|---|---|
 | #15 | `§` symbol leaks into clipboard when copying URL messages | Open | `context_menu_options.dart` — add `.replaceAll("§", "")` before `Clipboard.setData` |
-| #16 | Theme toggle not persisted to Isar Settings | Open | `theme_provider.dart` — read `isLightMode` from Settings on init; write back on toggle |
-| #18 | Back key exits chat screen instead of cancelling selection | Open | `chat_screen.dart` — check `selectedMessages.isNotEmpty` in `PopScope`, call `clearSelection()` |
+| #16 | Theme toggle not persisted to Isar Settings | **Done** | Fixed: `settings_notifier.dart` now has `toggleTheme()` / `setTheme()` that persist via `update()` |
+| #18 | Back key exits chat screen instead of cancelling selection | **Done** | Fixed: `chat_screen.dart` `PopScope.canPop` checks `!s.isSelecting`; `onPopInvokedWithResult` calls `unSelectAllMessages()` |
 
 ### Sprint 2: P1 Features (Independent)
 
@@ -834,13 +940,13 @@ dart run build_runner build --delete-conflicting-outputs
 | # | Feature | Key File(s) | Notes |
 |---|---|---|---|
 | #21 | Active bubble style indicator | `context_menu_options.dart` | Add `isSelected` to `ContextMenuOption` model |
-| #24 | Move "Delete All" to Settings with confirmation | `context_menu_options.dart`, `settings_screen.dart` | Remove from overflow menu, add to Settings with `showDialog` |
+| #24 | Move "Delete All" to Settings with confirmation | **Done** | Implemented in `settings_screen.dart` |
 | #20 | Left-side bubble default | `settings_model.dart`, `message_bubble.dart` | Add `defaultLeftBubble` bool to Settings |
 | #3 | Swipe direction for quote-reply | `settings_model.dart`, `swipable.dart` | Add `swipeRightToReply` bool to Settings |
 | #25 | Include Settings in backup | `backup_service.dart` | Add `_upsertSettings()` step in import |
 | #26 | Chat lock (prevent deletion) | `chat_model.dart`, chat tile | Add `isLocked` bool to Chat. Check before `onDismissed`. |
-| #2 | URL link preview | `bottom_message_bar.dart`, `chat_state_notifier.dart` | **Caution:** Requires network call — conflicts with "100% offline" principle. Must be opt-in with Settings toggle defaulting to OFF. |
-| Camera | Zoom+fade transition for camera preview | `transitions.dart`, `camera_screen.dart` | Add `zoomFadeRoute<T>()` to transitions.dart. Replace `MaterialPageRoute` in camera_screen.dart ~line 271. |
+| #2 | URL link preview (browser share bug) | `share_intent_handler.dart` | Known bug: link sharing from browser is partially working but has an open issue. **Caution:** Requires network call — must be opt-in via Settings toggle defaulting OFF. |
+| Camera | Zoom+fade transition for camera preview | `transitions.dart`, `camera_screen.dart` | Add `zoomFadeRoute<T>()` to transitions.dart. Replace `MaterialPageRoute` in camera_screen.dart. |
 
 ---
 
@@ -850,11 +956,8 @@ dart run build_runner build --delete-conflicting-outputs
 
 | Issue | Location | Fix |
 |---|---|---|
-| Duplicate imports | `share_intent_handler.dart` | Same 10 import lines appear twice. Remove duplicate block. |
 | Stale old notifiers | `Chat_screen/notifier/old_notifiers/` | 5 unused files. Delete or archive. |
-| `GlobalKey` as file-level constants | `settings_screen.dart` (`tile1`, `tile2`, `tile3`) | Will crash on re-mount. Move to widget State or local to `build()`. |
-| Missing `toggleTheme()` persistence | `settings_notifier.dart` | `Settings.toggleTheme()` model method exists but notifier doesn't call it. Root cause of bug #16. |
-| Undo snackbar sticking | `ChatListNotifier.deleteChatWithUndo()` | Review `SnackBar` duration. Dismiss programmatically on "Undo" tap or navigation. Use `ScaffoldMessenger.hideCurrentSnackBar()`. |
+| `GlobalKey` as file-level constants | `settings_screen.dart` (`tile1`–`tile4`) | Will crash on re-mount. Move to widget State or local to `build()`. |
 
 ### Architecture Notes
 

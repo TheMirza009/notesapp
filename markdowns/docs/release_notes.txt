@@ -1,0 +1,60 @@
+================================================================================
+  NOTESAPP — RELEASE NOTES
+================================================================================
+
+COMMIT       : 2a380c2ea7ebb08b6f3ec7de24db4bc35363697e
+SHORT HASH   : 2a380c2
+BRANCH       : desktop-prototype
+COMMIT MSG   : Testing breakpoints
+DATE         : 2026-06-01
+
+--------------------------------------------------------------------------------
+
+VERSION      : 2.1.1+6
+PACKAGE      : com.azdhaar.notesapp
+PLATFORMS    : Android (stable) · Windows (alpha)
+
+================================================================================
+  WHAT'S NEW
+================================================================================
+
+  NEW FEATURES
+
+  · Delete All Chats moved to Settings — The "Delete All Chats" option has
+    been moved out of the chat menu and into Settings, where it belongs.
+    A confirmation prompt is now required before anything is deleted.
+
+  · About — A new About section has been added to Homescreen options.
+
+
+  BUG FIXES
+
+  · Pressing the back button while messages are selected now clears the
+    selection instead of closing the chat entirely.
+
+  · Your light/dark theme choice is now remembered after restarting the app.
+
+  · Sharing files from other apps no longer shows unsupported file types in
+    the share sheet.
+
+  · Sharing a link directly from your browser now correctly opens the app
+    and routes you to the forward screen. (A minor edge-case bug remains
+    and will be addressed in the next update.)
+
+  · The "Undo" snackbar after deleting a chat now dismisses properly
+    instead of lingering on screen.
+
+
+================================================================================
+  KNOWN ISSUES
+================================================================================
+
+  · Copying a URL message may include an unexpected character on the clipboard.
+    Workaround: paste and delete the stray character manually.
+
+  · Sharing a link from the browser has a known edge-case bug — fix in progress.
+
+
+================================================================================
+  END OF RELEASE NOTES — 2.1.1+6
+================================================================================

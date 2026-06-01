@@ -46,6 +46,8 @@ class MessageContentBuilder extends StatelessWidget {
         return AudioMessageView(message: message, key: ValueKey(message.isarId),);
       case Mediatype.document:
         return DocumentMessageView(message: message);
+      case Mediatype.link:
+        return _buildTextWithTimestamp(context);
       default:
         return const SizedBox.shrink();
     }

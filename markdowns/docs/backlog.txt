@@ -1,0 +1,92 @@
+================================================================================
+  NOTESAPP — FEATURE & BUG BACKLOG
+================================================================================
+
+Last Updated : 2026-06-01
+Version      : 2.1.1+6
+Source       : markdowns/docs/NotesApp_Feature_Requests.docx
+
+================================================================================
+  P0 — OPEN BUGS (Fix Before Next Release)
+================================================================================
+
+  [#15]  § character leaks into clipboard when copying URL messages.
+         Status : FIXED — chat_state_notifier.dart 'copy' case now calls
+                  .replaceAll('§', '') before passing to copyTextToClipboard.
+
+  [#2]   Link sharing from browser produced an empty message bubble and the
+         URL was not clickable.
+         Status : FIXED —
+           · share_intent_handler.dart now applies .withWrappedLinks to the
+             URL before storing it as message.text, so TypeSet renders it as
+             a tappable link.
+           · message_content_builder.dart now has case Mediatype.link: which
+             routes to _buildTextWithTimestamp instead of SizedBox.shrink().
+
+  [UI]   GlobalKey tile1–tile4 declared at file scope in settings_screen.dart.
+         Will crash on re-mount if Settings screen is rebuilt.
+         Fix    : Move keys into widget State or local to build().
+
+  [Stale] 5 unused notifier files sitting in old_notifiers/.
+          Path  : Chat_screen/notifier/old_notifiers/
+          Fix   : Delete all five files.
+
+================================================================================
+  P1 — NEXT SPRINT (High Priority Features)
+================================================================================
+
+  [#19]  Share individual message via system share sheet.
+         File   : context_menu_options.dart
+         Notes  : Strip § sentinel before sharing. share_plus already in pubspec.
+
+  [#4]   Draft auto-save — preserve unsent text when leaving a chat.
+         Files  : settings_model.dart, bottom_message_bar.dart,
+                  settings_notifier.dart
+         Notes  : Per-chat draft (on Chat model) is preferred over a global
+                  Settings field. Discuss scope before implementing.
+                  Debounce writes at 500 ms. Clear draft on send.
+
+  [#1]   WhatsApp chat import from .txt export.
+         File   : New — whatsapp_import_service.dart
+         Notes  : Regex: ^\[(\d{1,2}/\d{1,2}/\d{2,4}),\s([^\]]+)\]\s([^:]+):\s(.*)$
+                  All messages isSender = true.
+                  Handle locale date format variations; skip unmatched lines.
+
+================================================================================
+  P2 — LOWER URGENCY FEATURES
+================================================================================
+
+  [#21]  Show which bubble style is currently active in the context menu.
+         File   : context_menu_options.dart
+         Notes  : Add isSelected field to ContextMenuOption model.
+
+  [#20]  Option to make left-side bubble the default alignment.
+         Files  : settings_model.dart, message_bubble.dart
+         Notes  : Add defaultLeftBubble bool to Settings.
+
+  [#3]   Configurable swipe direction for quote-reply.
+         Files  : settings_model.dart, swipable.dart
+         Notes  : Add swipeRightToReply bool to Settings.
+
+  [#25]  Include Settings in backup/restore.
+         File   : backup_service.dart
+         Notes  : Add _upsertSettings() step to the import flow.
+
+  [#26]  Chat lock — prevent a chat from being accidentally deleted.
+         Files  : chat_model.dart, chat tile
+         Notes  : Add isLocked bool to Chat. Check before onDismissed fires.
+
+  [#2]   URL link preview (inline card below message).
+         Files  : bottom_message_bar.dart, chat_state_notifier.dart
+         CAUTION: Requires an outbound network call. Conflicts with the
+                  100% offline principle. Must be opt-in via a Settings toggle
+                  that defaults to OFF. Cache previews in Isar.
+
+  [Camera] Zoom+fade transition when opening the camera screen.
+           Files  : transitions.dart, camera_screen.dart
+           Notes  : Add zoomFadeRoute<T>() to transitions.dart. Replace the
+                    existing MaterialPageRoute call in camera_screen.dart.
+
+================================================================================
+  END OF BACKLOG
+================================================================================

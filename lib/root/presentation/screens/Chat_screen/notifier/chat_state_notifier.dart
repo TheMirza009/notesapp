@@ -1701,7 +1701,7 @@ void editThread(Message thread) {
         } else if (message.isThread) {
           Utils.copyTextToClipboard(message.text.formatThread());
         } else {
-          Utils.copyTextToClipboard(message.text);
+          Utils.copyTextToClipboard(message.text.replaceAll('§', ''));
         }
         unSelectAllMessages();
         break;

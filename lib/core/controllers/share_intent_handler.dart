@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/media_extensions.dart';
+import 'package:notesapp/core/extensions/string_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
@@ -83,7 +84,7 @@ class ShareIntentHandler {
 
         final message = Message()
           ..id = const Uuid().v7()
-          ..text = mediaFile.type == Mediatype.link ? mediaFile.path! : _getTypeString(mediaFile)
+          ..text = mediaFile.type == Mediatype.link ? mediaFile.path!.withWrappedLinks : _getTypeString(mediaFile)
           ..time = DateTime.now()
           ..isSender = true
           ..media.value = mediaFile;
@@ -157,7 +158,7 @@ class ShareScreen extends StatelessWidget {
               final message =
                   Message()
                     ..id = const Uuid().v7()
-                    ..text = mediaFile.type == Mediatype.link ? mediaFile.path! : getTypeString(mediaFile)
+                    ..text = mediaFile.type == Mediatype.link ? mediaFile.path!.withWrappedLinks : getTypeString(mediaFile)
                     ..time = DateTime.now()
                     ..isSender = true
                     ..media.value = mediaFile;
