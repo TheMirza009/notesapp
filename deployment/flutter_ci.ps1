@@ -171,12 +171,16 @@ function deploy-test {
         $tagName = "test-$sha"
 
         Invoke-WithSpinner "Creating tag  ($tagName)" {
-            $tagObj = @{ tag = $tagName; message = "Test build $sha"; object = $fullSha; type = "commit" } | ConvertTo-Json
-            Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/git/tags" `
-                -Method Post -Headers $headers -Body $tagObj | Out-Null
-            $refObj = @{ ref = "refs/tags/$tagName"; sha = $fullSha } | ConvertTo-Json
-            Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/git/refs" `
-                -Method Post -Headers $headers -Body $refObj | Out-Null
+            try {
+                $tagObj = @{ tag = $tagName; message = "Test build $sha"; object = $fullSha; type = "commit" } | ConvertTo-Json
+                Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/git/tags" `
+                    -Method Post -Headers $headers -Body $tagObj | Out-Null
+            } catch { if ($_ -notmatch '"status":\s*"422"') { throw } }
+            try {
+                $refObj = @{ ref = "refs/tags/$tagName"; sha = $fullSha } | ConvertTo-Json
+                Invoke-RestMethod -Uri "https://api.github.com/repos/$script:REPO/git/refs" `
+                    -Method Post -Headers $headers -Body $refObj | Out-Null
+            } catch { if ($_ -notmatch '"status":\s*"422"') { throw } }
         }
 
         $release = Invoke-WithSpinner "Creating release" {
