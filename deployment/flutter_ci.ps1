@@ -11,10 +11,35 @@
 $_envFile = Join-Path $PSScriptRoot ".env.ps1"
 if (Test-Path $_envFile) { . $_envFile }
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Set-StrictMode -Off
 
 $script:REPO     = "TheMirza009/notesapp"
 $script:APK_PATH = "build\app\outputs\flutter-apk\app-rc-release.apk"
+
+Add-Type @"
+using System; using System.IO;
+public class ProgressStream : Stream {
+    private readonly Stream _inner;
+    private readonly long   _total;
+    private long _read;
+    public ProgressStream(Stream inner, long total) { _inner = inner; _total = total; }
+    public override bool CanRead  => true;
+    public override bool CanSeek  => false;
+    public override bool CanWrite => false;
+    public override long Length   => _total;
+    public override long Position { get => _read; set => throw new NotSupportedException(); }
+    public override int Read(byte[] buf, int off, int count) {
+        int n = _inner.Read(buf, off, count); _read += n; return n;
+    }
+    public long BytesRead => _read;
+    public long Total     => _total;
+    public override void Flush() {}
+    public override long Seek(long o, SeekOrigin r) => throw new NotSupportedException();
+    public override void SetLength(long v)          => throw new NotSupportedException();
+    public override void Write(byte[] b, int o, int c) => throw new NotSupportedException();
+}
+"@
 
 # ─── UI helpers ───────────────────────────────────────────────────────────────
 
@@ -88,6 +113,52 @@ function Invoke-WithSpinner {
     [Console]::WriteLine("`r    ✓  $Label   ")
     [Console]::ResetColor()
     return $result
+}
+
+# Uploads a file to a URL with a live progress bar.
+function _Invoke-UploadWithProgress {
+    param([string]$Url, [string]$Token, [string]$FilePath, [double]$TotalMB)
+
+    $barWidth = 28
+    $fileStream = [System.IO.File]::OpenRead($FilePath)
+    $progStream = [ProgressStream]::new($fileStream, $fileStream.Length)
+    $content    = [System.Net.Http.StreamContent]::new($progStream)
+    $content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new(
+        "application/vnd.android.package-archive")
+
+    $client = [System.Net.Http.HttpClient]::new()
+    $client.Timeout = [System.TimeSpan]::FromMinutes(10)
+    [void]$client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer $Token")
+    [void]$client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/vnd.github+json")
+
+    $task = $client.PostAsync($Url, $content)
+
+    while (-not $task.IsCompleted) {
+        $bytes  = $progStream.BytesRead
+        $total  = $progStream.Total
+        $pct    = if ($total -gt 0) { $bytes / $total } else { 0 }
+        $filled = [int]($barWidth * $pct)
+        $bar    = ("█" * $filled) + ("░" * ($barWidth - $filled))
+        $mb     = [math]::Round($bytes / 1MB, 1)
+        [Console]::ForegroundColor = [ConsoleColor]::DarkCyan
+        [Console]::Write("`r    [$bar]  $mb / $TotalMB MB  ")
+        [Console]::ResetColor()
+        Start-Sleep -Milliseconds 120
+    }
+
+    $fileStream.Dispose()
+    $response = $task.GetAwaiter().GetResult()
+    $client.Dispose()
+
+    if (-not $response.IsSuccessStatusCode) {
+        $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        [Console]::WriteLine("`r    ✗  Upload failed ($([int]$response.StatusCode))   ")
+        throw "APK upload failed: $body"
+    }
+
+    [Console]::ForegroundColor = [ConsoleColor]::Green
+    [Console]::WriteLine("`r    ✓  APK uploaded  ($TotalMB MB)   ")
+    [Console]::ResetColor()
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -195,17 +266,12 @@ function deploy-test {
                 -Method Post -Headers $headers -Body $releaseObj
         }
 
-        Invoke-WithSpinner "Uploading APK  ($apkMB MB)" {
-            $uploadUrl     = $release.upload_url -replace '\{.*\}', ''
-            $apkBytes      = [IO.File]::ReadAllBytes((Resolve-Path $script:APK_PATH))
-            $uploadHeaders = @{
-                Authorization  = "Bearer $token"
-                "Content-Type" = "application/vnd.android.package-archive"
-                Accept         = "application/vnd.github+json"
-            }
-            Invoke-RestMethod -Uri "${uploadUrl}?name=notesapp-rc-${sha}.apk" `
-                -Method Post -Headers $uploadHeaders -Body $apkBytes | Out-Null
-        }
+        $uploadUrl = $release.upload_url -replace '\{.*\}', ''
+        _Invoke-UploadWithProgress `
+            -Url     "${uploadUrl}?name=notesapp-rc-${sha}.apk" `
+            -Token   $token `
+            -FilePath (Resolve-Path $script:APK_PATH).Path `
+            -TotalMB  $apkMB
 
         $releaseUrl = $release.html_url
         Write-Host ""
