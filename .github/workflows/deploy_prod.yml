@@ -24,6 +24,9 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Override local JDK path for CI
+        run: sed -i '/org.gradle.java.home/d' android/gradle.properties
+
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
 
