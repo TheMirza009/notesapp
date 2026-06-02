@@ -335,16 +335,38 @@ function deploy-prod {
         if ($confirm -ne "yes") { Write-Host "`n  Cancelled." -ForegroundColor DarkYellow; return }
 
         # ── Release notes ─────────────────────────────────────────────────────
-        Write-Host ""
-        Write-Host "  Enter release notes (blank line to finish):" -ForegroundColor Cyan
-        $lines = @()
-        while ($true) {
-            $line = Read-Host "  >"
-            if ($line -eq "") { break }
-            $lines += $line
+        $releaseNotes = ""
+        $rnFile = "markdowns\docs\release_notes.txt"
+        if (Test-Path $rnFile) {
+            $content   = Get-Content $rnFile -Raw
+            $afterTag  = ($content -split "={3,}[\r\n]+\s*WHAT'S NEW[\r\n]+={3,}")[1]
+            if ($afterTag) {
+                $releaseNotes = $afterTag.Trim()
+            }
         }
-        $releaseNotes = $lines -join "`n"
-        if (-not $releaseNotes) { _Write-Fail "Release notes cannot be empty"; return }
+
+        if ($releaseNotes) {
+            Write-Host ""
+            Write-Host "  Release notes from release_notes.txt:" -ForegroundColor Cyan
+            Write-Host ""
+            $releaseNotes -split "`n" | ForEach-Object { Write-Host "    $_" }
+            Write-Host ""
+            $useFile = Read-Host "  Use these? (yes / no)"
+            if ($useFile -ne "yes") { $releaseNotes = "" }
+        }
+
+        if (-not $releaseNotes) {
+            Write-Host ""
+            Write-Host "  Enter release notes (blank line to finish):" -ForegroundColor Cyan
+            $lines = @()
+            while ($true) {
+                $line = Read-Host "  >"
+                if ($line -eq "") { break }
+                $lines += $line
+            }
+            $releaseNotes = $lines -join "`n"
+            if (-not $releaseNotes) { _Write-Fail "Release notes cannot be empty"; return }
+        }
 
         # ── [1/2] Git push ────────────────────────────────────────────────────
         _Write-Step 1 2 "Git"

@@ -38,23 +38,8 @@ PLATFORMS    : Android (stable) · Windows (alpha)
     the share sheet.
 
   · Sharing a link directly from your browser now correctly opens the app
-    and routes you to the forward screen. (A minor edge-case bug remains
-    and will be addressed in the next update.)
+    and routes you to the forward screen.
 
   · The "Undo" snackbar after deleting a chat now dismisses properly
     instead of lingering on screen.
 
-
-================================================================================
-  KNOWN ISSUES
-================================================================================
-
-  · Copying a URL message may include an unexpected character on the clipboard.
-    Workaround: paste and delete the stray character manually.
-
-  · Sharing a link from the browser has a known edge-case bug — fix in progress.
-
-
-================================================================================
-  END OF RELEASE NOTES — 2.1.1+6
-================================================================================

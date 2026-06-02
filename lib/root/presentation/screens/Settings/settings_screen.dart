@@ -16,16 +16,21 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
 
-final GlobalKey tile1 = GlobalKey();
-final GlobalKey tile2 = GlobalKey();
-final GlobalKey tile3 = GlobalKey();
-final GlobalKey tile4 = GlobalKey();
-
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final GlobalKey _tile1 = GlobalKey();
+  final GlobalKey tile2 = GlobalKey();
+  final GlobalKey tile3 = GlobalKey();
+  final GlobalKey tile4 = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
     final baseColor = context.isLight ? ThemeConstants.textLight : ThemeConstants.textDark;
     return PopScope(
       onPopInvoked: (didPop) => WindowsUtils.clearTitleBarColorDirect(),
@@ -40,13 +45,13 @@ class SettingsScreen extends ConsumerWidget {
               
               // THEME TILE
               RoundedTile(
-                key: tile1,
+                key: _tile1,
                 margins: EdgeInsets.only(bottom: 10),
                 leading: Icon(context.isLight ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
                 title: Text("Theme"),
                 onTap: () {
                    // Compute global position of the tile
-                  final Offset position = Utils.getObjectPosition(objectKey: tile1);
+                  final Offset position = Utils.getObjectPosition(objectKey: _tile1);
       
                   CustomContextMenu.showMenuAt(
                   context,
@@ -148,7 +153,7 @@ class SettingsScreen extends ConsumerWidget {
     final RenderBox box = key.currentContext!.findRenderObject() as RenderBox;
     final Offset globalPosition = box.localToGlobal(Offset.zero);
     final Size size = box.size;
-    
+
     // We want centerRight → x = right edge, y = vertical center
     final Offset position = Offset(
       globalPosition.dx + size.width,
@@ -157,6 +162,7 @@ class SettingsScreen extends ConsumerWidget {
     return position;
   }
 }
+
 
 void handleThemeOptions(WidgetRef ref, String value) {
   switch (value) {
