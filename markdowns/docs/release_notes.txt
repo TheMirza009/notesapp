@@ -18,28 +18,14 @@ PLATFORMS    : Android (stable) · Windows (alpha)
   WHAT'S NEW
 ================================================================================
 
-  NEW FEATURES
+NEW FEATURES
+· Delete All Chats moved to Settings with confirmation prompt
+· New About section added to Homescreen
 
-  · Delete All Chats moved to Settings — The "Delete All Chats" option has
-    been moved out of the chat menu and into Settings, where it belongs.
-    A confirmation prompt is now required before anything is deleted.
-
-  · About — A new About section has been added to Homescreen options.
-
-
-  BUG FIXES
-
-  · Pressing the back button while messages are selected now clears the
-    selection instead of closing the chat entirely.
-
-  · Your light/dark theme choice is now remembered after restarting the app.
-
-  · Sharing files from other apps no longer shows unsupported file types in
-    the share sheet.
-
-  · Sharing a link directly from your browser now correctly opens the app
-    and routes you to the forward screen.
-
-  · The "Undo" snackbar after deleting a chat now dismisses properly
-    instead of lingering on screen.
+BUG FIXES
+· Back button while selecting messages now clears selection
+· Light/dark theme choice now persists after restart
+· Share sheet no longer shows unsupported file types
+· Sharing links from browser now correctly opens forward screen
+· Undo snackbar after deleting a chat now dismisses properly
 
