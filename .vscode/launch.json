@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
 
+        // ── Device runs (safe alongside the PlayStore build) ──────────────────
+        // Both are DEBUG, so the buildType adds applicationIdSuffix ".debug":
+        //   production-debug -> com.azdhaar.notesapp.debug      (PlayStore is com.azdhaar.notesapp)
+        //   rc-debug         -> com.azdhaar.notesapp.rc.debug
+        // Different package = installs side-by-side; never overwrites the store app.
+        // WARNING: do NOT add "--flavor production" to a profile/release config —
+        // those have no ".debug" suffix and would collide with the PlayStore app.
+        {
+            "name": "notesapp (production · debug)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "toolArgs": ["--flavor", "production"]
+        },
+        {
+            "name": "notesapp (rc · debug)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "toolArgs": ["--flavor", "rc"]
+        },
+
         {
             "name": "notesapp",
             "request": "launch",
