@@ -19,13 +19,5 @@ PLATFORMS    : Android (stable) · Windows (alpha)
 ================================================================================
 
 NEW FEATURES
-· Delete All Chats moved to Settings with confirmation prompt
-· New About section added to Homescreen
-
-BUG FIXES
-· Back button while selecting messages now clears selection
-· Light/dark theme choice now persists after restart
-· Share sheet no longer shows unsupported file types
-· Sharing links from browser now correctly opens forward screen
-· Undo snackbar after deleting a chat now dismisses properly
+· Draft messages for unsent texts!
 

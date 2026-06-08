@@ -2,7 +2,7 @@ name: notesapp
 description: "A Chat-based note taking app!"
 publish_to: 'none'
 
-version: 2.2.0+7
+version: 2.2.0+8
 
 environment:
   sdk: ^3.7.2
