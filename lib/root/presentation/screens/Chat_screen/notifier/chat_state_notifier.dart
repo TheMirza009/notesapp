@@ -41,6 +41,7 @@ import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/domain/usecases/draft_usecase.dart';
 import 'package:notesapp/root/presentation/screens/Chat_Detail/chat_detail_screen.dart';
 import 'package:notesapp/root/presentation/widgets/custom_icon_dialogue.dart';
 import 'package:typeset/typeset.dart';
@@ -64,6 +65,14 @@ class ChatStateNotifier extends Notifier<ChatState> {
   bool isLoading = false;
   bool get isReplying => state.anchorMessage != null;
 
+  // Drafts: attach the save-listener once, and only reload the bar when the
+  // active chat actually changes (build() reruns for unrelated reasons too).
+  // _isRestoringDraft suppresses the listener while we write the loaded draft
+  // back into the bar, so restoring never re-triggers a save (or a wipe).
+  bool _draftListenerAttached = false;
+  bool _isRestoringDraft = false;
+  int? _lastDraftChatId;
+
   @override
   ChatState build() {
     ref.keepAlive();
@@ -75,10 +84,25 @@ class ChatStateNotifier extends Notifier<ChatState> {
     final selectedChat = ref.watch(
       chatListProvider.select((s) => s.selectedChat),
     );
-    if (selectedChat == null) return ChatState();
+    if (selectedChat == null) {
+      // Chat closed (mobile backs out via null): reset the guard so re-opening
+      // the same chat restores its draft again instead of being skipped.
+      _lastDraftChatId = null;
+      return ChatState();
+    }
 
     _chat = selectedChat;
-  
+
+  // Drafts: wire the save-listener once, restore the bar when the chat changes
+  if (!_draftListenerAttached) {
+    keyboardController.addListener(_onDraftChanged);
+    _draftListenerAttached = true;
+  }
+  if (_chat!.isarID != _lastDraftChatId) {
+    _lastDraftChatId = _chat!.isarID;
+    _restoreDraft(_chat!.isarID);
+  }
+
   // Listen for message to highlight
   final messageToHighlight = ref.watch(
     chatListProvider.select((s) => s.messageToHighlight),
@@ -100,6 +124,31 @@ class ChatStateNotifier extends Notifier<ChatState> {
   });
   
   return ChatState();
+  }
+
+  // =====================================================
+  // Drafts
+  // =====================================================
+
+  // Saves the bar's text as this chat's draft, skipping edit/thread compose.
+  void _onDraftChanged() {
+    if (_isRestoringDraft || _chat == null || state.isEditing || state.isThreading) {
+      debugPrint('[DRAFT] _onDraftChanged skipped (restoring=$_isRestoringDraft, chat=${_chat?.isarID}, editing=${state.isEditing}, threading=${state.isThreading})');
+      return;
+    }
+    ref.read(draftUseCaseProvider.notifier).save(_chat!.isarID, keyboardController.text);
+  }
+
+  /// Loads [chatId]'s persisted draft and writes it into the bar (empty if none),
+  /// replacing any leftover text from the previously open chat.
+  Future<void> _restoreDraft(int chatId) async {
+    debugPrint('[DRAFT] _restoreDraft($chatId) start');
+    final draft = await ref.read(draftUseCaseProvider.notifier).getDraft(chatId);
+    if (_chat?.isarID != chatId) return; // chat changed while loading — abort
+    _isRestoringDraft = true;
+    keyboardController.text = draft ?? '';
+    _isRestoringDraft = false;
+    debugPrint('[DRAFT] _restoreDraft($chatId) done -> bar len=${keyboardController.text.length}');
   }
 
   // =====================================================
@@ -478,6 +527,7 @@ Future<void> _loadRemainingMessagesSilently(
 
   Future<void> sendMessage(String text) async {
     if (_chat == null) return;
+    ref.read(draftUseCaseProvider.notifier).clear(_chat!.isarID);
     await deleteInitMessage();
 
     final newMessage = Message()

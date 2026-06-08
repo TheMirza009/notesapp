@@ -6,9 +6,22 @@ import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/main.dart';
 import 'package:notesapp/root/presentation/screens/Homescreen/components/chat_list/doc_icon.dart';
 
+// Draft subtitle styling (shared by the desktop and mobile subtitle branches).
+const _draftLabelStyle = TextStyle(
+  fontSize: 12,
+  color: ThemeConstants.sinisterSeed,
+  fontStyle: FontStyle.italic,
+);
+const _draftPreviewStyle = TextStyle(
+  fontSize: 12,
+  color: ThemeConstants.subtitleLight,
+  fontStyle: FontStyle.italic,
+);
+
 class ChatTile extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String? draftText;
   final String time;
   final bool showDivider;
   final Widget? chatIcon;
@@ -26,6 +39,7 @@ class ChatTile extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
+    this.draftText,
     required this.time,
     this.showDivider = true,
     this.chatIcon,
@@ -173,28 +187,48 @@ class ChatTile extends StatelessWidget {
                             ),
                             SizedBox(height: ThemeConstants.screenHeight * 0.002,),
 
-                            // Subtitle Text
-                            kisDesktop ? Text(
-                                subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
-                                maxLines: 1,
-                                softWrap: false, // Prevent wrapping
-                                overflow: TextOverflow.ellipsis, // Truncate if necessary
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: ThemeConstants.subtitleLight,
-                                ),
-                              ) : SizedBox(
+                            // Subtitle Text — italic "Draft: …" when one exists, else last message
+                            kisDesktop ? ((draftText?.isNotEmpty ?? false)
+                              ? Text.rich(
+                                  TextSpan(children: [
+                                    const TextSpan(text: "Draft: ", style: _draftLabelStyle),
+                                    TextSpan(text: draftText!.replaceAll('\n', " "), style: _draftPreviewStyle),
+                                  ]),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : Text(
+                                  subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
+                                  maxLines: 1,
+                                  softWrap: false, // Prevent wrapping
+                                  overflow: TextOverflow.ellipsis, // Truncate if necessary
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: ThemeConstants.subtitleLight,
+                                  ),
+                                )) : SizedBox(
                               width: context.screenWidth * 0.6, // Adjust width for subtitle
-                              child: Text(
-                                subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
-                                maxLines: 1,
-                                softWrap: false, // Prevent wrapping
-                                overflow: TextOverflow.ellipsis, // Truncate if necessary
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: ThemeConstants.subtitleLight,
+                              child: (draftText?.isNotEmpty ?? false)
+                              ? Text.rich(
+                                  TextSpan(children: [
+                                    const TextSpan(text: "Draft: ", style: _draftLabelStyle),
+                                    TextSpan(text: draftText!.replaceAll('\n', " "), style: _draftPreviewStyle),
+                                  ]),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : Text(
+                                  subtitle.replaceAll('\n', " "), // method to show a multi-line note as single line
+                                  maxLines: 1,
+                                  softWrap: false, // Prevent wrapping
+                                  overflow: TextOverflow.ellipsis, // Truncate if necessary
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: ThemeConstants.subtitleLight,
+                                  ),
                                 ),
-                              ),
                             ),
                           ],
                         ),

@@ -16,6 +16,7 @@ import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/core/utils/windows_utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
 import 'package:notesapp/root/domain/usecases/delete_chat_usecase.dart';
+import 'package:notesapp/root/domain/usecases/draft_usecase.dart';
 import 'package:notesapp/root/data/enums/chatlist_filter.dart';
 import 'package:notesapp/root/data/models/chat_model.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
@@ -278,6 +279,7 @@ class HomescreenState extends HomeScreenBaseState {
                                         isPinned: chat.isPinned,
                                         title: chat.title ?? "New Note",
                                         subtitle: chat.loadLastMessageTextFormatted(),
+                                        draftText: ref.watch(draftUseCaseProvider)[chat.isarID],
                                         chatPhotoPath: chat.chatPhotoPath,
                                         time: TimeFormat.formatChatTime( chat.date, ),
                                         onDismissed: (_) => ref.read(deleteChatUseCaseProvider).queueDelete(chat),

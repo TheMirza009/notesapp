@@ -153,7 +153,8 @@ deploy-prod
 2. **Collect release notes**
    - Prompt for multi-line input (blank line to finish)
    - Release notes cannot be empty — cancel if they are
-   - *(ReleaseNotes.txt integration deferred — for now, notes are typed at prompt time)*
+   - Release notes cannot exceed 500 characters — cancel if they do (Google Play limit)
+   - Source: `markdowns/docs/release_notes.txt` WHAT'S NEW section; falls back to manual prompt if empty
 
 3. **Git push**
    - `git push origin main`

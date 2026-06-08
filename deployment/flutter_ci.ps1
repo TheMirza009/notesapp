@@ -368,6 +368,11 @@ function deploy-prod {
             if (-not $releaseNotes) { _Write-Fail "Release notes cannot be empty"; return }
         }
 
+        if ($releaseNotes.Length -gt 500) {
+            _Write-Fail "Release notes exceed 500 characters ($($releaseNotes.Length)). Google Play limit is 500."
+            return
+        }
+
         # ── [1/2] Git push ────────────────────────────────────────────────────
         _Write-Step 1 2 "Git"
         Invoke-WithSpinner "Pushing → $branch" {
