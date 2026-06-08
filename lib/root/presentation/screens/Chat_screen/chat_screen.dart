@@ -62,10 +62,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
   @override
   bool get wantKeepAlive => true;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  // }
+  @override
+  void initState() {
+    super.initState();
+    // Restore the draft for the chat open when this screen mounts. On mobile a
+    // fresh ChatScreen is pushed on every open (so this fires each time); on
+    // desktop it fires for the first chat, with the listener in build() handling
+    // subsequent chat switches.
+    final chatId = ref.read(chatListProvider).selectedChat?.isarID;
+    if (chatId != null) {
+      ref.read(chatStateController.notifier).loadDraftIntoBar(chatId);
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -83,6 +91,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with AutomaticKeepAlive
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Desktop keeps one ChatScreen mounted and swaps chats via selectedChat;
+    // restore the draft whenever the active chat actually changes.
+    ref.listen(chatListProvider.select((s) => s.selectedChat?.isarID), (prev, next) {
+      if (next != null && next != prev) {
+        ref.read(chatStateController.notifier).loadDraftIntoBar(next);
+      }
+    });
     // final notifier = ref.read(chatMessagesController.notifier);
     final overlayHandler = ref.read(overlayHandlerProvider);
     final newChat = ref.read(isNewChat);

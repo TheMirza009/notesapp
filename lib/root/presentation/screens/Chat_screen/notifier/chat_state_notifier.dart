@@ -65,14 +65,6 @@ class ChatStateNotifier extends Notifier<ChatState> {
   bool isLoading = false;
   bool get isReplying => state.anchorMessage != null;
 
-  // Drafts: attach the save-listener once, and only reload the bar when the
-  // active chat actually changes (build() reruns for unrelated reasons too).
-  // _isRestoringDraft suppresses the listener while we write the loaded draft
-  // back into the bar, so restoring never re-triggers a save (or a wipe).
-  bool _draftListenerAttached = false;
-  bool _isRestoringDraft = false;
-  int? _lastDraftChatId;
-
   @override
   ChatState build() {
     ref.keepAlive();
@@ -84,24 +76,9 @@ class ChatStateNotifier extends Notifier<ChatState> {
     final selectedChat = ref.watch(
       chatListProvider.select((s) => s.selectedChat),
     );
-    if (selectedChat == null) {
-      // Chat closed (mobile backs out via null): reset the guard so re-opening
-      // the same chat restores its draft again instead of being skipped.
-      _lastDraftChatId = null;
-      return ChatState();
-    }
+    if (selectedChat == null) return ChatState();
 
     _chat = selectedChat;
-
-  // Drafts: wire the save-listener once, restore the bar when the chat changes
-  if (!_draftListenerAttached) {
-    keyboardController.addListener(_onDraftChanged);
-    _draftListenerAttached = true;
-  }
-  if (_chat!.isarID != _lastDraftChatId) {
-    _lastDraftChatId = _chat!.isarID;
-    _restoreDraft(_chat!.isarID);
-  }
 
   // Listen for message to highlight
   final messageToHighlight = ref.watch(
@@ -130,25 +107,30 @@ class ChatStateNotifier extends Notifier<ChatState> {
   // Drafts
   // =====================================================
 
-  // Saves the bar's text as this chat's draft, skipping edit/thread compose.
-  void _onDraftChanged() {
-    if (_isRestoringDraft || _chat == null || state.isEditing || state.isThreading) {
-      debugPrint('[DRAFT] _onDraftChanged skipped (restoring=$_isRestoringDraft, chat=${_chat?.isarID}, editing=${state.isEditing}, threading=${state.isThreading})');
-      return;
-    }
-    ref.read(draftUseCaseProvider.notifier).save(_chat!.isarID, keyboardController.text);
+  /// Persists the user-typed [text] as the current chat's draft.
+  ///
+  /// Called from the message bar's onChanged — which fires ONLY on real user
+  /// input, never on the app's programmatic controller writes (cancel-edit,
+  /// thread compose, draft restore). That distinction is the whole point: a
+  /// listener on keyboardController would also fire on those clears and wipe
+  /// the saved draft on leave. Skips edit/thread compose, which reuse the bar.
+  void onDraftTyped(String text) {
+    if (_chat == null || state.isEditing || state.isThreading) return;
+    ref.read(draftUseCaseProvider.notifier).save(_chat!.isarID, text);
   }
 
-  /// Loads [chatId]'s persisted draft and writes it into the bar (empty if none),
-  /// replacing any leftover text from the previously open chat.
-  Future<void> _restoreDraft(int chatId) async {
-    debugPrint('[DRAFT] _restoreDraft($chatId) start');
+  /// Loads [chatId]'s persisted draft into the message bar (empty if none).
+  ///
+  /// Called on every chat open (ChatScreen.initState + the selectedChat
+  /// listener) — not from build() — because mobile can re-open the same chat
+  /// without selectedChat changing, which would never rerun build(). Writing
+  /// `keyboardController.text` is programmatic, so it does not fire onChanged
+  /// and cannot loop back into onDraftTyped.
+  Future<void> loadDraftIntoBar(int chatId) async {
+    debugPrint('[DRAFT] loadDraftIntoBar($chatId) start');
     final draft = await ref.read(draftUseCaseProvider.notifier).getDraft(chatId);
-    if (_chat?.isarID != chatId) return; // chat changed while loading — abort
-    _isRestoringDraft = true;
     keyboardController.text = draft ?? '';
-    _isRestoringDraft = false;
-    debugPrint('[DRAFT] _restoreDraft($chatId) done -> bar len=${keyboardController.text.length}');
+    debugPrint('[DRAFT] loadDraftIntoBar($chatId) done -> bar len=${keyboardController.text.length}');
   }
 
   // =====================================================

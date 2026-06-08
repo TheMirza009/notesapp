@@ -135,6 +135,7 @@ class _BottomMessageBarState extends ConsumerState<BottomMessageBar> {
                   },
                 ),
                 onChanged: (value) {
+                  notifier.onDraftTyped(value);
                   if (isThreading) {ref.read(chatStateController.notifier).onTyping(value);}
                 },
               ),

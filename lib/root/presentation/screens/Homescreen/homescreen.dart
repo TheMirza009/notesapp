@@ -78,6 +78,9 @@ class HomescreenState extends HomeScreenBaseState {
     final chatNotifier = ref.read(chatListProvider.notifier);
     final chatlist = ref.watch(chatListProvider.select((state) => state.chats));
     final isLoading = ref.watch(chatListProvider.select((state) => state.isLoading));
+    // Watched here (not inside the ListView itemBuilder, where a watch wouldn't
+    // reliably register) so the tiles rebuild when a draft is saved/cleared.
+    final drafts = ref.watch(draftUseCaseProvider);
     final isLight = Theme.brightnessOf(context) == Brightness.light;
     final headerColor = isLight ? ThemeConstants.hometoolbarLight2 : ThemeConstants.darkAppbar;
     final dividerColor = isLight ? ThemeConstants.homeDividerLight : ThemeConstants.darkIconBorder;
@@ -279,7 +282,7 @@ class HomescreenState extends HomeScreenBaseState {
                                         isPinned: chat.isPinned,
                                         title: chat.title ?? "New Note",
                                         subtitle: chat.loadLastMessageTextFormatted(),
-                                        draftText: ref.watch(draftUseCaseProvider)[chat.isarID],
+                                        draftText: drafts[chat.isarID],
                                         chatPhotoPath: chat.chatPhotoPath,
                                         time: TimeFormat.formatChatTime( chat.date, ),
                                         onDismissed: (_) => ref.read(deleteChatUseCaseProvider).queueDelete(chat),
