@@ -6,7 +6,7 @@ COMMIT       : 2a380c2ea7ebb08b6f3ec7de24db4bc35363697e
 SHORT HASH   : 2a380c2
 BRANCH       : desktop-prototype
 COMMIT MSG   : Testing breakpoints
-DATE         : 2026-06-01
+DATE         : 2026-06-09
 
 --------------------------------------------------------------------------------
 
@@ -20,4 +20,10 @@ PLATFORMS    : Android (stable) · Windows (alpha)
 
 NEW FEATURES
 · Draft messages for unsent texts!
+· Send multiple images at once — they group into a photo album
+· Tap an album to view fullscreen and swipe through, with an album filmstrip
+
+BUG FIXES
+· Deleting a chat image no longer deletes the original file on your device
+· Fixed a crash on the Profile/Settings screens
 
