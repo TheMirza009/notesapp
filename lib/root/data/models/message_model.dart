@@ -15,6 +15,11 @@ class Message {
   late bool isSender;
 
   IsarLink<Media> media = IsarLink<Media>();
+
+  /// Multiple media for an album message. Empty for single-media/legacy messages.
+  /// When populated, [media] holds the cover (first item).
+  IsarLinks<Media> mediaList = IsarLinks<Media>();
+
   IsarLink<Message> replyingTo = IsarLink<Message>();
 
   @Backlink(to: 'messages')
@@ -46,6 +51,11 @@ class Message {
       newMessage.media.value = media;
     } else if (this.media.value != null) {
       newMessage.media.value = this.media.value;
+    }
+
+    // Preserve album media (in-memory) so album messages survive copyWith
+    if (mediaList.isNotEmpty) {
+      newMessage.mediaList.addAll(mediaList.toList());
     }
 
     // Copy replyingTo link

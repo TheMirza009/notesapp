@@ -159,15 +159,16 @@ extension MessageGalleryExtensions on List<Message> {
         .toList();
   }
 
-  List<Media> get imageMedias =>
-      where((m) => m.isImage && m.media.value?.path != null)
-          .map((m) => m.media.value!)
-          .toList();
+  // Album messages are expanded so each member appears inline, in chat order.
+  List<Media> get imageMedias => expand((m) => m.allMedia)
+      .where((media) => media.type == Mediatype.image && media.path != null)
+      .toList();
 
-  List<Media> get imagesAndVideos =>
-      where((m) => (m.isImage || m.isVideo) && m.media.value?.path != null)
-          .map((m) => m.media.value!)
-          .toList();
+  List<Media> get imagesAndVideos => expand((m) => m.allMedia)
+      .where((media) =>
+          (media.type == Mediatype.image || media.type == Mediatype.video) &&
+          media.path != null)
+      .toList();
 }
 
 extension ThreadExtensions on List<Message> {

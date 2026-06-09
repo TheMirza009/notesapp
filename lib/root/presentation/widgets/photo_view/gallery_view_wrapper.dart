@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:extended_image/extended_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:intl/intl.dart';
 import 'package:notesapp/core/Theme/icon_paths.dart';
 import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
@@ -18,11 +15,7 @@ import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
 import 'package:notesapp/root/presentation/screens/Chat_Detail/chat_detail_base_state.dart';
-import 'package:notesapp/root/presentation/screens/Chat_Detail/chat_detail_screen.dart';
-import 'package:notesapp/root/presentation/screens/Chat_Forward/widgets/send_button.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
-import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
-import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/wrappers/message_list_wrapper.dart';
 import 'package:notesapp/root/presentation/widgets/context_menus/custom_context_menu.dart';
 import 'package:notesapp/root/presentation/widgets/video_view/seek_indicators.dart';
 import 'package:notesapp/root/presentation/widgets/video_view/video_gallery_player.dart';
@@ -64,6 +57,7 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
   late final PageController _pageController;
   late int currentIndex;
   bool showOverlay = true;
+  List<Media>? _currentAlbum; // album of the current page; null when not in an album
   final Color overlayBase = Colors.black26;
   
   // Store video controllers for control access
@@ -74,6 +68,7 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
     super.initState();
     currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
+    _recomputeAlbum(currentIndex);
   }
 
   @override
@@ -114,19 +109,31 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
     _videoControllers[path] = controller;
   }
 
-  /// Get the time from the first linked message (backlink)
-  DateTime? get currentImageTime {
+  /// The message that owns the current media — via the single `media` link
+  /// (cover/single image) or, for non-cover album members, the `mediaList`
+  /// link. Without the album fallback, title/time go blank past the first
+  /// image of an album.
+  Message? get _currentOwnerMessage {
     final media = widget.galleryItems[currentIndex];
-    return media.messagesBacklink.isNotEmpty
-        ? media.messagesBacklink.first.time
-        : null;
+    try {
+      media.messagesBacklink.loadSync();
+      if (media.messagesBacklink.isNotEmpty) return media.messagesBacklink.first;
+      media.albumBacklink.loadSync();
+      if (media.albumBacklink.isNotEmpty) return media.albumBacklink.first;
+    } catch (e) {
+      debugPrint('Owner message resolve failed: $e');
+    }
+    return null;
   }
 
+  /// Get the time from the owning message (backlink)
+  DateTime? get currentImageTime => _currentOwnerMessage?.time;
+
   String? get currentChatTitle {
-    final media = widget.galleryItems[currentIndex];
-    if (media.messagesBacklink.isEmpty) return null;
-    final chat = media.messagesBacklink.first.chat.value;
-    return chat?.title;
+    final msg = _currentOwnerMessage;
+    if (msg == null) return null;
+    msg.chat.loadSync();
+    return msg.chat.value?.title;
   }
 
   /// Get path for a given index
@@ -143,6 +150,91 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
     
     final path = mediaPath(currentIndex);
     return path != null ? path.split(Platform.pathSeparator).last : "📷 Photo";
+  }
+
+  /// Recompute the album the current page belongs to (null when not in one).
+  void _recomputeAlbum(int index) {
+    if (index < 0 || index >= widget.galleryItems.length) {
+      _currentAlbum = null;
+      return;
+    }
+    _currentAlbum = _albumForMedia(widget.galleryItems[index]);
+  }
+
+  /// Resolve the album (2+ media) that owns [media] via its mediaList backlink.
+  List<Media>? _albumForMedia(Media media) {
+    try {
+      media.albumBacklink.loadSync();
+      if (media.albumBacklink.isEmpty) return null;
+      final msg = media.albumBacklink.first;
+      msg.mediaList.loadSync();
+      if (msg.mediaList.length <= 1) return null;
+      return msg.mediaList.toList();
+    } catch (e) {
+      debugPrint('Album filmstrip resolve failed: $e');
+      return null;
+    }
+  }
+
+  /// Bottom filmstrip of the current album; highlights the current image,
+  /// tapping a thumbnail jumps the pager to it.
+  Widget _buildAlbumFilmstrip(List<Media> album) {
+    return Container(
+      height: 72,
+      color: Colors.black38,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      child: Center(
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          shrinkWrap: true,
+          itemCount: album.length,
+          itemBuilder: (context, i) {
+            final item = album[i];
+            final isCurrent =
+                item.isarId == widget.galleryItems[currentIndex].isarId;
+            return GestureDetector(
+              onTap: () {
+                final target = widget.galleryItems
+                    .indexWhere((m) => m.isarId == item.isarId);
+                if (target >= 0) {
+                  _pageController.animateToPage(
+                    target,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                  );
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isCurrent
+                        ? ThemeConstants.sinisterSeed
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: item.path != null
+                      ? Image.file(
+                          File(item.path!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const Icon(
+                              Icons.broken_image,
+                              color: Colors.white54),
+                        )
+                      : const Icon(Icons.broken_image, color: Colors.white54),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -242,7 +334,10 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                 final currentVideoController = VideoHandler.controllers[currentMedia.path!];
                 currentVideoController?.pause();
               }
-              setState(() => currentIndex = index);
+              setState(() {
+                currentIndex = index;
+                _recomputeAlbum(index);
+              });
             },
             builder: (context, index) {
               if (index < 0 || index >= widget.galleryItems.length) {
@@ -347,7 +442,39 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
         bottomNavigationBar: AnimatedOpacity(
           duration: const Duration(milliseconds: 300),
           opacity: showOverlay ? 1.0 : 0.0,
-          child: Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Slides up + expands when swiping INTO an album, collapses out when leaving.
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) => SizeTransition(
+                  sizeFactor: animation,
+                  alignment: Alignment.topCenter,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 1),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                ),
+                // Inner switcher cross-fades when the album CONTENT changes
+                // (swiping from one album into another). Keyed by album
+                // identity so same-album highlight changes don't fade.
+                child: _currentAlbum != null
+                    ? AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: KeyedSubtree(
+                          key: ValueKey(_currentAlbum!.first.isarId),
+                          child: _buildAlbumFilmstrip(_currentAlbum!),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              Container(
             constraints: const BoxConstraints(maxHeight: 70),
             alignment: Alignment.center,
             color: Colors.black26,
@@ -400,6 +527,8 @@ class _GalleryViewWrapperState extends State<GalleryViewWrapper> {
                       )
                   : Text(currentFileName, style: const TextStyle(color: Colors.white)),
             ),
+          ),
+            ],
           ),
         ),
       ),

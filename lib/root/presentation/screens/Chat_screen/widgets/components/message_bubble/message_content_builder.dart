@@ -10,9 +10,11 @@ import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
+import 'package:notesapp/core/extensions/message_extensions.dart';
 import 'package:notesapp/root/data/enums/media_type.dart';
 import 'package:notesapp/root/data/models/media_model.dart';
 import 'package:notesapp/root/data/models/message_model.dart';
+import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/message_bubble/content/album_view.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/message_bubble/content/audio_message_view.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/message_bubble/content/document_message_view.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/components/message_bubble/content/image_message_view.dart';
@@ -30,6 +32,10 @@ class MessageContentBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (message.isAlbum) {
+      return AlbumView(message: message, key: ValueKey(message.isarId));
+    }
+
     final media = message.media.value;
     if (media == null || media.type == Mediatype.text) {
       return _buildTextWithTimestamp(context);

@@ -117,43 +117,44 @@ class MediaSendUseCase {
     return saved;
   }
 
-  /// Persist all messages in a SINGLE writeTxn, then reload managed instances.
-  /// Rolls back saved files if the transaction throws.
+  /// Persist as ONE message in a SINGLE writeTxn: an album when 2+ media,
+  /// otherwise a single-media message. Rolls back saved files if the txn throws.
   Future<void> _persistAndAttach(List<Media> savedMediaList) async {
     final chat = ref.read(chatListProvider).selectedChat;
-    if (chat == null) return;
+    if (chat == null || savedMediaList.isEmpty) return;
 
     final isar = IsarDatabase.isar;
     final notifier = ref.read(chatStateController.notifier);
 
-    // deleteInitMessage must run before the first attach (owned by notifier).
+    // deleteInitMessage must run before attach (owned by notifier).
     await notifier.deleteInitMessage();
 
-    final messages = savedMediaList
-        .map((_) => Message()
-          ..text = "📷 Photo"
-          ..isSender = true
-          ..time = DateTime.now())
-        .toList();
+    final isAlbum = savedMediaList.length > 1;
+    final message = Message()
+      ..text = "📷 Photo"
+      ..isSender = true
+      ..time = DateTime.now();
 
-    List<int> messageIds = [];
+    int? messageId;
 
     try {
       await isar.writeTxn(() async {
-        // Persist all media objects first.
-        for (int i = 0; i < savedMediaList.length; i++) {
-          await isar.medias.put(savedMediaList[i]);
+        for (final media in savedMediaList) {
+          await isar.medias.put(media);
         }
 
-        // Persist all messages and link their media.
-        for (int i = 0; i < messages.length; i++) {
-          final id = await isar.messages.put(messages[i]);
-          messageIds.add(id);
-          messages[i].media.value = savedMediaList[i];
-          await messages[i].media.save();
+        messageId = await isar.messages.put(message);
+
+        // Cover = first item (keeps single-media code paths working).
+        message.media.value = savedMediaList.first;
+        await message.media.save();
+
+        // Album → also link the full list.
+        if (isAlbum) {
+          message.mediaList.addAll(savedMediaList);
+          await message.mediaList.save();
         }
 
-        // Load/create the managed chat once and add all messages.
         Chat? managedChat = await isar.chats.get(chat.isarID);
         if (managedChat == null) {
           await isar.chats.put(chat);
@@ -161,34 +162,28 @@ class MediaSendUseCase {
         }
         if (managedChat != null) {
           await managedChat.messages.load();
-          for (final message in messages) {
-            managedChat.messages.add(message);
-          }
+          managedChat.messages.add(message);
           await managedChat.messages.save();
           await isar.chats.put(managedChat);
         }
       });
     } catch (e) {
       debugPrint('❌ MediaSendUseCase: writeTxn failed, rolling back saved files: $e');
-      // Roll back — delete files that were written to storage before the txn failed.
+      // Roll back — delete files written to storage before the txn failed.
       for (final media in savedMediaList) {
         await MediaHandler.deleteMedia(media);
       }
       return;
     }
 
-    // Reload managed messages (with media loaded) before handing to notifier.
-    final managedMessages = <Message>[];
-    for (final id in messageIds) {
-      final managed = await isar.messages.get(id);
+    // Reload the managed message (with links) before handing to the notifier.
+    if (messageId != null) {
+      final managed = await isar.messages.get(messageId!);
       if (managed != null) {
         await managed.media.load();
-        managedMessages.add(managed);
+        await managed.mediaList.load();
+        notifier.appendSentMessages([managed]);
       }
-    }
-
-    if (managedMessages.isNotEmpty) {
-      notifier.appendSentMessages(managedMessages);
     }
   }
 }

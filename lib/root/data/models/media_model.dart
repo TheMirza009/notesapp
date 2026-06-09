@@ -27,6 +27,11 @@ class Media {
   @Backlink(to: 'media')
   final IsarLinks<Message> messagesBacklink = IsarLinks<Message>();
 
+  /// Album messages that include this media in their [Message.mediaList].
+  /// Lets any album member resolve its owning album message.
+  @Backlink(to: 'mediaList')
+  final IsarLinks<Message> albumBacklink = IsarLinks<Message>();
+
   Media();
 
   factory Media.text() {

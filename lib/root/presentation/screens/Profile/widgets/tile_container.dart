@@ -200,19 +200,35 @@ class TileContainer extends StatelessWidget {
     );
   }
 
-  /// Shared tile builder
+  /// Shared tile builder.
+  ///
+  /// Uses an InkWell + Row instead of ListTile: ListTile throws a hard layout
+  /// assertion when the tile is laid out narrower than its leading widget
+  /// (which can happen at small/transient widths). A Row clips gracefully.
   Widget _buildTile(TileItem item) {
-    return ListTile(
-      contentPadding: tilePadding,
-      leading: Padding(
-        padding: iconPadding ?? const EdgeInsets.all(8.0),
-        child: item.icon,
-      ),
-      title: Text(
-        item.title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w300),
-      ),
+    return InkWell(
       onTap: item.onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 56),
+        child: Padding(
+          padding: tilePadding,
+          child: Row(
+            children: [
+              Padding(
+                padding: iconPadding ?? const EdgeInsets.all(8.0),
+                child: item.icon,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w300),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -393,7 +393,7 @@ List<PopupMenuItem<String>> messageHoldOptions({bool isMedia = false, required M
       text: "Forward",
     ),
   ),
-  PopupMenuItem(
+  if (!message.isAlbum) PopupMenuItem(
     value: 'copy',
     child: buildOptionTile(
       icon: vectorBuild(IconPaths.copy),

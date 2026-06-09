@@ -5,7 +5,8 @@
       "Bash(python -c ' *)",
       "Bash(python3 -m pip install python-docx -q)",
       "Bash(py -m pip install python-docx -q)",
-      "PowerShell(pip install python-docx -q)"
+      "PowerShell(pip install python-docx -q)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)"
     ]
   }
 }

@@ -302,9 +302,19 @@ static Future<Media?> saveAudio(String audioPath) async {
   }
 
   /// Find and delete a media file from storage (if local).
+  ///
+  /// SAFETY: only deletes files that live inside the app's managed storage
+  /// (`<AppDocuments>/Media/...`). A message's media path can point at an
+  /// external original (e.g. the user's Downloads folder on desktop); deleting
+  /// the chat message must never delete that source file.
   static Future<void> deleteMedia(Media media) async {
     final filePath = media.path;
     if (filePath == null) return; // Remote link or null, nothing to delete
+
+    if (!await _isWithinAppStorage(filePath)) {
+      debugPrint("⛔ Refusing to delete file outside app storage: $filePath");
+      return;
+    }
 
     final file = File(filePath);
     if (await file.exists()) {
@@ -314,6 +324,21 @@ static Future<Media?> saveAudio(String audioPath) async {
       } catch (e) {
         debugPrint("🚨⚠️ Failed to delete media file at $filePath: $e");
       }
+    }
+  }
+
+  /// True only when [filePath] is inside the app's managed `Media` directory.
+  /// Comparison is separator- and case-insensitive to be safe on Windows.
+  static Future<bool> _isWithinAppStorage(String filePath) async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      String norm(String s) => s.replaceAll('\\', '/').toLowerCase();
+      final base = '${norm(appDir.path)}/media/';
+      return norm(filePath).startsWith(base);
+    } catch (e) {
+      // If we can't resolve app storage, err on the side of NOT deleting.
+      debugPrint("⚠️ _isWithinAppStorage check failed, skipping delete: $e");
+      return false;
     }
   }
 

@@ -152,6 +152,11 @@ class Utils {
     await Share.shareXFiles([file]);
   }
 
+  static Future<void> shareFilesToApps(List<XFile> files) async {
+    if (files.isEmpty) return;
+    await Share.shareXFiles(files);
+  }
+
   static Future<void> shareText(String text) async {
     // await Share.share(text);
     await SharePlus.instance.share(ShareParams(text: text ));

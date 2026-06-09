@@ -36,6 +36,12 @@ const MessageSchema = CollectionSchema(
       target: r'Media',
       single: true,
     ),
+    r'mediaList': LinkSchema(
+      id: -5757295486507297219,
+      name: r'mediaList',
+      target: r'Media',
+      single: false,
+    ),
     r'replyingTo': LinkSchema(
       id: -8995176130860208234,
       name: r'replyingTo',
@@ -121,12 +127,13 @@ Id _messageGetId(Message object) {
 }
 
 List<IsarLinkBase<dynamic>> _messageGetLinks(Message object) {
-  return [object.media, object.replyingTo, object.chat];
+  return [object.media, object.mediaList, object.replyingTo, object.chat];
 }
 
 void _messageAttach(IsarCollection<dynamic> col, Id id, Message object) {
   object.isarId = id;
   object.media.attach(col, col.isar.collection<Media>(), r'media', id);
+  object.mediaList.attach(col, col.isar.collection<Media>(), r'mediaList', id);
   object.replyingTo.attach(
     col,
     col.isar.collection<Message>(),
@@ -657,6 +664,67 @@ extension MessageQueryLinks
   QueryBuilder<Message, Message, QAfterFilterCondition> mediaIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.linkLength(r'media', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> mediaList(
+    FilterQuery<Media> q,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'mediaList');
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> mediaListLengthEqualTo(
+    int length,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'mediaList', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> mediaListIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'mediaList', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> mediaListIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'mediaList', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> mediaListLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'mediaList', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition>
+  mediaListLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'mediaList', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<Message, Message, QAfterFilterCondition> mediaListLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(
+        r'mediaList',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 

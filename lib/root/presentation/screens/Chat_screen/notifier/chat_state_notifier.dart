@@ -33,7 +33,6 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:notesapp/core/controllers/isar_database.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
-import 'package:notesapp/core/extensions/message_list_extensions.dart';
 import 'package:notesapp/core/utils/global_keys.dart';
 import 'package:notesapp/core/utils/utils.dart';
 import 'package:notesapp/root/data/chat_list_provider/chat_list_notifier.dart';
@@ -213,15 +212,16 @@ class ChatStateNotifier extends Notifier<ChatState> {
 
 
   /// Delete a message within a single DB transaction (removes message record and removes links from chat)
-  /// Returns a reference to the media (if any) so caller can check and perform file cleanup outside the txn.
-  Future<Media?> _deleteMessageManaged(Message message) async {
-    Media? mediaRef;
+  /// Returns all media (single + album) so the caller can check and perform file cleanup outside the txn.
+  Future<List<Media>> _deleteMessageManaged(Message message) async {
+    final mediaRefs = <Media>[];
     await _isar.writeTxn(() async {
       final managedMsg = await _isar.messages.get(message.isarId);
       if (managedMsg != null) {
-        // Grab media reference before deletion
+        // Grab media references before deletion (single + album)
         await managedMsg.media.load();
-        mediaRef = managedMsg.media.value;
+        await managedMsg.mediaList.load();
+        mediaRefs.addAll(managedMsg.allMedia);
 
         // Delete the message record
         await _isar.messages.delete(managedMsg.isarId);
@@ -246,20 +246,23 @@ class ChatStateNotifier extends Notifier<ChatState> {
       }
     });
 
-    return mediaRef;
+    return mediaRefs;
   }
 
   /// Helper: determine whether a given media (by path) is used by any message other than an optional excluded message.
   Future<bool> _isMediaUsedByOthers(String? mediaPath, {int? excludingMessageIsarId}) async {
     if (mediaPath == null) return false;
-    // Fetch all messages and preload media to inspect paths.
+    // Scan every message's media (single + album) for a matching file path.
     final msgs = await _isar.messages.where().findAll();
     for (final m in msgs) {
+      if (excludingMessageIsarId != null && m.isarId == excludingMessageIsarId) continue;
       await m.media.load();
+      await m.mediaList.load();
+      for (final media in m.allMedia) {
+        if (media.path == mediaPath) return true;
+      }
     }
-    // Use your existing extension function if available
-    final dup = msgs.hasDuplicateMediaPathByPath(mediaPath, excludingIsarId: excludingMessageIsarId);
-    return dup;
+    return false;
   }
 
   // =====================================================
@@ -352,18 +355,18 @@ Future<List<Message>> _loadMessageBatch(
   // ✅ Collect all blurhashes to decode
   final hashesToDecode = <MapEntry<String, double>>[];
 
-  // Load media
+  // Load media (single + album)
   await Future.wait(
     validMessages.map((message) async {
       try {
         await message.media.load();
+        await message.mediaList.load(); // album media (empty for single/legacy)
 
-        final media = message.media.value;
-        if (media == null) return;
-
-        // Collect blurhash for batch decode
-        if (media.blurHash != null && media.aspectRatio != null) {
-          hashesToDecode.add(MapEntry(media.blurHash!, media.aspectRatio!));
+        // Collect blurhashes for batch decode across all media in the message
+        for (final media in message.allMedia) {
+          if (media.blurHash != null && media.aspectRatio != null) {
+            hashesToDecode.add(MapEntry(media.blurHash!, media.aspectRatio!));
+          }
         }
       } catch (e) {
         debugPrint('⚠️ Failed to load media: $e');
@@ -550,6 +553,9 @@ Future<void> _loadRemainingMessagesSilently(
       await original.media.load();
     } catch (_) {}
     try {
+      await original.mediaList.load();
+    } catch (_) {}
+    try {
       await original.replyingTo.load();
     } catch (_) {}
 
@@ -559,28 +565,35 @@ Future<void> _loadRemainingMessagesSilently(
       ..time = DateTime.now()
       ..isSender = true;
 
-    // Clone media if present (no DB assignment yet)
-    final originalMedia = original.media.value;
-    Media? clonedMedia;
-    if (originalMedia != null) {
-      clonedMedia = Media()
-        ..name = originalMedia.name
-        ..path = originalMedia.path
-        ..extension = originalMedia.extension
-        ..type = originalMedia.type
-        ..aspectRatio = originalMedia.aspectRatio;
-    }
+    // Clone all media (single or album) — no DB assignment yet.
+    final wasAlbum = original.isAlbum;
+    final clonedMedia = original.allMedia
+        .map((m) => Media()
+          ..name = m.name
+          ..path = m.path
+          ..extension = m.extension
+          ..type = m.type
+          ..aspectRatio = m.aspectRatio
+          ..blurHash = m.blurHash
+          ..duration = m.duration
+          ..thumbnailPath = m.thumbnailPath)
+        .toList();
 
     // Persist media + message + attach to targetChat in a single txn (reuse helper semantics)
     await _isar.writeTxn(() async {
-      if (clonedMedia != null) {
-        await _isar.medias.put(clonedMedia);
+      for (final media in clonedMedia) {
+        await _isar.medias.put(media);
       }
       await _isar.messages.put(newMessage);
 
-      if (clonedMedia != null) {
-        newMessage.media.value = clonedMedia;
+      if (clonedMedia.isNotEmpty) {
+        // Cover = first; album → also link the full list.
+        newMessage.media.value = clonedMedia.first;
         await newMessage.media.save();
+        if (wasAlbum) {
+          newMessage.mediaList.addAll(clonedMedia);
+          await newMessage.mediaList.save();
+        }
       }
 
       if (original.replyingTo.value != null) {
@@ -854,17 +867,17 @@ Future<void> _loadRemainingMessagesSilently(
   }
 
   void _backgroundDeleteOperations(Message message) async {
-    // Delete message from database and get media reference
-    final mediaRef = await _deleteMessageManaged(message);
+    // Delete message from database and get its media (single + album)
+    final mediaRefs = await _deleteMessageManaged(message);
 
-    // Handle media cleanup if needed
-    if (mediaRef != null && mediaRef.type != Mediatype.text) {
+    // Clean up each file that no other message still references
+    for (final mediaRef in mediaRefs) {
+      if (mediaRef.type == Mediatype.text || mediaRef.path == null) continue;
       final usedByOthers = await _isMediaUsedByOthers(
         mediaRef.path,
         excludingMessageIsarId: message.isarId,
       );
-
-      if (!usedByOthers && mediaRef.path != null) {
+      if (!usedByOthers) {
         await MediaHandler.deleteMedia(mediaRef);
       }
     }
@@ -887,9 +900,8 @@ Future<void> _loadRemainingMessagesSilently(
 
         for (final msg in managedMessages.whereType<Message>()) {
           await msg.media.load().catchError((_) {});
-          if (msg.media.value != null) {
-            mediaToCheck.add(msg.media.value!);
-          }
+          await msg.mediaList.load().catchError((_) {});
+          mediaToCheck.addAll(msg.allMedia);
         }
 
         // Batch delete messages
@@ -1736,7 +1748,9 @@ void editThread(Message thread) {
         Navigator.push(navigatorKey.currentContext!, CupertinoPageRoute(builder: (_) => ChatForwardScreen(message: message)));
         break;
       case 'copy':
-        if (message.isImage) {
+        if (message.isAlbum) {
+          // Copy not supported for albums
+        } else if (message.isImage) {
           Utils.copyImageFromPath(message.media.value!.path);
         } else if (message.isThread) {
           Utils.copyTextToClipboard(message.text.formatThread());
@@ -1753,6 +1767,12 @@ void editThread(Message thread) {
       case "share":
         if (message.isThread) {
           await Utils.shareText(message.text.formatThread());
+        } else if (message.isAlbum) {
+          final files = message.allMedia
+              .where((m) => m.path != null)
+              .map((m) => XFile(m.path!))
+              .toList();
+          await Utils.shareFilesToApps(files);
         } else {
           await Utils.shareToApps(XFile(message.media.value!.path!));
         }

@@ -78,6 +78,13 @@ const MediaSchema = CollectionSchema(
       single: false,
       linkName: r'media',
     ),
+    r'albumBacklink': LinkSchema(
+      id: -1019061458257477875,
+      name: r'albumBacklink',
+      target: r'Message',
+      single: false,
+      linkName: r'mediaList',
+    ),
   },
   embeddedSchemas: {},
 
@@ -237,7 +244,7 @@ Id _mediaGetId(Media object) {
 }
 
 List<IsarLinkBase<dynamic>> _mediaGetLinks(Media object) {
-  return [object.messagesBacklink];
+  return [object.messagesBacklink, object.albumBacklink];
 }
 
 void _mediaAttach(IsarCollection<dynamic> col, Id id, Media object) {
@@ -246,6 +253,12 @@ void _mediaAttach(IsarCollection<dynamic> col, Id id, Media object) {
     col,
     col.isar.collection<Message>(),
     r'messagesBacklink',
+    id,
+  );
+  object.albumBacklink.attach(
+    col,
+    col.isar.collection<Message>(),
+    r'albumBacklink',
     id,
   );
 }
@@ -1828,6 +1841,67 @@ extension MediaQueryLinks on QueryBuilder<Media, Media, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.linkLength(
         r'messagesBacklink',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> albumBacklink(
+    FilterQuery<Message> q,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'albumBacklink');
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> albumBacklinkLengthEqualTo(
+    int length,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'albumBacklink', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> albumBacklinkIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'albumBacklink', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> albumBacklinkIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'albumBacklink', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> albumBacklinkLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'albumBacklink', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition>
+  albumBacklinkLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'albumBacklink', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<Media, Media, QAfterFilterCondition> albumBacklinkLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(
+        r'albumBacklink',
         lower,
         includeLower,
         upper,
