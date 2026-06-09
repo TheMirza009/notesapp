@@ -5,6 +5,7 @@ import 'package:notesapp/core/Theme/theme_constants.dart';
 import 'package:notesapp/core/controllers/media_handler.dart';
 import 'package:notesapp/core/extensions/context_extensions.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/chat_state_notifier.dart';
+import 'package:notesapp/root/domain/usecases/media_send_usecase.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/old_notifiers/chat_state_notifier_o.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/notifier/old_notifiers/chat_screen_notifier_3.dart';
 import 'package:notesapp/root/presentation/screens/Chat_screen/widgets/wrappers/attachment/overlay_controller.dart';
@@ -51,6 +52,7 @@ class AttachmentBoard extends ConsumerWidget {
     const double iconSize = 22;
     const double rowSpacing = 35;
     final notifier = ref.read(chatStateController.notifier);
+    final mediaSendUseCase = ref.read(mediaSendUseCaseProvider);
 
     return BorderedContainer(
       margins: const EdgeInsets.only(top: 15),
@@ -81,7 +83,7 @@ class AttachmentBoard extends ConsumerWidget {
               AttachmentItem(
                 widget: Icon(Icons.photo, color: Color(0xFFF43665), size: iconSize),
                 title: "Photo",
-                onPressed: onGalleryPressed ?? () async => await notifier.pickImage(),
+                onPressed: onGalleryPressed ?? () async => await mediaSendUseCase.pickAndSendImages(),
               ),
               AttachmentItem(
                 widget: Icon(Icons.video_camera_back_rounded, 

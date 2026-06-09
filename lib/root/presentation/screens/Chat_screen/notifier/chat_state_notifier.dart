@@ -507,6 +507,14 @@ Future<void> _loadRemainingMessagesSilently(
     state = state.copyWith(messages: messages);
   }
 
+  /// Append a batch of already-persisted messages to the in-memory list and
+  /// scroll to bottom. Called by [MediaSendUseCase] after its writeTxn commits.
+  void appendSentMessages(List<Message> messages) {
+    allMessages.addAll(messages);
+    state = state.copyWith(messages: [...allMessages]);
+    scrollToBottom();
+  }
+
   Future<void> sendMessage(String text) async {
     if (_chat == null) return;
     ref.read(draftUseCaseProvider.notifier).clear(_chat!.isarID);
